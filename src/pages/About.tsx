@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users, Sparkles, MapPin, ShieldCheck, MessageSquareHeart, Store } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -113,6 +114,7 @@ const About = () => {
           </Card>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { Download, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/contexts/A11yContext";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -210,6 +211,7 @@ const Dashboard = () => {
           </>
         )}
       </main>
+      <Footer />
     </div>
   );
 };

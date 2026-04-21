@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { BusinessCard } from "@/components/BusinessCard";
 import { PreferencesBanner } from "@/components/PreferencesBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,6 +143,7 @@ const MyHuddle = () => {
           </section>
         )}
       </main>
+      <Footer />
     </div>
   );
 };
