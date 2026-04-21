@@ -83,7 +83,15 @@ const MyHuddle = () => {
     })();
   }, [user]);
 
-  const matches = useMemo(() => huddleMatch(saved, all), [saved, all]);
+  const { prefs } = useUserPreferences();
+  const personalize = hasAnyPrefs(prefs);
+
+  // Prefer preference-based matching when the user set them; otherwise fall
+  // back to "based on what you've saved".
+  const matches = useMemo(() => {
+    if (personalize) return prefsMatch(saved, all, prefs, 6);
+    return huddleMatch(saved, all);
+  }, [saved, all, prefs, personalize]);
 
   if (!user) return null;
 
@@ -91,6 +99,8 @@ const MyHuddle = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main id="main" className="container py-8 space-y-8">
+        <PreferencesBanner />
+
         <section>
           <div className="flex items-center gap-2 mb-4">
             <BookmarkCheck className="h-5 w-5 text-primary" />
@@ -115,10 +125,12 @@ const MyHuddle = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Sparkles className="h-5 w-5 text-primary" />
-                  {t("huddle.matchTitle")}
+                  {personalize ? "Picked for your vibe" : t("huddle.matchTitle")}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {t("huddle.matchHint")}
+                  {personalize
+                    ? "Based on the categories and vibes you set in your preferences."
+                    : t("huddle.matchHint")}
                 </p>
               </CardHeader>
               <CardContent>
