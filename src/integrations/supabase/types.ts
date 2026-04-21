@@ -38,6 +38,13 @@ export type Database = {
             foreignKeyName: "bookmarks_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "business_insights_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "bookmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -49,6 +56,27 @@ export type Database = {
             referencedColumns: ["business_id"]
           },
         ]
+      }
+      business_views: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          viewer_id?: string | null
+        }
+        Relationships: []
       }
       businesses: {
         Row: {
@@ -158,6 +186,13 @@ export type Database = {
             foreignKeyName: "check_ins_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "business_insights_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "check_ins_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -212,6 +247,13 @@ export type Database = {
             foreignKeyName: "coupons_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "business_insights_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "coupons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -223,6 +265,36 @@ export type Database = {
             referencedColumns: ["business_id"]
           },
         ]
+      }
+      featured_businesses: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          note: string | null
+          starts_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          note?: string | null
+          starts_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          note?: string | null
+          starts_at?: string
+        }
+        Relationships: []
       }
       google_place_cache: {
         Row: {
@@ -313,6 +385,13 @@ export type Database = {
           verified?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_insights_summary"
+            referencedColumns: ["business_id"]
+          },
           {
             foreignKeyName: "reviews_business_id_fkey"
             columns: ["business_id"]
@@ -421,6 +500,13 @@ export type Database = {
             foreignKeyName: "coupons_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "business_insights_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "coupons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -432,6 +518,54 @@ export type Database = {
             referencedColumns: ["business_id"]
           },
         ]
+      }
+      business_insights_summary: {
+        Row: {
+          avg_rating: number | null
+          business_id: string | null
+          category: string | null
+          check_ins_30d: number | null
+          name: string | null
+          owner_id: string | null
+          review_count: number | null
+          status: Database["public"]["Enums"]["business_status"] | null
+          total_bookmarks: number | null
+          total_check_ins: number | null
+          total_views: number | null
+          unique_viewers: number | null
+          views_30d: number | null
+        }
+        Insert: {
+          avg_rating?: number | null
+          business_id?: string | null
+          category?: string | null
+          check_ins_30d?: never
+          name?: string | null
+          owner_id?: string | null
+          review_count?: number | null
+          status?: Database["public"]["Enums"]["business_status"] | null
+          total_bookmarks?: never
+          total_check_ins?: never
+          total_views?: never
+          unique_viewers?: never
+          views_30d?: never
+        }
+        Update: {
+          avg_rating?: number | null
+          business_id?: string | null
+          category?: string | null
+          check_ins_30d?: never
+          name?: string | null
+          owner_id?: string | null
+          review_count?: number | null
+          status?: Database["public"]["Enums"]["business_status"] | null
+          total_bookmarks?: never
+          total_check_ins?: never
+          total_views?: never
+          unique_viewers?: never
+          views_30d?: never
+        }
+        Relationships: []
       }
       trending_pulse: {
         Row: {
