@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
           "hair_salon", "barber_shop", "beauty_salon", "nail_salon", "spa",
           "yoga_studio", "art_gallery",
         ],
-        rankPreference: "POPULARITY",
+        rankPreference: "DISTANCE",
         locationRestriction: {
           circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
         },
