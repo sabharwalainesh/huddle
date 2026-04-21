@@ -156,16 +156,21 @@ export const AttentionMap = () => {
 
   const renderLayers = () => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
     const SRC = "biz-src";
     const HEAT = "biz-heat";
     const PT = "biz-points";
 
-    if (map.getLayer(PT)) map.removeLayer(PT);
-    if (map.getLayer(HEAT)) map.removeLayer(HEAT);
-    if (map.getSource(SRC)) map.removeSource(SRC);
+    const data = featureCollection as any;
 
-    map.addSource(SRC, { type: "geojson", data: featureCollection as any });
+    // If source exists, just update its data (no flicker, no re-adding layers)
+    const existing = map.getSource(SRC) as mapboxgl.GeoJSONSource | undefined;
+    if (existing) {
+      existing.setData(data);
+      return;
+    }
+
+    map.addSource(SRC, { type: "geojson", data });
 
     map.addLayer({
       id: HEAT,
@@ -173,19 +178,19 @@ export const AttentionMap = () => {
       source: SRC,
       maxzoom: 17,
       paint: {
-        "heatmap-weight": ["interpolate", ["linear"], ["get", "weight"], 0, 0.2, 1, 1],
+        "heatmap-weight": ["interpolate", ["linear"], ["get", "weight"], 0, 0.4, 1, 1],
         "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 1, 17, 4],
         "heatmap-color": [
           "interpolate", ["linear"], ["heatmap-density"],
           0, "rgba(0,0,0,0)",
-          0.15, "rgba(56,189,248,0.55)",
-          0.4, "rgba(99,102,241,0.65)",
-          0.6, "rgba(217,70,239,0.75)",
-          0.8, "rgba(244,63,94,0.85)",
+          0.1, "rgba(56,189,248,0.6)",
+          0.3, "rgba(99,102,241,0.75)",
+          0.5, "rgba(217,70,239,0.85)",
+          0.7, "rgba(244,63,94,0.9)",
           1, "rgba(250,204,21,0.95)",
         ],
-        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 20, 9, 40, 14, 70, 17, 90],
-        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 14, 0.7, 17, 0.4],
+        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 30, 9, 50, 14, 80, 17, 110],
+        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 14, 0.75, 17, 0.5],
       },
     });
 
@@ -196,9 +201,9 @@ export const AttentionMap = () => {
       paint: {
         "circle-radius": [
           "interpolate", ["linear"], ["zoom"],
-          0, 3,
-          7, ["+", 4, ["*", 4, ["get", "weight"]]],
-          16, ["+", 8, ["*", 12, ["get", "weight"]]],
+          0, 5,
+          7, ["+", 7, ["*", 4, ["get", "weight"]]],
+          16, ["+", 12, ["*", 12, ["get", "weight"]]],
         ],
         "circle-color": [
           "interpolate", ["linear"], ["get", "weight"],
@@ -206,9 +211,9 @@ export const AttentionMap = () => {
           0.5, "hsl(280, 80%, 60%)",
           1, "hsl(48, 96%, 55%)",
         ],
-        "circle-stroke-width": 1.5,
-        "circle-stroke-color": "rgba(255,255,255,0.9)",
-        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 7, 0.9, 11, 1],
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "rgba(255,255,255,0.95)",
+        "circle-opacity": 1,
       },
     });
 
@@ -254,12 +259,12 @@ export const AttentionMap = () => {
       if (!fittedRef.current && points.length > 0) {
         const bounds = new mapboxgl.LngLatBounds();
         points.forEach((p) => bounds.extend([p.lng, p.lat]));
-        map.fitBounds(bounds, { padding: 60, maxZoom: 14, duration: 1200 });
+        map.fitBounds(bounds, { padding: 80, maxZoom: 13, duration: 1200 });
         fittedRef.current = true;
       }
     };
     if (map.isStyleLoaded()) run();
-    else map.once("style.load", run);
+    else map.once("load", run);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featureCollection, points]);
 
