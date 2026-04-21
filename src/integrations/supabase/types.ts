@@ -53,6 +53,8 @@ export type Database = {
       businesses: {
         Row: {
           address: string | null
+          ai_review_notes: string | null
+          ai_review_status: Database["public"]["Enums"]["ai_review_status"]
           avg_rating: number
           category: string
           created_at: string
@@ -63,13 +65,21 @@ export type Database = {
           name: string
           owner_id: string | null
           phone: string | null
+          proof_document_url: string | null
+          rejection_reason: string | null
           review_count: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["business_status"]
+          submitted_at: string | null
           tags: string[]
           updated_at: string
           website: string | null
         }
         Insert: {
           address?: string | null
+          ai_review_notes?: string | null
+          ai_review_status?: Database["public"]["Enums"]["ai_review_status"]
           avg_rating?: number
           category: string
           created_at?: string
@@ -80,13 +90,21 @@ export type Database = {
           name: string
           owner_id?: string | null
           phone?: string | null
+          proof_document_url?: string | null
+          rejection_reason?: string | null
           review_count?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["business_status"]
+          submitted_at?: string | null
           tags?: string[]
           updated_at?: string
           website?: string | null
         }
         Update: {
           address?: string | null
+          ai_review_notes?: string | null
+          ai_review_status?: Database["public"]["Enums"]["ai_review_status"]
           avg_rating?: number
           category?: string
           created_at?: string
@@ -97,7 +115,13 @@ export type Database = {
           name?: string
           owner_id?: string | null
           phone?: string | null
+          proof_document_url?: string | null
+          rejection_reason?: string | null
           review_count?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["business_status"]
+          submitted_at?: string | null
           tags?: string[]
           updated_at?: string
           website?: string | null
@@ -199,6 +223,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          owns_business: boolean
           updated_at: string
           user_id: string
         }
@@ -206,6 +231,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          owns_business?: boolean
           updated_at?: string
           user_id: string
         }
@@ -213,6 +239,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          owns_business?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -265,6 +292,27 @@ export type Database = {
             referencedColumns: ["business_id"]
           },
         ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -337,10 +385,23 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      ai_review_status: "not_run" | "passed" | "flagged" | "error"
+      app_role: "admin" | "business_owner" | "customer"
+      business_status:
+        | "draft"
+        | "pending"
+        | "under_review"
+        | "approved"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -467,6 +528,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      ai_review_status: ["not_run", "passed", "flagged", "error"],
+      app_role: ["admin", "business_owner", "customer"],
+      business_status: [
+        "draft",
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+      ],
+    },
   },
 } as const

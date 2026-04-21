@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
@@ -25,6 +26,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [ownsBusiness, setOwnsBusiness] = useState(false);
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
@@ -49,7 +51,10 @@ const Auth = () => {
       password: parsed.data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { display_name: parsed.data.displayName },
+        data: {
+          display_name: parsed.data.displayName,
+          owns_business: ownsBusiness,
+        },
       },
     });
     setLoading(false);
@@ -57,7 +62,13 @@ const Auth = () => {
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Check your email", description: "Confirm your address to finish signing up." });
+    if (ownsBusiness) {
+      toast({ title: "Account created", description: "Let's set up your business listing." });
+      navigate("/business/onboarding");
+    } else {
+      toast({ title: "Welcome to Huddle!" });
+      navigate("/");
+    }
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -128,6 +139,22 @@ const Auth = () => {
                   <div className="space-y-2">
                     <Label htmlFor="su-password">Password</Label>
                     <Input id="su-password" name="password" type="password" required minLength={8} />
+                  </div>
+                  <div className="flex items-start gap-3 rounded-md border p-3 bg-muted/30">
+                    <Checkbox
+                      id="owns-business"
+                      checked={ownsBusiness}
+                      onCheckedChange={(c) => setOwnsBusiness(Boolean(c))}
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="owns-business" className="cursor-pointer font-medium">
+                        I own a business I want to list
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        We'll walk you through verification right after signup. You can change this later.
+                      </p>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Create account"}
