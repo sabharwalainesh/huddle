@@ -3,15 +3,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useT } from "@/contexts/A11yContext";
 import { Navbar } from "@/components/Navbar";
+import { PreferencesDialog } from "@/components/PreferencesDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Building2, ShieldCheck, Plus } from "lucide-react";
+import { Building2, ShieldCheck, Plus, Sparkles, Pencil } from "lucide-react";
+import { PREF_CATEGORIES, type UserPreferences } from "@/lib/preferences";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Business = Tables<"businesses">;
@@ -32,6 +35,24 @@ const Account = () => {
   const [ownsBusiness, setOwnsBusiness] = useState(false);
   const [myBusinesses, setMyBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
+  const { prefs, hasRow: hasPrefRow, save: savePrefs } = useUserPreferences();
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  const handlePrefsSave = async (next: UserPreferences) => {
+    setSavingPrefs(true);
+    const { error } = await savePrefs(next);
+    setSavingPrefs(false);
+    if (error) {
+      toast({ title: "Couldn't save preferences", description: error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Preferences updated" });
+    setPrefsOpen(false);
+  };
+
+  const categoryLabel = (value: string) =>
+    PREF_CATEGORIES.find((c) => c.value === value)?.label ?? value;
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -89,6 +110,61 @@ const Account = () => {
             </CardContent>
           </Card>
         )}
+
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" /> Your preferences
+              </CardTitle>
+              <CardDescription>
+                We use these to surface places you'll love first — both on Huddle and in Google results.
+              </CardDescription>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setPrefsOpen(true)}>
+              <Pencil className="h-4 w-4" />
+              {hasPrefRow ? "Edit" : "Set up"}
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                Categories
+              </p>
+              {prefs.categories.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No categories picked yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {prefs.categories.map((c) => (
+                    <Badge key={c} variant="secondary">{categoryLabel(c)}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                Vibes
+              </p>
+              {prefs.vibes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No vibes picked yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {prefs.vibes.map((v) => (
+                    <Badge key={v} variant="outline" className="capitalize">{v}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <PreferencesDialog
+          open={prefsOpen}
+          initial={prefs}
+          saving={savingPrefs}
+          onOpenChange={setPrefsOpen}
+          onSave={handlePrefsSave}
+        />
 
         <Card>
           <CardHeader>
