@@ -24,10 +24,23 @@ export type GooglePlace = {
   photoUrl: string | null;
 };
 
+type GoogleReview = {
+  author: string;
+  authorUri: string | null;
+  authorPhoto: string | null;
+  rating: number;
+  text: string;
+  relativeTime: string;
+  publishTime: string;
+};
+
 export const GooglePlaceCard = ({ p }: { p: GooglePlace }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [importing, setImporting] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [reviews, setReviews] = useState<GoogleReview[] | null>(null);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const handleImport = async () => {
     if (!user) {
@@ -69,6 +82,30 @@ export const GooglePlaceCard = ({ p }: { p: GooglePlace }) => {
     }
   };
 
+  const toggleReviews = async () => {
+    const next = !reviewsOpen;
+    setReviewsOpen(next);
+    if (next && reviews === null) {
+      setReviewsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("google-place-reviews", {
+          body: { place_id: p.place_id },
+        });
+        if (error) throw error;
+        setReviews(((data as { reviews?: GoogleReview[] })?.reviews ?? []));
+      } catch (e) {
+        toast({
+          title: "Couldn't load reviews",
+          description: (e as Error).message,
+          variant: "destructive",
+        });
+        setReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    }
+  };
+
   return (
     <Card className="overflow-hidden shadow-card flex flex-col">
       <div className="aspect-[16/10] bg-muted overflow-hidden">
@@ -96,7 +133,7 @@ export const GooglePlaceCard = ({ p }: { p: GooglePlace }) => {
             <MapPin className="h-3 w-3 shrink-0" /> {p.address}
           </p>
         )}
-        <div className="flex items-center gap-2 pt-2 mt-auto">
+        <div className="flex items-center gap-2 pt-2">
           <Button size="sm" onClick={handleImport} disabled={importing} className="flex-1">
             {importing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
             Add to Huddle
@@ -109,6 +146,55 @@ export const GooglePlaceCard = ({ p }: { p: GooglePlace }) => {
             </Button>
           )}
         </div>
+
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={toggleReviews}
+          className="justify-between mt-1"
+          aria-expanded={reviewsOpen}
+        >
+          <span className="flex items-center gap-1.5">
+            <MessageSquare className="h-3 w-3" />
+            {reviewsOpen ? "Hide Google reviews" : "Read Google reviews"}
+          </span>
+          {reviewsOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        </Button>
+
+        {reviewsOpen && (
+          <div className="mt-2 space-y-3 border-t pt-3">
+            {reviewsLoading ? (
+              <div className="flex items-center justify-center py-4 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : reviews && reviews.length > 0 ? (
+              <>
+                {reviews.map((r, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      {r.authorPhoto ? (
+                        <img src={r.authorPhoto} alt="" className="h-6 w-6 rounded-full" loading="lazy" />
+                      ) : (
+                        <div className="h-6 w-6 rounded-full bg-muted" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{r.author}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <StarRating value={Number(r.rating)} size={10} />
+                          <span>{r.relativeTime}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {r.text && <p className="text-xs text-foreground/80 whitespace-pre-line">{r.text}</p>}
+                  </div>
+                ))}
+                <p className="text-[10px] text-muted-foreground pt-1">Reviews powered by Google</p>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-2">No Google reviews available.</p>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
