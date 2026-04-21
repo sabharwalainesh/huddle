@@ -133,3 +133,50 @@
     box-shadow: var(--shadow-card);
   }
 }
+
+/* High-Visibility Mode — accessibility suite */
+.high-visibility {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --primary: 220 100% 35%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 0 0% 92%;
+  --muted-foreground: 0 0% 15%;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 220 100% 35%;
+  --accent: 30 100% 35%;
+  --accent-foreground: 0 0% 100%;
+}
+.high-visibility * {
+  border-color: hsl(0 0% 0%) !important;
+}
+.high-visibility body {
+  font-weight: 500;
+}
+.high-visibility a,
+.high-visibility button,
+.high-visibility [role="button"] {
+  text-decoration: underline;
+}
+.high-visibility *:focus-visible {
+  outline: 3px solid hsl(220 100% 35%) !important;
+  outline-offset: 2px !important;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
