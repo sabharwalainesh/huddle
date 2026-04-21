@@ -11,8 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/StarRating";
-import { Captcha } from "@/components/Captcha";
-import { VerifyVisitPuzzle } from "@/components/VerifyVisitPuzzle";
+import { ReceiptVerifier } from "@/components/ReceiptVerifier";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -38,7 +37,6 @@ const BusinessDetail = () => {
 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [captchaOk, setCaptchaOk] = useState(false);
   const [visitVerified, setVisitVerified] = useState(false);
   const [posting, setPosting] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
@@ -145,7 +143,6 @@ const BusinessDetail = () => {
     e.preventDefault();
     if (!user) { navigate("/auth"); return; }
     if (!business) return;
-    if (!captchaOk) return toast({ title: "Please complete the verification", variant: "destructive" });
 
     const parsed = reviewSchema.safeParse({ rating, comment });
     if (!parsed.success) return toast({ title: "Invalid review", description: parsed.error.issues[0].message, variant: "destructive" });
@@ -266,9 +263,8 @@ const BusinessDetail = () => {
                   />
                   <p className="text-xs text-muted-foreground text-right">{comment.length}/1000</p>
                 </div>
-                <Captcha onVerifiedChange={setCaptchaOk} />
-                <VerifyVisitPuzzle onVerifiedChange={setVisitVerified} />
-                <Button type="submit" disabled={posting || !captchaOk || !rating}>
+                {business && <ReceiptVerifier businessId={business.id} onVerifiedChange={setVisitVerified} />}
+                <Button type="submit" disabled={posting || !rating}>
                   {posting ? "Posting..." : visitVerified ? "Post verified review" : "Post review"}
                 </Button>
               </form>
