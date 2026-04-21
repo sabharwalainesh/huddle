@@ -246,19 +246,57 @@ const Index = () => {
                 Nearby on Google
               </ToggleGroupItem>
             </ToggleGroup>
-            {source === "google" && (
+            {source === "google" ? (
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {coords ? "Using your location" : geoDenied ? "Location unavailable — type to search" : "Requesting location…"}
               </p>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Switch id="near-me" checked={nearMe} onCheckedChange={setNearMe} />
+                <Label htmlFor="near-me" className="text-xs cursor-pointer flex items-center gap-1">
+                  <Navigation className="h-3 w-3" /> Near me
+                </Label>
+                {nearMe && !coords && !geoDenied && (
+                  <span className="text-[11px] text-muted-foreground">Requesting location…</span>
+                )}
+                {nearMe && geoDenied && (
+                  <span className="text-[11px] text-destructive">Location unavailable</span>
+                )}
+              </div>
             )}
           </div>
+
+          {source === "huddle" && nearMe && coords && (
+            <div className="pt-4 mt-4 border-t space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-xs flex items-center gap-1">
+                  <Navigation className="h-3 w-3" /> Within {radiusMi} {radiusMi === 1 ? "mile" : "miles"}
+                </Label>
+                <span className="text-[11px] text-muted-foreground">
+                  {huddleByRange.inRange.length} in range · {huddleByRange.outOfRange.length} farther
+                </span>
+              </div>
+              <Slider
+                value={[radiusMi]}
+                onValueChange={(v) => setRadiusMi(v[0])}
+                min={1}
+                max={50}
+                step={1}
+                aria-label="Distance in miles"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>1 mi</span>
+                <span>50 mi</span>
+              </div>
+            </div>
+          )}
         </Card>
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {source === "huddle"
-              ? loading ? t("home.loading") : `${visible.length} ${visible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}`
+              ? loading ? t("home.loading") : `${huddleVisible.length} ${huddleVisible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}${nearMe && coords ? ` within ${radiusMi} mi` : ""}`
               : googleLoading ? "Searching Google…" : `${googlePlaces.length} nearby on Google`}
           </p>
           {(query || category !== "all" || minRating > 0 || openNow) && (
