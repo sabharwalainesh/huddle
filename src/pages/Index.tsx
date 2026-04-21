@@ -112,17 +112,44 @@ const Index = () => {
     [businesses, query, category, minRating, openNow, sort],
   );
 
+  // Distance-aware partitioning of Huddle results. When "near me" is on and we have
+  // coords, split into in-range vs. out-of-range so the UI can offer a Google fallback.
+  const huddleByRange = useMemo(() => {
+    if (source !== "huddle" || !nearMe || !coords) {
+      return { inRange: visible, outOfRange: [] as Business[], unknownLocation: [] as Business[] };
+    }
+    const inRange: Business[] = [];
+    const outOfRange: Business[] = [];
+    const unknownLocation: Business[] = [];
+    for (const b of visible) {
+      const d = distanceToBusinessMi(coords, b);
+      if (d == null) unknownLocation.push(b);
+      else if (d <= radiusMi) inRange.push(b);
+      else outOfRange.push(b);
+    }
+    return { inRange, outOfRange, unknownLocation };
+  }, [visible, source, nearMe, coords, radiusMi]);
+
+  const huddleVisible = useMemo(
+    () => (nearMe && coords ? huddleByRange.inRange : visible),
+    [nearMe, coords, huddleByRange.inRange, visible],
+  );
+
   // "Filter then fill": when a user has prefs and isn't actively filtering by category,
   // surface matches first then the remaining list below a divider.
   const huddleSplit = useMemo(() => {
-    if (!personalize || category !== "all") return { matches: [] as Business[], rest: visible };
-    return partitionByPrefs(visible, prefs);
-  }, [visible, prefs, personalize, category]);
+    if (!personalize || category !== "all") return { matches: [] as Business[], rest: huddleVisible };
+    return partitionByPrefs(huddleVisible, prefs);
+  }, [huddleVisible, prefs, personalize, category]);
 
   const googleSplit = useMemo(() => {
     if (!personalize) return { matches: [] as GooglePlace[], rest: googlePlaces };
     return partitionGoogleByPrefs(googlePlaces, prefs);
   }, [googlePlaces, prefs, personalize]);
+
+  // Distance lookup for badges (only meaningful when we have coords + Huddle source)
+  const distanceFor = (b: Business): number | null =>
+    source === "huddle" && coords ? distanceToBusinessMi(coords, b) : null;
 
 
   return (
