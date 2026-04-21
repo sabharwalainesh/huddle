@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Loader2, MapPin } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
 import { GooglePlaceCard, type GooglePlace } from "@/components/GooglePlaceCard";
 import { PulseWidget } from "@/components/PulseWidget";
 import { AttentionMap } from "@/components/AttentionMap";
+import { PreferencesBanner } from "@/components/PreferencesBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
 import { useT } from "@/contexts/A11yContext";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { partitionByPrefs, partitionGoogleByPrefs, hasAnyPrefs } from "@/lib/preferences";
 import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@/lib/sorting";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -94,12 +97,26 @@ const Index = () => {
     return () => clearTimeout(handle);
   }, [source, query, coords]);
 
+  const { prefs } = useUserPreferences();
+  const personalize = hasAnyPrefs(prefs);
+
   const visible = useMemo(
     () => sortBusinesses(filterBusinesses(businesses, { query, category, minRating, openNow }), sort),
     [businesses, query, category, minRating, openNow, sort],
   );
 
-  
+  // "Filter then fill": when a user has prefs and isn't actively filtering by category,
+  // surface matches first then the remaining list below a divider.
+  const huddleSplit = useMemo(() => {
+    if (!personalize || category !== "all") return { matches: [] as Business[], rest: visible };
+    return partitionByPrefs(visible, prefs);
+  }, [visible, prefs, personalize, category]);
+
+  const googleSplit = useMemo(() => {
+    if (!personalize) return { matches: [] as GooglePlace[], rest: googlePlaces };
+    return partitionGoogleByPrefs(googlePlaces, prefs);
+  }, [googlePlaces, prefs, personalize]);
+
 
   return (
     <div className="min-h-screen bg-background">
