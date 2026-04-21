@@ -12,7 +12,6 @@ import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@/lib/sorting";
-import { ImmersiveHero } from "@/components/ImmersiveHero";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"];
 
@@ -45,10 +44,16 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <ImmersiveHero />
+      <section className="bg-gradient-hero text-primary-foreground">
+        <div className="container py-12 md:py-16 text-center">
+          <h1 className="text-3xl md:text-5xl font-bold mb-3">Discover your local huddle.</h1>
+          <p className="text-base md:text-lg opacity-90 max-w-xl mx-auto">
+            Find trusted spots, real reviews, and community deals in your neighborhood.
+          </p>
+        </div>
+      </section>
 
-      <main id="main" className="container py-8 space-y-6 scroll-mt-20">
-        <div id="explore" />
+      <main id="main" className="container py-8 space-y-6">
         <Card className="p-4 shadow-card">
           <div className="grid gap-3 md:grid-cols-12 md:items-end">
             <div className="md:col-span-5 space-y-1.5">
