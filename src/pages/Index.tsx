@@ -19,7 +19,7 @@ import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@
 import type { TranslationKey } from "@/lib/i18n";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
-const RESULTS_PER_SECTION = 3;
+const GOOGLE_MAX_RESULTS = 10;
 
 const Index = () => {
   const t = useT();
@@ -78,11 +78,11 @@ const Index = () => {
             query: trimmed || null,
             lat: coords?.lat ?? null,
             lng: coords?.lng ?? null,
-            maxResults: RESULTS_PER_SECTION,
+            maxResults: GOOGLE_MAX_RESULTS,
           },
         });
         if (error) throw error;
-        setGooglePlaces(((data as { places?: GooglePlace[] })?.places ?? []).slice(0, RESULTS_PER_SECTION));
+        setGooglePlaces((data as { places?: GooglePlace[] })?.places ?? []);
       } catch (e) {
         toast({ title: "Google search failed", description: (e as Error).message, variant: "destructive" });
         setGooglePlaces([]);
@@ -98,7 +98,7 @@ const Index = () => {
     [businesses, query, category, minRating, openNow, sort],
   );
 
-  const huddleSlice = source === "huddle" ? visible : visible.slice(0, RESULTS_PER_SECTION);
+  
 
   return (
     <div className="min-h-screen bg-background">
@@ -214,14 +214,14 @@ const Index = () => {
                 <h2 id="huddle-heading" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                   On Huddle
                 </h2>
-                {!loading && huddleSlice.length === 0 ? (
+                {!loading && visible.length === 0 ? (
                   <Card className="p-12 text-center text-muted-foreground">
                     <p className="font-medium mb-1">{t("home.noResults")}</p>
                     <p className="text-sm">{t("home.noResultsHint")}</p>
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {huddleSlice.map((b) => <BusinessCard key={b.id} b={b} />)}
+                    {visible.map((b) => <BusinessCard key={b.id} b={b} />)}
                   </div>
                 )}
               </section>
