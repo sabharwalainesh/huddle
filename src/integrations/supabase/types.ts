@@ -14,10 +14,247 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookmarks: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          address: string | null
+          avg_rating: number
+          category: string
+          created_at: string
+          description: string
+          hours: Json
+          id: string
+          image_url: string | null
+          name: string
+          owner_id: string | null
+          phone: string | null
+          review_count: number
+          tags: string[]
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          avg_rating?: number
+          category: string
+          created_at?: string
+          description?: string
+          hours?: Json
+          id?: string
+          image_url?: string | null
+          name: string
+          owner_id?: string | null
+          phone?: string | null
+          review_count?: number
+          tags?: string[]
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          avg_rating?: number
+          category?: string
+          created_at?: string
+          description?: string
+          hours?: Json
+          id?: string
+          image_url?: string | null
+          name?: string
+          owner_id?: string | null
+          phone?: string | null
+          review_count?: number
+          tags?: string[]
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      coupons: {
+        Row: {
+          business_id: string
+          code: string | null
+          created_at: string
+          description: string
+          discount: string | null
+          expires_at: string
+          id: string
+          owner_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          code?: string | null
+          created_at?: string
+          description?: string
+          discount?: string | null
+          expires_at: string
+          id?: string
+          owner_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          code?: string | null
+          created_at?: string
+          description?: string
+          discount?: string | null
+          expires_at?: string
+          id?: string
+          owner_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          business_id: string
+          comment: string
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          comment?: string
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      active_coupons: {
+        Row: {
+          business_id: string | null
+          code: string | null
+          created_at: string | null
+          description: string | null
+          discount: string | null
+          expires_at: string | null
+          id: string | null
+          owner_id: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          owner_id?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          owner_id?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
