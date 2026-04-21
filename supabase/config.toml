@@ -4,4 +4,4 @@ project_id = "ijdqiguubxctdwdjeuge"
 verify_jwt = false
 
 [functions.verify-business-doc]
-verify_jwt = true
+verify_jwt = false
