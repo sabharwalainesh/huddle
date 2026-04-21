@@ -9,8 +9,10 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import BusinessDetail from "./pages/BusinessDetail.tsx";
-import NewBusiness from "./pages/NewBusiness.tsx";
+import BusinessOnboarding from "./pages/BusinessOnboarding.tsx";
 import MyHuddle from "./pages/MyHuddle.tsx";
+import Account from "./pages/Account.tsx";
+import Admin from "./pages/Admin.tsx";
 import Ask from "./pages/Ask.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -29,9 +31,11 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/business/new" element={<NewBusiness />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/business/onboarding" element={<BusinessOnboarding />} />
                 <Route path="/business/:id" element={<BusinessDetail />} />
                 <Route path="/my-huddle" element={<MyHuddle />} />
+                <Route path="/admin" element={<Admin />} />
                 <Route path="/ask" element={<Ask />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
