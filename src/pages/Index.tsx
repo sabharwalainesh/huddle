@@ -214,14 +214,14 @@ const Index = () => {
                 <h2 id="huddle-heading" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                   On Huddle
                 </h2>
-                {!loading && huddleSlice.length === 0 ? (
+                {!loading && visible.length === 0 ? (
                   <Card className="p-12 text-center text-muted-foreground">
                     <p className="font-medium mb-1">{t("home.noResults")}</p>
                     <p className="text-sm">{t("home.noResultsHint")}</p>
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {huddleSlice.map((b) => <BusinessCard key={b.id} b={b} />)}
+                    {visible.map((b) => <BusinessCard key={b.id} b={b} />)}
                   </div>
                 )}
               </section>
