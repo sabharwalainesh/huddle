@@ -79,8 +79,9 @@ Deno.serve(async (req) => {
     let url: string;
     let body: Record<string, unknown>;
 
-    // Over-fetch to compensate for filtering
-    const fetchCount = Math.min(20, (maxResults ?? 10) * 2);
+    // Always fetch the API max so we have headroom after strict filtering
+    const fetchCount = 20;
+    const MAX_REVIEWS = 200;
 
     if (query && query.length > 0) {
       url = "https://places.googleapis.com/v1/places:searchText";
