@@ -78,11 +78,11 @@ const Index = () => {
             query: trimmed || null,
             lat: coords?.lat ?? null,
             lng: coords?.lng ?? null,
-            maxResults: RESULTS_PER_SECTION,
+            maxResults: GOOGLE_MAX_RESULTS,
           },
         });
         if (error) throw error;
-        setGooglePlaces(((data as { places?: GooglePlace[] })?.places ?? []).slice(0, RESULTS_PER_SECTION));
+        setGooglePlaces((data as { places?: GooglePlace[] })?.places ?? []);
       } catch (e) {
         toast({ title: "Google search failed", description: (e as Error).message, variant: "destructive" });
         setGooglePlaces([]);
@@ -98,7 +98,7 @@ const Index = () => {
     [businesses, query, category, minRating, openNow, sort],
   );
 
-  const huddleSlice = source === "huddle" ? visible : visible.slice(0, RESULTS_PER_SECTION);
+  
 
   return (
     <div className="min-h-screen bg-background">
