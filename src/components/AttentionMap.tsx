@@ -109,8 +109,8 @@ export const AttentionMap = () => {
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: darkMode ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11",
-      center: [-98.5, 39.5], // continental US default
-      zoom: 3.2,
+      center: [-97.7431, 30.2672], // Austin (where demo data lives)
+      zoom: 11,
       attributionControl: true,
       antialias: true,
       pitch: 0,
@@ -119,25 +119,6 @@ export const AttentionMap = () => {
     map.scrollZoom.setWheelZoomRate(1 / 200);
     map.dragPan.enable();
     mapRef.current = map;
-
-    map.on("load", () => {
-      // Try geolocation
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            map.flyTo({
-              center: [pos.coords.longitude, pos.coords.latitude],
-              zoom: 12,
-              speed: 1.2,
-              curve: 1.6,
-              essential: true,
-            });
-          },
-          () => {},
-          { timeout: 4000 },
-        );
-      }
-    });
 
     return () => {
       popupRef.current?.remove();
@@ -190,21 +171,21 @@ export const AttentionMap = () => {
       id: HEAT,
       type: "heatmap",
       source: SRC,
-      maxzoom: 16,
+      maxzoom: 17,
       paint: {
-        "heatmap-weight": ["interpolate", ["linear"], ["get", "weight"], 0, 0.05, 1, 1],
-        "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 0.6, 16, 3.5],
+        "heatmap-weight": ["interpolate", ["linear"], ["get", "weight"], 0, 0.2, 1, 1],
+        "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 1, 17, 4],
         "heatmap-color": [
           "interpolate", ["linear"], ["heatmap-density"],
           0, "rgba(0,0,0,0)",
-          0.2, "rgba(56,189,248,0.45)",
-          0.4, "rgba(99,102,241,0.55)",
-          0.6, "rgba(217,70,239,0.65)",
-          0.8, "rgba(244,63,94,0.75)",
+          0.15, "rgba(56,189,248,0.55)",
+          0.4, "rgba(99,102,241,0.65)",
+          0.6, "rgba(217,70,239,0.75)",
+          0.8, "rgba(244,63,94,0.85)",
           1, "rgba(250,204,21,0.95)",
         ],
-        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 8, 9, 24, 16, 60],
-        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0.9, 16, 0.35],
+        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 20, 9, 40, 14, 70, 17, 90],
+        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 14, 0.7, 17, 0.4],
       },
     });
 
@@ -215,8 +196,9 @@ export const AttentionMap = () => {
       paint: {
         "circle-radius": [
           "interpolate", ["linear"], ["zoom"],
-          7, ["+", 3, ["*", 4, ["get", "weight"]]],
-          16, ["+", 6, ["*", 12, ["get", "weight"]]],
+          0, 3,
+          7, ["+", 4, ["*", 4, ["get", "weight"]]],
+          16, ["+", 8, ["*", 12, ["get", "weight"]]],
         ],
         "circle-color": [
           "interpolate", ["linear"], ["get", "weight"],
@@ -225,8 +207,8 @@ export const AttentionMap = () => {
           1, "hsl(48, 96%, 55%)",
         ],
         "circle-stroke-width": 1.5,
-        "circle-stroke-color": "rgba(255,255,255,0.85)",
-        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0.55, 11, 0.95],
+        "circle-stroke-color": "rgba(255,255,255,0.9)",
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 7, 0.9, 11, 1],
       },
     });
 
