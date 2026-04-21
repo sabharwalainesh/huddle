@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
-import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft } from "lucide-react";
+import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft, MapPinned, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/StarRating";
 import { Captcha } from "@/components/Captcha";
+import { VerifyVisitPuzzle } from "@/components/VerifyVisitPuzzle";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
