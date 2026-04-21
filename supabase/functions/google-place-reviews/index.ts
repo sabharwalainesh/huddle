@@ -134,12 +134,14 @@ Deno.serve(async (req) => {
       })),
     };
 
-    await admin.from("google_place_cache").upsert({
-      business_id,
-      place_id: place.id,
-      payload,
-      fetched_at: new Date().toISOString(),
-    }, { onConflict: "business_id" });
+    if (!byPlaceId) {
+      await admin.from("google_place_cache").upsert({
+        business_id: (input as { business_id: string }).business_id,
+        place_id: place.id,
+        payload,
+        fetched_at: new Date().toISOString(),
+      }, { onConflict: "business_id" });
+    }
 
     return new Response(JSON.stringify({ cached: false, ...payload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
