@@ -39,6 +39,10 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!signUpHuman) {
+      toast({ title: "Please confirm you're not a robot", variant: "destructive" });
+      return;
+    }
     const form = new FormData(e.currentTarget);
     const data = {
       email: String(form.get("email")),
@@ -78,6 +82,10 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!signInHuman) {
+      toast({ title: "Please confirm you're not a robot", variant: "destructive" });
+      return;
+    }
     const form = new FormData(e.currentTarget);
     const data = { email: String(form.get("email")), password: String(form.get("password")) };
     const parsed = signInSchema.safeParse(data);
