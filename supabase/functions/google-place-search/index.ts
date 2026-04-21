@@ -102,9 +102,9 @@ Deno.serve(async (req) => {
           "restaurant", "cafe", "bakery", "bar", "coffee_shop", "ice_cream_shop",
           "sandwich_shop", "pizza_restaurant", "dessert_shop", "wine_bar", "pub",
           "clothing_store", "book_store", "gift_shop", "florist", "jewelry_store",
-          "shoe_store", "pet_store", "thrift_store", "boutique",
+          "shoe_store", "pet_store", "thrift_store",
           "hair_salon", "barber_shop", "beauty_salon", "nail_salon", "spa",
-          "tattoo_parlor", "yoga_studio", "art_gallery",
+          "yoga_studio", "art_gallery",
         ],
         rankPreference: "POPULARITY",
         locationRestriction: {
