@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.verify-business-doc]
 verify_jwt = false
+
+[functions.verify-receipt]
+verify_jwt = false
