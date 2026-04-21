@@ -19,21 +19,20 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { formatPhoneInput, phoneError } from "@/lib/phone";
 
 const detailsSchema = z.object({
-  name: z.string().trim().min(2, "Name is required").max(100),
+  name: z.string().trim().min(2, "Name is required"),
   category: z.string().min(1),
   phone: z
     .string()
     .trim()
     .min(7, "Phone is required for verification")
-    .max(30)
     .refine((v) => {
       const digits = v.replace(/\D/g, "");
       return digits.length >= 7 && digits.length <= 15;
-    }, "Enter a valid phone number (7–15 digits)"),
-  description: z.string().trim().max(1000).optional(),
-  address: z.string().trim().max(200).optional(),
-  website: z.string().trim().url("Must be a valid URL").max(200).optional().or(z.literal("")),
-  image_url: z.string().trim().url("Must be a valid URL").max(500).optional().or(z.literal("")),
+    }, "Enter a valid phone number"),
+  description: z.string().trim().optional(),
+  address: z.string().trim().optional(),
+  website: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
+  image_url: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type Step = "details" | "upload" | "verifying" | "result";
