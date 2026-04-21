@@ -139,7 +139,9 @@ Deno.serve(async (req) => {
     const rawPlaces = (json.places ?? []) as Array<Record<string, unknown>>;
     const filtered = rawPlaces.filter((p) => {
       const count = (p.userRatingCount as number | undefined) ?? 0;
+      // Drop big chains AND empty ghost listings
       if (count > MAX_REVIEWS) return false;
+      if (count < 3) return false;
       return isLocalBusiness(p.primaryType as string | null, p.types as string[] | undefined);
     });
     const places = filtered.slice(0, maxResults).map((p) => {
