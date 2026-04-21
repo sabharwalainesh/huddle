@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldCheck, FileText, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
+import { FeaturedManager } from "@/components/FeaturedManager";
 
 type Business = Tables<"businesses">;
 
