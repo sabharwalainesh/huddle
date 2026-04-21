@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useA11y, useT } from "@/contexts/A11yContext";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,23 +11,37 @@ import { toast } from "@/hooks/use-toast";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
-const SUGGESTIONS = [
-  "Where can I find gluten-free bread?",
-  "Best highly-rated coffee spots",
-  "Recommend a family-friendly restaurant",
-];
+const SUGGESTIONS: Record<"en" | "es", string[]> = {
+  en: [
+    "Where can I find gluten-free bread?",
+    "Best highly-rated coffee spots",
+    "Recommend a family-friendly restaurant",
+  ],
+  es: [
+    "¿Dónde puedo encontrar pan sin gluten?",
+    "Mejores cafés con buena calificación",
+    "Recomienda un restaurante familiar",
+  ],
+};
 
 const Ask = () => {
-  const [messages, setMessages] = useState<Msg[]>([
-    { role: "assistant", content: "Hi! I'm **Huddle Bot** 🤖. Ask me anything about local businesses — I'll match you with the best ones from our directory." },
-  ]);
+  const t = useT();
+  const { lang } = useA11y();
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Reset greeting when language changes
+  useEffect(() => {
+    setMessages([{ role: "assistant", content: t("ask.greeting") }]);
+  }, [t]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
+
+  const suggestions = useMemo(() => SUGGESTIONS[lang], [lang]);
 
   const send = async (text: string) => {
     const question = text.trim();
@@ -43,7 +58,7 @@ const Ask = () => {
       if (dErr) throw dErr;
 
       const { data, error } = await supabase.functions.invoke("huddle-bot", {
-        body: { question, businesses: businesses ?? [] },
+        body: { question, businesses: businesses ?? [], lang },
       });
 
       if (error) throw error;
@@ -63,10 +78,10 @@ const Ask = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main className="container max-w-3xl flex-1 flex flex-col py-6 gap-4">
+      <main id="main" className="container max-w-3xl flex-1 flex flex-col py-6 gap-4">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold">Ask Huddle Bot</h1>
+          <h1 className="text-2xl font-bold">{t("ask.title")}</h1>
         </div>
 
         <Card className="flex-1 flex flex-col overflow-hidden shadow-card">
@@ -88,7 +103,7 @@ const Ask = () => {
               {loading && (
                 <div className="flex justify-start">
                   <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-sm flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking...
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("ask.thinking")}
                   </div>
                 </div>
               )}
@@ -96,7 +111,7 @@ const Ask = () => {
 
             {messages.length <= 1 && (
               <div className="px-4 pb-2 flex flex-wrap gap-2">
-                {SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}
@@ -115,11 +130,11 @@ const Ask = () => {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about local businesses..."
+                placeholder={t("ask.placeholder")}
                 disabled={loading}
-                aria-label="Ask Huddle Bot"
+                aria-label={t("ask.title")}
               />
-              <Button type="submit" disabled={loading || !input.trim()} size="icon" aria-label="Send">
+              <Button type="submit" disabled={loading || !input.trim()} size="icon" aria-label={t("ask.send")}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
