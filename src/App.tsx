@@ -16,8 +16,10 @@ import Account from "./pages/Account.tsx";
 import Admin from "./pages/Admin.tsx";
 import Ask from "./pages/Ask.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import Insights from "./pages/Insights.tsx";
 import About from "./pages/About.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { RequireAdmin } from "./components/RequireAdmin";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +41,8 @@ const App = () => (
                 <Route path="/my-huddle" element={<MyHuddle />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/ask" element={<Ask />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<RequireAdmin><Dashboard /></RequireAdmin>} />
+                <Route path="/insights" element={<Insights />} />
                 <Route path="/about" element={<About />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
