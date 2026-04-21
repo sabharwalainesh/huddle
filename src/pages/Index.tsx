@@ -45,7 +45,7 @@ const Index = () => {
   const [geoDenied, setGeoDenied] = useState(false);
 
   // Huddle "near me" filter
-  const [nearMe, setNearMe] = useState(false);
+  const [nearMe, setNearMe] = useState(true);
   const [radiusMi, setRadiusMi] = useState(10);
 
   useEffect(() => {
