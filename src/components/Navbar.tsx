@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle } from "lucide-react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -30,6 +30,9 @@ export const Navbar = () => {
         <nav className="flex items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost" size="sm">
             <Link to="/dashboard"><BarChart3 className="h-4 w-4" /> <span className="hidden sm:inline">{t("nav.insights")}</span></Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/about"><Info className="h-4 w-4" /> <span className="hidden sm:inline">About</span></Link>
           </Button>
           <AccessibilityPanel />
           {user ? (
