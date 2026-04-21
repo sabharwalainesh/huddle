@@ -15,11 +15,21 @@ import { Loader2, Upload, CheckCircle2, AlertTriangle, Search, Sparkles, MapPin,
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import type { GooglePlace } from "@/components/GooglePlaceCard";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { formatPhoneInput, phoneError } from "@/lib/phone";
 
 const detailsSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(100),
   category: z.string().min(1),
-  phone: z.string().trim().min(7, "Phone is required for verification").max(30),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Phone is required for verification")
+    .max(30)
+    .refine((v) => {
+      const digits = v.replace(/\D/g, "");
+      return digits.length >= 7 && digits.length <= 15;
+    }, "Enter a valid phone number (7–15 digits)"),
   description: z.string().trim().max(1000).optional(),
   address: z.string().trim().max(200).optional(),
   website: z.string().trim().url("Must be a valid URL").max(200).optional().or(z.literal("")),
