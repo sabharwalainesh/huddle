@@ -19,21 +19,20 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { formatPhoneInput, phoneError } from "@/lib/phone";
 
 const detailsSchema = z.object({
-  name: z.string().trim().min(2, "Name is required").max(100),
+  name: z.string().trim().min(2, "Name is required"),
   category: z.string().min(1),
   phone: z
     .string()
     .trim()
     .min(7, "Phone is required for verification")
-    .max(30)
     .refine((v) => {
       const digits = v.replace(/\D/g, "");
       return digits.length >= 7 && digits.length <= 15;
-    }, "Enter a valid phone number (7–15 digits)"),
-  description: z.string().trim().max(1000).optional(),
-  address: z.string().trim().max(200).optional(),
-  website: z.string().trim().url("Must be a valid URL").max(200).optional().or(z.literal("")),
-  image_url: z.string().trim().url("Must be a valid URL").max(500).optional().or(z.literal("")),
+    }, "Enter a valid phone number"),
+  description: z.string().trim().optional(),
+  address: z.string().trim().optional(),
+  website: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
+  image_url: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type Step = "details" | "upload" | "verifying" | "result";
@@ -412,7 +411,7 @@ const BusinessOnboarding = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="name">Business name *</Label>
-                      <Input id="name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
+                      <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
                       {fieldHint("name")}
                     </div>
                     <div className="space-y-1.5">
@@ -449,7 +448,6 @@ const BusinessOnboarding = () => {
                       <Input
                         id="phone"
                         required
-                        maxLength={30}
                         inputMode="tel"
                         placeholder="(555) 123-4567"
                         value={phone}
@@ -471,7 +469,6 @@ const BusinessOnboarding = () => {
                         value={address}
                         onChange={setAddress}
                         placeholder="Start typing an address..."
-                        maxLength={200}
                       />
                       {fieldHint("address")}
                     </div>
@@ -511,7 +508,7 @@ const BusinessOnboarding = () => {
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="description">Description</Label>
-                      <Textarea id="description" maxLength={1000} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+                      <Textarea id="description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
                     </div>
                   </div>
                   <div className="flex gap-2 justify-end">
