@@ -39,7 +39,19 @@ const BusinessDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [captchaOk, setCaptchaOk] = useState(false);
+  const [visitVerified, setVisitVerified] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+
+  const checkIn = async () => {
+    if (!user) { navigate("/auth"); return; }
+    if (!business) return;
+    setCheckingIn(true);
+    const { error } = await supabase.from("check_ins").insert({ business_id: business.id, user_id: user.id });
+    setCheckingIn(false);
+    if (error) return toast({ title: "Couldn't check in", description: error.message, variant: "destructive" });
+    toast({ title: "Checked in!", description: "Thanks for supporting local 💛" });
+  };
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -106,11 +118,12 @@ const BusinessDetail = () => {
       user_id: user.id,
       rating: parsed.data.rating,
       comment: parsed.data.comment,
+      verified: visitVerified,
     });
     setPosting(false);
     if (error) return toast({ title: "Couldn't post review", description: error.message, variant: "destructive" });
-    toast({ title: "Review posted!" });
-    setRating(0); setComment("");
+    toast({ title: visitVerified ? "Verified review posted!" : "Review posted!" });
+    setRating(0); setComment(""); setVisitVerified(false);
     load();
   };
 
@@ -118,7 +131,7 @@ const BusinessDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container py-8"><p className="text-muted-foreground">Loading...</p></main>
+        <main id="main" className="container py-8"><p className="text-muted-foreground">Loading...</p></main>
       </div>
     );
   }
@@ -126,7 +139,7 @@ const BusinessDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container py-6 space-y-6">
+      <main id="main" className="container py-6 space-y-6">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" /> Back</Button>
 
         <Card className="overflow-hidden">
