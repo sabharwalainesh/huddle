@@ -301,6 +301,75 @@ const BusinessDetail = () => {
             )}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Star className="h-5 w-5 text-primary" /> Google reviews
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!googleData ? (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  See what people are saying about this business on Google.
+                </p>
+                <Button onClick={fetchGoogleReviews} disabled={loadingGoogle} variant="outline">
+                  {loadingGoogle ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading...</> : "Show Google reviews"}
+                </Button>
+              </div>
+            ) : !googleData.found ? (
+              <p className="text-sm text-muted-foreground">No matching Google listing was found.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <StarRating value={googleData.rating ?? 0} size={16} />
+                    <span className="text-muted-foreground">
+                      {googleData.rating?.toFixed(1) ?? "—"} · {googleData.userRatingCount} Google review{googleData.userRatingCount === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  {googleData.googleMapsUri && (
+                    <a
+                      href={googleData.googleMapsUri}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                    >
+                      View on Google Maps <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                {googleData.reviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No reviews returned by Google.</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {googleData.reviews.map((r, i) => (
+                      <li key={i} className="border-b last:border-0 pb-4 last:pb-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {r.authorPhoto && (
+                            <img src={r.authorPhoto} alt={`${r.author} avatar`} className="h-5 w-5 rounded-full" loading="lazy" />
+                          )}
+                          {r.authorUri ? (
+                            <a href={r.authorUri} target="_blank" rel="noreferrer" className="font-medium text-sm hover:underline">
+                              {r.author}
+                            </a>
+                          ) : (
+                            <span className="font-medium text-sm">{r.author}</span>
+                          )}
+                          <StarRating value={r.rating} size={12} />
+                          <span className="text-xs text-muted-foreground">· {r.relativeTime}</span>
+                        </div>
+                        <p className="text-sm whitespace-pre-line">{r.text}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-xs text-muted-foreground pt-2 border-t">Powered by Google</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
