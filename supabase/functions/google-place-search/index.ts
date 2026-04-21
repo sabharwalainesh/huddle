@@ -69,6 +69,7 @@ Deno.serve(async (req) => {
       "places.rating",
       "places.userRatingCount",
       "places.primaryType",
+      "places.types",
       "places.googleMapsUri",
       "places.websiteUri",
       "places.nationalPhoneNumber",
@@ -78,9 +79,12 @@ Deno.serve(async (req) => {
     let url: string;
     let body: Record<string, unknown>;
 
+    // Over-fetch to compensate for filtering
+    const fetchCount = Math.min(20, (maxResults ?? 10) * 2);
+
     if (query && query.length > 0) {
       url = "https://places.googleapis.com/v1/places:searchText";
-      body = { textQuery: query, maxResultCount: maxResults };
+      body = { textQuery: query, maxResultCount: fetchCount };
       if (lat != null && lng != null) {
         body.locationBias = {
           circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
