@@ -141,9 +141,10 @@ const BusinessOnboarding = () => {
 
   const applyGooglePlace = (p: GooglePlace) => {
     const pickedCategory = mapGoogleTypeToCategory(p.primaryType);
+    const formattedPhone = p.phone ? formatPhoneInput(p.phone) : "";
     setName(p.name ?? "");
     setCategory(pickedCategory);
-    setPhone(p.phone ?? "");
+    setPhone(formattedPhone);
     setAddress(p.address ?? "");
     setWebsite(p.websiteUri ?? "");
     setImageUrl(p.photoUrl ?? "");
@@ -152,7 +153,7 @@ const BusinessOnboarding = () => {
     }
     setOriginalGoogle({
       name: p.name ?? "",
-      phone: p.phone ?? "",
+      phone: formattedPhone,
       address: p.address ?? "",
       website: p.websiteUri ?? "",
       image_url: p.photoUrl ?? "",
@@ -445,12 +446,33 @@ const BusinessOnboarding = () => {
                           </Tooltip>
                         </TooltipProvider>
                       </Label>
-                      <Input id="phone" required maxLength={30} placeholder="+1 555 555 5555" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                      {fieldHint("phone")}
+                      <Input
+                        id="phone"
+                        required
+                        maxLength={30}
+                        inputMode="tel"
+                        placeholder="(555) 123-4567"
+                        value={phone}
+                        onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                        aria-invalid={phone.length > 0 && phoneError(phone) !== null}
+                      />
+                      {phone.length > 0 && phoneError(phone) ? (
+                        <p className="text-[11px] text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" /> {phoneError(phone)}
+                        </p>
+                      ) : (
+                        fieldHint("phone")
+                      )}
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="address">Address</Label>
-                      <Input id="address" maxLength={200} value={address} onChange={(e) => setAddress(e.target.value)} />
+                      <AddressAutocomplete
+                        id="address"
+                        value={address}
+                        onChange={setAddress}
+                        placeholder="Start typing an address..."
+                        maxLength={200}
+                      />
                       {fieldHint("address")}
                     </div>
                     <div className="space-y-1.5">
