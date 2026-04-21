@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, BookmarkCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/contexts/A11yContext";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import type { Business } from "@/lib/sorting";
 
-// Huddle Match: pick top 3 unsaved businesses from the user's most-bookmarked categories.
 const huddleMatch = (saved: Business[], all: Business[]): Business[] => {
   if (!saved.length) return [];
   const counts = new Map<string, number>();
@@ -17,7 +17,6 @@ const huddleMatch = (saved: Business[], all: Business[]): Business[] => {
   const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
   const savedIds = new Set(saved.map((b) => b.id));
   const candidates = all.filter((b) => !savedIds.has(b.id) && ranked.includes(b.category));
-  // Score: category preference rank + rating
   return candidates
     .map((b) => ({
       b,
@@ -30,6 +29,7 @@ const huddleMatch = (saved: Business[], all: Business[]): Business[] => {
 
 const MyHuddle = () => {
   const { user, loading: authLoading } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [saved, setSaved] = useState<Business[]>([]);
   const [all, setAll] = useState<Business[]>([]);
@@ -67,17 +67,17 @@ const MyHuddle = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container py-8 space-y-8">
+      <main id="main" className="container py-8 space-y-8">
         <section>
           <div className="flex items-center gap-2 mb-4">
             <BookmarkCheck className="h-5 w-5 text-primary" />
-            <h1 className="text-2xl font-bold">My Huddle</h1>
+            <h1 className="text-2xl font-bold">{t("huddle.title")}</h1>
           </div>
           {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{t("common.loading")}</p>
           ) : saved.length === 0 ? (
             <Card><CardContent className="p-8 text-center text-muted-foreground">
-              You haven't bookmarked any businesses yet. Save a few to unlock recommendations!
+              {t("huddle.empty")}
             </CardContent></Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -92,10 +92,10 @@ const MyHuddle = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Sparkles className="h-5 w-5 text-primary" />
-                  Huddle Match — picked for you
+                  {t("huddle.matchTitle")}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Based on the categories you bookmark most.
+                  {t("huddle.matchHint")}
                 </p>
               </CardHeader>
               <CardContent>
