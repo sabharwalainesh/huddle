@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles, Navigation, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ import { useT } from "@/contexts/A11yContext";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { partitionByPrefs, partitionGoogleByPrefs, hasAnyPrefs } from "@/lib/preferences";
 import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@/lib/sorting";
+import { distanceToBusinessMi } from "@/lib/geo";
 import type { TranslationKey } from "@/lib/i18n";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
@@ -41,6 +43,10 @@ const Index = () => {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDenied, setGeoDenied] = useState(false);
 
+  // Huddle "near me" filter
+  const [nearMe, setNearMe] = useState(false);
+  const [radiusMi, setRadiusMi] = useState(10);
+
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase.from("businesses").select("*").limit(500);
@@ -53,9 +59,10 @@ const Index = () => {
     })();
   }, []);
 
-  // Request geolocation when user first switches to Google source
+  // Request geolocation when needed: switching to Google source OR enabling "near me" on Huddle
   useEffect(() => {
-    if (source !== "google" || coords || geoDenied) return;
+    const needsLocation = source === "google" || (source === "huddle" && nearMe);
+    if (!needsLocation || coords || geoDenied) return;
     if (!navigator.geolocation) {
       setGeoDenied(true);
       return;
@@ -65,7 +72,7 @@ const Index = () => {
       () => setGeoDenied(true),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 },
     );
-  }, [source, coords, geoDenied]);
+  }, [source, nearMe, coords, geoDenied]);
 
   // Fetch Google places when in google source: on query change (debounced) or coords arrival
   useEffect(() => {
