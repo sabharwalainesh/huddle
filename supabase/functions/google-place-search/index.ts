@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     } else if (lat != null && lng != null) {
       url = "https://places.googleapis.com/v1/places:searchNearby";
       body = {
-        maxResultCount: maxResults,
+        maxResultCount: fetchCount,
         locationRestriction: {
           circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
         },
