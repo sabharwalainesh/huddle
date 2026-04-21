@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
 import { GooglePlaceCard, type GooglePlace } from "@/components/GooglePlaceCard";
 import { PulseWidget } from "@/components/PulseWidget";
+import { BusinessOfTheWeek } from "@/components/BusinessOfTheWeek";
 import { AttentionMap } from "@/components/AttentionMap";
 import { PreferencesBanner } from "@/components/PreferencesBanner";
 import { Input } from "@/components/ui/input";
@@ -165,6 +166,7 @@ const Index = () => {
       </section>
 
       <main id="main">
+        <BusinessOfTheWeek />
         <AttentionMap />
 
         <div className="container py-8 space-y-6">
