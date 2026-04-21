@@ -83,7 +83,7 @@ const Index = () => {
         });
         if (error) throw error;
         const all = (data as { places?: GooglePlace[] })?.places ?? [];
-        setGooglePlaces(all.filter((pl) => (pl.userRatingCount ?? 0) <= 200));
+        setGooglePlaces(all);
       } catch (e) {
         toast({ title: "Google search failed", description: (e as Error).message, variant: "destructive" });
         setGooglePlaces([]);
