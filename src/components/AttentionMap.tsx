@@ -219,9 +219,6 @@ export const AttentionMap = () => {
       },
     });
 
-    // placeholder removed
-      },
-    });
 
     // Hover popup
     map.on("mousemove", PT, (e) => {
