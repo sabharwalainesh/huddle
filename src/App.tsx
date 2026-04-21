@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { A11yProvider } from "@/contexts/A11yContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AskHuddleWidget } from "@/components/AskHuddleWidget";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import BusinessDetail from "./pages/BusinessDetail.tsx";
@@ -41,6 +42,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <AskHuddleWidget />
             </A11yProvider>
           </AuthProvider>
         </BrowserRouter>
