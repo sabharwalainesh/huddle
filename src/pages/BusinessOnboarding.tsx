@@ -384,8 +384,8 @@ const BusinessOnboarding = () => {
               <CardHeader><CardTitle>Business details</CardTitle></CardHeader>
               <CardContent>
                 {editedPrefilled.length > 0 && (
-                  <Alert className="mb-4 border-amber-500/40">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Heads up</AlertTitle>
                     <AlertDescription>
                       You've changed {editedPrefilled.length === 1 ? "a field" : `${editedPrefilled.length} fields`} that came from Google
