@@ -15,11 +15,21 @@ import { Loader2, Upload, CheckCircle2, AlertTriangle, Search, Sparkles, MapPin,
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import type { GooglePlace } from "@/components/GooglePlaceCard";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { formatPhoneInput, phoneError } from "@/lib/phone";
 
 const detailsSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(100),
   category: z.string().min(1),
-  phone: z.string().trim().min(7, "Phone is required for verification").max(30),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Phone is required for verification")
+    .max(30)
+    .refine((v) => {
+      const digits = v.replace(/\D/g, "");
+      return digits.length >= 7 && digits.length <= 15;
+    }, "Enter a valid phone number (7–15 digits)"),
   description: z.string().trim().max(1000).optional(),
   address: z.string().trim().max(200).optional(),
   website: z.string().trim().url("Must be a valid URL").max(200).optional().or(z.literal("")),
@@ -131,9 +141,10 @@ const BusinessOnboarding = () => {
 
   const applyGooglePlace = (p: GooglePlace) => {
     const pickedCategory = mapGoogleTypeToCategory(p.primaryType);
+    const formattedPhone = p.phone ? formatPhoneInput(p.phone) : "";
     setName(p.name ?? "");
     setCategory(pickedCategory);
-    setPhone(p.phone ?? "");
+    setPhone(formattedPhone);
     setAddress(p.address ?? "");
     setWebsite(p.websiteUri ?? "");
     setImageUrl(p.photoUrl ?? "");
@@ -142,7 +153,7 @@ const BusinessOnboarding = () => {
     }
     setOriginalGoogle({
       name: p.name ?? "",
-      phone: p.phone ?? "",
+      phone: formattedPhone,
       address: p.address ?? "",
       website: p.websiteUri ?? "",
       image_url: p.photoUrl ?? "",
@@ -435,12 +446,33 @@ const BusinessOnboarding = () => {
                           </Tooltip>
                         </TooltipProvider>
                       </Label>
-                      <Input id="phone" required maxLength={30} placeholder="+1 555 555 5555" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                      {fieldHint("phone")}
+                      <Input
+                        id="phone"
+                        required
+                        maxLength={30}
+                        inputMode="tel"
+                        placeholder="(555) 123-4567"
+                        value={phone}
+                        onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                        aria-invalid={phone.length > 0 && phoneError(phone) !== null}
+                      />
+                      {phone.length > 0 && phoneError(phone) ? (
+                        <p className="text-[11px] text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" /> {phoneError(phone)}
+                        </p>
+                      ) : (
+                        fieldHint("phone")
+                      )}
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="address">Address</Label>
-                      <Input id="address" maxLength={200} value={address} onChange={(e) => setAddress(e.target.value)} />
+                      <AddressAutocomplete
+                        id="address"
+                        value={address}
+                        onChange={setAddress}
+                        placeholder="Start typing an address..."
+                        maxLength={200}
+                      />
                       {fieldHint("address")}
                     </div>
                     <div className="space-y-1.5">
