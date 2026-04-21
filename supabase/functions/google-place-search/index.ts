@@ -76,57 +76,72 @@ Deno.serve(async (req) => {
       "places.photos",
     ].join(",");
 
-    let url: string;
-    let body: Record<string, unknown>;
+    const fetchCount = 20;
+    const MAX_REVIEWS = 200;
 
-    // Over-fetch to compensate for filtering
-    const fetchCount = Math.min(20, (maxResults ?? 10) * 2);
+    const fieldHeaders = {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": fieldMask,
+    };
+
+    // Helper: run one Places API request and return raw places array
+    const runRequest = async (url: string, body: Record<string, unknown>) => {
+      const r = await fetch(url, { method: "POST", headers: fieldHeaders, body: JSON.stringify(body) });
+      if (!r.ok) return [];
+      const j = await r.json();
+      return (j.places ?? []) as Array<Record<string, unknown>>;
+    };
+
+    let rawPlaces: Array<Record<string, unknown>> = [];
 
     if (query && query.length > 0) {
-      url = "https://places.googleapis.com/v1/places:searchText";
-      body = { textQuery: query, maxResultCount: fetchCount };
+      const body: Record<string, unknown> = { textQuery: query, maxResultCount: fetchCount };
       if (lat != null && lng != null) {
         body.locationBias = {
           circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
         };
       }
+      rawPlaces = await runRequest("https://places.googleapis.com/v1/places:searchText", body);
     } else if (lat != null && lng != null) {
-      url = "https://places.googleapis.com/v1/places:searchNearby";
-      body = {
-        maxResultCount: fetchCount,
-        locationRestriction: {
-          circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
-        },
-      };
+      // No query → fan out across small-business buckets via text search.
+      // This consistently surfaces independent local shops, even in areas
+      // where plain Nearby Search is dominated by big chains.
+      const buckets = ["coffee shops", "restaurants", "bakeries", "boutiques", "salons"];
+      const results = await Promise.all(
+        buckets.map((q) =>
+          runRequest("https://places.googleapis.com/v1/places:searchText", {
+            textQuery: q,
+            maxResultCount: 10,
+            locationBias: {
+              circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
+            },
+          }),
+        ),
+      );
+      // Dedupe by place id
+      const seen = new Set<string>();
+      for (const arr of results) {
+        for (const p of arr) {
+          const id = p.id as string | undefined;
+          if (!id || seen.has(id)) continue;
+          seen.add(id);
+          rawPlaces.push(p);
+        }
+      }
     } else {
       return new Response(JSON.stringify({ places: [], reason: "no_query_or_location" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": fieldMask,
-      },
-      body: JSON.stringify(body),
+    const filtered = rawPlaces.filter((p) => {
+      const count = (p.userRatingCount as number | undefined) ?? 0;
+      // Drop big chains AND empty ghost listings
+      if (count > MAX_REVIEWS) return false;
+      if (count < 1) return false;
+      return isLocalBusiness(p.primaryType as string | null, p.types as string[] | undefined);
     });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      return new Response(JSON.stringify({ error: `Google search failed: ${txt}` }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const json = await res.json();
-    const rawPlaces = (json.places ?? []) as Array<Record<string, unknown>>;
-    const filtered = rawPlaces.filter((p) =>
-      isLocalBusiness(p.primaryType as string | null, p.types as string[] | undefined),
-    );
     const places = filtered.slice(0, maxResults).map((p) => {
       const photo = (p.photos as Array<{ name?: string }> | undefined)?.[0]?.name;
       const photoUrl = photo
