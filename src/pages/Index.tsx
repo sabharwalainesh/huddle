@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Loader2, MapPin } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
 import { GooglePlaceCard, type GooglePlace } from "@/components/GooglePlaceCard";
 import { PulseWidget } from "@/components/PulseWidget";
 import { AttentionMap } from "@/components/AttentionMap";
+import { PreferencesBanner } from "@/components/PreferencesBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
 import { useT } from "@/contexts/A11yContext";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { partitionByPrefs, partitionGoogleByPrefs, hasAnyPrefs } from "@/lib/preferences";
 import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@/lib/sorting";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -94,12 +97,26 @@ const Index = () => {
     return () => clearTimeout(handle);
   }, [source, query, coords]);
 
+  const { prefs } = useUserPreferences();
+  const personalize = hasAnyPrefs(prefs);
+
   const visible = useMemo(
     () => sortBusinesses(filterBusinesses(businesses, { query, category, minRating, openNow }), sort),
     [businesses, query, category, minRating, openNow, sort],
   );
 
-  
+  // "Filter then fill": when a user has prefs and isn't actively filtering by category,
+  // surface matches first then the remaining list below a divider.
+  const huddleSplit = useMemo(() => {
+    if (!personalize || category !== "all") return { matches: [] as Business[], rest: visible };
+    return partitionByPrefs(visible, prefs);
+  }, [visible, prefs, personalize, category]);
+
+  const googleSplit = useMemo(() => {
+    if (!personalize) return { matches: [] as GooglePlace[], rest: googlePlaces };
+    return partitionGoogleByPrefs(googlePlaces, prefs);
+  }, [googlePlaces, prefs, personalize]);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,6 +134,7 @@ const Index = () => {
         <AttentionMap />
 
         <div className="container py-8 space-y-6">
+        <PreferencesBanner />
         <Card className="p-4 shadow-card">
           <div className="grid gap-3 md:grid-cols-12 md:items-end">
             <div className="md:col-span-5 space-y-1.5">
@@ -228,6 +246,30 @@ const Index = () => {
                     <p className="font-medium mb-1">{t("home.noResults")}</p>
                     <p className="text-sm">{t("home.noResultsHint")}</p>
                   </Card>
+                ) : huddleSplit.matches.length > 0 ? (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Picked for you
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {huddleSplit.matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+                      </div>
+                    </div>
+                    {huddleSplit.rest.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-wide">
+                          <span className="h-px bg-border flex-1" />
+                          More on Huddle
+                          <span className="h-px bg-border flex-1" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          {huddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} />)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {visible.map((b) => <BusinessCard key={b.id} b={b} />)}
@@ -254,6 +296,30 @@ const Index = () => {
                       {geoDenied && !query ? "Type a search to find places on Google." : "Try a different search."}
                     </p>
                   </Card>
+                ) : googleSplit.matches.length > 0 ? (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Matches your vibe
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {googleSplit.matches.map((p) => <GooglePlaceCard key={p.place_id} p={p} />)}
+                      </div>
+                    </div>
+                    {googleSplit.rest.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-wide">
+                          <span className="h-px bg-border flex-1" />
+                          More nearby
+                          <span className="h-px bg-border flex-1" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          {googleSplit.rest.map((p) => <GooglePlaceCard key={p.place_id} p={p} />)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {googlePlaces.map((p) => <GooglePlaceCard key={p.place_id} p={p} />)}
