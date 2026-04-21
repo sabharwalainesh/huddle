@@ -1,14 +1,21 @@
 import { Link } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/StarRating";
+import { formatMiles } from "@/lib/geo";
 import type { Business } from "@/lib/sorting";
 
-export const BusinessCard = ({ b }: { b: Business }) => (
+interface BusinessCardProps {
+  b: Business;
+  /** Optional distance from the user in miles. Shown as a subtle badge on the image. */
+  distanceMi?: number | null;
+}
+
+export const BusinessCard = ({ b, distanceMi }: BusinessCardProps) => (
   <Link to={`/business/${b.id}`} className="block group">
     <Card className="overflow-hidden transition-all hover:shadow-elegant hover:-translate-y-0.5 shadow-card">
-      <div className="aspect-[16/10] bg-muted overflow-hidden">
+      <div className="relative aspect-[16/10] bg-muted overflow-hidden">
         {b.image_url ? (
           <img
             src={b.image_url}
@@ -18,6 +25,15 @@ export const BusinessCard = ({ b }: { b: Business }) => (
           />
         ) : (
           <div className="w-full h-full bg-gradient-primary opacity-80" />
+        )}
+        {distanceMi != null && (
+          <Badge
+            variant="secondary"
+            className="absolute top-2 right-2 gap-1 bg-background/90 backdrop-blur-sm shadow-sm text-[11px] py-0.5"
+          >
+            <Navigation className="h-3 w-3" />
+            {formatMiles(distanceMi)}
+          </Badge>
         )}
       </div>
       <CardContent className="p-4 space-y-2">
