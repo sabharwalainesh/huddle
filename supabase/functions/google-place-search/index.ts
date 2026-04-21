@@ -123,7 +123,11 @@ Deno.serve(async (req) => {
     }
 
     const json = await res.json();
-    const places = (json.places ?? []).map((p: Record<string, unknown>) => {
+    const rawPlaces = (json.places ?? []) as Array<Record<string, unknown>>;
+    const filtered = rawPlaces.filter((p) =>
+      isLocalBusiness(p.primaryType as string | null, p.types as string[] | undefined),
+    );
+    const places = filtered.slice(0, maxResults).map((p) => {
       const photo = (p.photos as Array<{ name?: string }> | undefined)?.[0]?.name;
       const photoUrl = photo
         ? `https://places.googleapis.com/v1/${photo}/media?maxWidthPx=600&key=${apiKey}`
