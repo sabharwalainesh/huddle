@@ -411,7 +411,7 @@ const BusinessOnboarding = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="name">Business name *</Label>
-                      <Input id="name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
+                      <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
                       {fieldHint("name")}
                     </div>
                     <div className="space-y-1.5">
@@ -448,7 +448,6 @@ const BusinessOnboarding = () => {
                       <Input
                         id="phone"
                         required
-                        maxLength={30}
                         inputMode="tel"
                         placeholder="(555) 123-4567"
                         value={phone}
@@ -470,7 +469,6 @@ const BusinessOnboarding = () => {
                         value={address}
                         onChange={setAddress}
                         placeholder="Start typing an address..."
-                        maxLength={200}
                       />
                       {fieldHint("address")}
                     </div>
@@ -510,7 +508,7 @@ const BusinessOnboarding = () => {
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="description">Description</Label>
-                      <Textarea id="description" maxLength={1000} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+                      <Textarea id="description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
                     </div>
                   </div>
                   <div className="flex gap-2 justify-end">
