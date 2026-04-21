@@ -134,7 +134,8 @@ const Auth = () => {
                     <Label htmlFor="si-password">{t("auth.password")}</Label>
                     <Input id="si-password" name="password" type="password" required />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <RecaptchaBox onVerifiedChange={setSignInHuman} />
+                  <Button type="submit" className="w-full" disabled={loading || !signInHuman}>
                     {loading ? t("auth.signingIn") : t("auth.signIn")}
                   </Button>
                 </form>
@@ -169,7 +170,8 @@ const Auth = () => {
                       </p>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <RecaptchaBox onVerifiedChange={setSignUpHuman} />
+                  <Button type="submit" className="w-full" disabled={loading || !signUpHuman}>
                     {loading ? t("auth.creating") : t("auth.createAccount")}
                   </Button>
                 </form>
