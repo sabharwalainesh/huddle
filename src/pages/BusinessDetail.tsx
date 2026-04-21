@@ -229,8 +229,9 @@ const BusinessDetail = () => {
                   <p className="text-xs text-muted-foreground text-right">{comment.length}/1000</p>
                 </div>
                 <Captcha onVerifiedChange={setCaptchaOk} />
+                <VerifyVisitPuzzle onVerifiedChange={setVisitVerified} />
                 <Button type="submit" disabled={posting || !captchaOk || !rating}>
-                  {posting ? "Posting..." : "Post review"}
+                  {posting ? "Posting..." : visitVerified ? "Post verified review" : "Post review"}
                 </Button>
               </form>
             ) : (
@@ -245,9 +246,14 @@ const BusinessDetail = () => {
               <ul className="space-y-4">
                 {reviews.map((r) => (
                   <li key={r.id} className="border-b last:border-0 pb-4 last:pb-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-medium text-sm">{r.profiles?.display_name ?? "Member"}</span>
                       <StarRating value={r.rating} size={12} />
+                      {(r as { verified?: boolean }).verified && (
+                        <Badge variant="secondary" className="gap-1 text-[10px] py-0 h-5 bg-success/15 text-success border-success/30">
+                          <ShieldCheck className="h-3 w-3" /> Verified Visit
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">· {new Date(r.created_at).toLocaleDateString()}</span>
                     </div>
                     <p className="text-sm">{r.comment}</p>
