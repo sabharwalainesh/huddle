@@ -179,7 +179,7 @@ export const AttentionMap = () => {
       maxzoom: 17,
       paint: {
         "heatmap-weight": ["interpolate", ["linear"], ["get", "weight"], 0, 0.4, 1, 1],
-        "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 1, 17, 4],
+        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 14, 0.75, 17, 0.5],
         "heatmap-color": [
           "interpolate", ["linear"], ["heatmap-density"],
           0, "rgba(0,0,0,0)",
