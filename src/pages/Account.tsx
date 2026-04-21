@@ -6,6 +6,7 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useT } from "@/contexts/A11yContext";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { PreferencesDialog } from "@/components/PreferencesDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
