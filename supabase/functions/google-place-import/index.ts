@@ -16,6 +16,8 @@ const BodySchema = z.object({
   websiteUri: z.string().max(500).optional().nullable(),
   primaryType: z.string().max(100).optional().nullable(),
   photoUrl: z.string().max(1000).optional().nullable(),
+  rating: z.number().min(0).max(5).optional().nullable(),
+  userRatingCount: z.number().int().min(0).optional().nullable(),
 });
 
 // Map Google primary types to our category enum strings
@@ -104,8 +106,11 @@ Deno.serve(async (req) => {
         image_url: p.photoUrl ?? null,
         lat: p.lat ?? null,
         lng: p.lng ?? null,
-        status: "approved",
-        ai_review_status: "passed",
+        avg_rating: p.rating ?? 0,
+        review_count: p.userRatingCount ?? 0,
+        status: "pending",
+        ai_review_status: "not_run",
+        submitted_at: new Date().toISOString(),
         tags: ["google-imported"],
       })
       .select("id")
