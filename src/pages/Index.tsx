@@ -177,12 +177,20 @@ const Index = () => {
               type="single"
               value={source}
               onValueChange={(v) => v && setSource(v as "huddle" | "google")}
-              className="bg-muted/50 rounded-md p-1"
+              className="bg-muted/60 rounded-full p-1 gap-0 border border-border/50"
             >
-              <ToggleGroupItem value="huddle" size="sm" className="data-[state=on]:bg-background data-[state=on]:shadow-sm">
+              <ToggleGroupItem
+                value="huddle"
+                size="sm"
+                className="rounded-full px-4 text-xs font-medium transition-all data-[state=on]:bg-gradient-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-elegant data-[state=off]:text-muted-foreground data-[state=off]:hover:text-foreground"
+              >
                 On Huddle
               </ToggleGroupItem>
-              <ToggleGroupItem value="google" size="sm" className="data-[state=on]:bg-background data-[state=on]:shadow-sm">
+              <ToggleGroupItem
+                value="google"
+                size="sm"
+                className="rounded-full px-4 text-xs font-medium transition-all data-[state=on]:bg-gradient-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-elegant data-[state=off]:text-muted-foreground data-[state=off]:hover:text-foreground"
+              >
                 Nearby on Google
               </ToggleGroupItem>
             </ToggleGroup>
