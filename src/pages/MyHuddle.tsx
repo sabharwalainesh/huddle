@@ -4,12 +4,17 @@ import { Sparkles, BookmarkCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
+import { PreferencesBanner } from "@/components/PreferencesBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { hasAnyPrefs, scoreBusiness, type UserPreferences } from "@/lib/preferences";
 import type { Business } from "@/lib/sorting";
 
+// Bookmark-only matcher (existing behavior) — used as a fallback when the user
+// has no explicit preferences set yet.
 const huddleMatch = (saved: Business[], all: Business[]): Business[] => {
   if (!saved.length) return [];
   const counts = new Map<string, number>();
@@ -24,6 +29,24 @@ const huddleMatch = (saved: Business[], all: Business[]): Business[] => {
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
+    .map((x) => x.b);
+};
+
+// Preference-driven matcher: rank unsaved businesses by how well they match prefs,
+// breaking ties with rating. Returns top N.
+const prefsMatch = (
+  saved: Business[],
+  all: Business[],
+  prefs: UserPreferences,
+  limit = 6,
+): Business[] => {
+  const savedIds = new Set(saved.map((b) => b.id));
+  return all
+    .filter((b) => !savedIds.has(b.id))
+    .map((b) => ({ b, score: scoreBusiness(b, prefs) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || Number(b.b.avg_rating) - Number(a.b.avg_rating))
+    .slice(0, limit)
     .map((x) => x.b);
 };
 
@@ -60,7 +83,15 @@ const MyHuddle = () => {
     })();
   }, [user]);
 
-  const matches = useMemo(() => huddleMatch(saved, all), [saved, all]);
+  const { prefs } = useUserPreferences();
+  const personalize = hasAnyPrefs(prefs);
+
+  // Prefer preference-based matching when the user set them; otherwise fall
+  // back to "based on what you've saved".
+  const matches = useMemo(() => {
+    if (personalize) return prefsMatch(saved, all, prefs, 6);
+    return huddleMatch(saved, all);
+  }, [saved, all, prefs, personalize]);
 
   if (!user) return null;
 
@@ -68,6 +99,8 @@ const MyHuddle = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main id="main" className="container py-8 space-y-8">
+        <PreferencesBanner />
+
         <section>
           <div className="flex items-center gap-2 mb-4">
             <BookmarkCheck className="h-5 w-5 text-primary" />
@@ -92,10 +125,12 @@ const MyHuddle = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Sparkles className="h-5 w-5 text-primary" />
-                  {t("huddle.matchTitle")}
+                  {personalize ? "Picked for your vibe" : t("huddle.matchTitle")}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {t("huddle.matchHint")}
+                  {personalize
+                    ? "Based on the categories and vibes you set in your preferences."
+                    : t("huddle.matchHint")}
                 </p>
               </CardHeader>
               <CardContent>
