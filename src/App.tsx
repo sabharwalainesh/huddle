@@ -16,6 +16,7 @@ import Account from "./pages/Account.tsx";
 import Admin from "./pages/Admin.tsx";
 import Ask from "./pages/Ask.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import About from "./pages/About.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/ask" element={<Ask />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/about" element={<About />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
