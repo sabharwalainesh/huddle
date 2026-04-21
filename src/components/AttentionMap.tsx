@@ -189,8 +189,8 @@ export const AttentionMap = () => {
           0.7, "rgba(244,63,94,0.9)",
           1, "rgba(250,204,21,0.95)",
         ],
-        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 30, 9, 50, 14, 80, 17, 110],
-        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 14, 0.75, 17, 0.5],
+        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 2, 5, 6, 9, 18, 12, 35, 14, 60, 17, 100],
+        "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 0.4, 9, 1, 14, 2, 17, 4],
       },
     });
 
