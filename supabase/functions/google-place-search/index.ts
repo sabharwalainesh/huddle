@@ -74,6 +74,8 @@ Deno.serve(async (req) => {
       "places.websiteUri",
       "places.nationalPhoneNumber",
       "places.photos",
+      "places.editorialSummary",
+      "places.generativeSummary",
     ].join(",");
 
     const fetchCount = 20;
@@ -147,6 +149,8 @@ Deno.serve(async (req) => {
       const photoUrl = photo
         ? `https://places.googleapis.com/v1/${photo}/media?maxWidthPx=600&key=${apiKey}`
         : null;
+      const editorial = (p.editorialSummary as { text?: string } | undefined)?.text ?? null;
+      const generative = (p.generativeSummary as { overview?: { text?: string } } | undefined)?.overview?.text ?? null;
       return {
         place_id: p.id,
         name: (p.displayName as { text?: string })?.text ?? "",
@@ -160,6 +164,7 @@ Deno.serve(async (req) => {
         websiteUri: p.websiteUri ?? null,
         phone: p.nationalPhoneNumber ?? null,
         photoUrl,
+        description: editorial ?? generative ?? null,
       };
     });
 
