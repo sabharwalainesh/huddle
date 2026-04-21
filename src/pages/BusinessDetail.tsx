@@ -176,6 +176,11 @@ const BusinessDetail = () => {
                 </a>
               )}
             </div>
+            <div className="pt-2">
+              <Button variant="outline" size="sm" onClick={checkIn} disabled={checkingIn}>
+                <MapPinned className="h-4 w-4" /> {checkingIn ? "Checking in..." : "I'm here — check in"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
