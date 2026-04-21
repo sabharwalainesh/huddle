@@ -379,6 +379,7 @@ const BusinessDetail = () => {
           </CardContent>
         </Card>
       </main>
+      <Footer />
     </div>
   );
 };

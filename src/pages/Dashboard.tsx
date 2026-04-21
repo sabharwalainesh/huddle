@@ -210,6 +210,7 @@ const Dashboard = () => {
           </>
         )}
       </main>
+      <Footer />
     </div>
   );
 };

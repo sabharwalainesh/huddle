@@ -586,6 +586,7 @@ const BusinessOnboarding = () => {
           </Card>
         )}
       </main>
+      <Footer />
     </div>
   );
 };

@@ -95,6 +95,7 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </main>
+      <Footer />
     </div>
   );
 };

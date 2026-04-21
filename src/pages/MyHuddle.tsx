@@ -142,6 +142,7 @@ const MyHuddle = () => {
           </section>
         )}
       </main>
+      <Footer />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { BusinessCard } from "@/components/BusinessCard";
 import { GooglePlaceCard, type GooglePlace } from "@/components/GooglePlaceCard";
 import { PulseWidget } from "@/components/PulseWidget";
 import { BusinessOfTheWeek } from "@/components/BusinessOfTheWeek";
+import { Footer } from "@/components/Footer";
 import { AttentionMap } from "@/components/AttentionMap";
 import { PreferencesBanner } from "@/components/PreferencesBanner";
 import { Input } from "@/components/ui/input";
@@ -442,6 +443,7 @@ const Index = () => {
         </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

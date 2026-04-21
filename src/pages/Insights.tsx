@@ -309,6 +309,7 @@ const Insights = () => {
           </>
         )}
       </main>
+      <Footer />
     </div>
   );
 };
