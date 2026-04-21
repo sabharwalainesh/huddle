@@ -19,7 +19,7 @@ import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@
 import type { TranslationKey } from "@/lib/i18n";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
-const RESULTS_PER_SECTION = 3;
+const GOOGLE_MAX_RESULTS = 10;
 
 const Index = () => {
   const t = useT();
