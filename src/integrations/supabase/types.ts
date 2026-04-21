@@ -381,6 +381,26 @@ export type Database = {
           recent_bookmarks: number | null
           recent_check_ins: number | null
         }
+        Insert: {
+          avg_rating?: number | null
+          business_id?: string | null
+          category?: string | null
+          image_url?: string | null
+          name?: string | null
+          pulse_score?: never
+          recent_bookmarks?: never
+          recent_check_ins?: never
+        }
+        Update: {
+          avg_rating?: number | null
+          business_id?: string | null
+          category?: string | null
+          image_url?: string | null
+          name?: string | null
+          pulse_score?: never
+          recent_bookmarks?: never
+          recent_check_ins?: never
+        }
         Relationships: []
       }
     }
