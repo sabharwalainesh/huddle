@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles, Navigation, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ import { useT } from "@/contexts/A11yContext";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { partitionByPrefs, partitionGoogleByPrefs, hasAnyPrefs } from "@/lib/preferences";
 import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@/lib/sorting";
+import { distanceToBusinessMi } from "@/lib/geo";
 import type { TranslationKey } from "@/lib/i18n";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
@@ -41,6 +43,10 @@ const Index = () => {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDenied, setGeoDenied] = useState(false);
 
+  // Huddle "near me" filter
+  const [nearMe, setNearMe] = useState(false);
+  const [radiusMi, setRadiusMi] = useState(10);
+
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase.from("businesses").select("*").limit(500);
@@ -53,9 +59,10 @@ const Index = () => {
     })();
   }, []);
 
-  // Request geolocation when user first switches to Google source
+  // Request geolocation when needed: switching to Google source OR enabling "near me" on Huddle
   useEffect(() => {
-    if (source !== "google" || coords || geoDenied) return;
+    const needsLocation = source === "google" || (source === "huddle" && nearMe);
+    if (!needsLocation || coords || geoDenied) return;
     if (!navigator.geolocation) {
       setGeoDenied(true);
       return;
@@ -65,7 +72,7 @@ const Index = () => {
       () => setGeoDenied(true),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 },
     );
-  }, [source, coords, geoDenied]);
+  }, [source, nearMe, coords, geoDenied]);
 
   // Fetch Google places when in google source: on query change (debounced) or coords arrival
   useEffect(() => {
@@ -105,17 +112,44 @@ const Index = () => {
     [businesses, query, category, minRating, openNow, sort],
   );
 
+  // Distance-aware partitioning of Huddle results. When "near me" is on and we have
+  // coords, split into in-range vs. out-of-range so the UI can offer a Google fallback.
+  const huddleByRange = useMemo(() => {
+    if (source !== "huddle" || !nearMe || !coords) {
+      return { inRange: visible, outOfRange: [] as Business[], unknownLocation: [] as Business[] };
+    }
+    const inRange: Business[] = [];
+    const outOfRange: Business[] = [];
+    const unknownLocation: Business[] = [];
+    for (const b of visible) {
+      const d = distanceToBusinessMi(coords, b);
+      if (d == null) unknownLocation.push(b);
+      else if (d <= radiusMi) inRange.push(b);
+      else outOfRange.push(b);
+    }
+    return { inRange, outOfRange, unknownLocation };
+  }, [visible, source, nearMe, coords, radiusMi]);
+
+  const huddleVisible = useMemo(
+    () => (nearMe && coords ? huddleByRange.inRange : visible),
+    [nearMe, coords, huddleByRange.inRange, visible],
+  );
+
   // "Filter then fill": when a user has prefs and isn't actively filtering by category,
   // surface matches first then the remaining list below a divider.
   const huddleSplit = useMemo(() => {
-    if (!personalize || category !== "all") return { matches: [] as Business[], rest: visible };
-    return partitionByPrefs(visible, prefs);
-  }, [visible, prefs, personalize, category]);
+    if (!personalize || category !== "all") return { matches: [] as Business[], rest: huddleVisible };
+    return partitionByPrefs(huddleVisible, prefs);
+  }, [huddleVisible, prefs, personalize, category]);
 
   const googleSplit = useMemo(() => {
     if (!personalize) return { matches: [] as GooglePlace[], rest: googlePlaces };
     return partitionGoogleByPrefs(googlePlaces, prefs);
   }, [googlePlaces, prefs, personalize]);
+
+  // Distance lookup for badges (only meaningful when we have coords + Huddle source)
+  const distanceFor = (b: Business): number | null =>
+    source === "huddle" && coords ? distanceToBusinessMi(coords, b) : null;
 
 
   return (
@@ -212,19 +246,57 @@ const Index = () => {
                 Nearby on Google
               </ToggleGroupItem>
             </ToggleGroup>
-            {source === "google" && (
+            {source === "google" ? (
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {coords ? "Using your location" : geoDenied ? "Location unavailable — type to search" : "Requesting location…"}
               </p>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Switch id="near-me" checked={nearMe} onCheckedChange={setNearMe} />
+                <Label htmlFor="near-me" className="text-xs cursor-pointer flex items-center gap-1">
+                  <Navigation className="h-3 w-3" /> Near me
+                </Label>
+                {nearMe && !coords && !geoDenied && (
+                  <span className="text-[11px] text-muted-foreground">Requesting location…</span>
+                )}
+                {nearMe && geoDenied && (
+                  <span className="text-[11px] text-destructive">Location unavailable</span>
+                )}
+              </div>
             )}
           </div>
+
+          {source === "huddle" && nearMe && coords && (
+            <div className="pt-4 mt-4 border-t space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-xs flex items-center gap-1">
+                  <Navigation className="h-3 w-3" /> Within {radiusMi} {radiusMi === 1 ? "mile" : "miles"}
+                </Label>
+                <span className="text-[11px] text-muted-foreground">
+                  {huddleByRange.inRange.length} in range · {huddleByRange.outOfRange.length} farther
+                </span>
+              </div>
+              <Slider
+                value={[radiusMi]}
+                onValueChange={(v) => setRadiusMi(v[0])}
+                min={1}
+                max={50}
+                step={1}
+                aria-label="Distance in miles"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>1 mi</span>
+                <span>50 mi</span>
+              </div>
+            </div>
+          )}
         </Card>
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {source === "huddle"
-              ? loading ? t("home.loading") : `${visible.length} ${visible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}`
+              ? loading ? t("home.loading") : `${huddleVisible.length} ${huddleVisible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}${nearMe && coords ? ` within ${radiusMi} mi` : ""}`
               : googleLoading ? "Searching Google…" : `${googlePlaces.length} nearby on Google`}
           </p>
           {(query || category !== "all" || minRating > 0 || openNow) && (
@@ -246,6 +318,28 @@ const Index = () => {
                     <p className="font-medium mb-1">{t("home.noResults")}</p>
                     <p className="text-sm">{t("home.noResultsHint")}</p>
                   </Card>
+                ) : nearMe && coords && huddleByRange.inRange.length === 0 ? (
+                  <Card className="p-8 text-center space-y-4 border-dashed">
+                    <div className="mx-auto h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Navigation className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium">No Huddle businesses within {radiusMi} mi</p>
+                      <p className="text-sm text-muted-foreground">
+                        {huddleByRange.outOfRange.length > 0
+                          ? `${huddleByRange.outOfRange.length} are farther away. Try widening the radius or check Google for nearby places.`
+                          : "Try widening the radius or check Google for nearby places."}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <Button variant="outline" size="sm" onClick={() => setRadiusMi(Math.min(50, radiusMi + 10))}>
+                        Widen to {Math.min(50, radiusMi + 10)} mi
+                      </Button>
+                      <Button size="sm" onClick={() => setSource("google")} className="gap-1">
+                        Search Nearby on Google <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </Card>
                 ) : huddleSplit.matches.length > 0 ? (
                   <div className="space-y-6">
                     <div className="space-y-3">
@@ -254,7 +348,7 @@ const Index = () => {
                         Picked for you
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {huddleSplit.matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+                        {huddleSplit.matches.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
                       </div>
                     </div>
                     {huddleSplit.rest.length > 0 && (
@@ -265,14 +359,26 @@ const Index = () => {
                           <span className="h-px bg-border flex-1" />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                          {huddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} />)}
+                          {huddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
                         </div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {visible.map((b) => <BusinessCard key={b.id} b={b} />)}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {huddleVisible.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
+                    </div>
+                    {nearMe && coords && huddleByRange.outOfRange.length > 0 && (
+                      <Card className="p-4 flex flex-wrap items-center justify-between gap-3 bg-muted/30 border-dashed">
+                        <p className="text-sm text-muted-foreground">
+                          {huddleByRange.outOfRange.length} more {huddleByRange.outOfRange.length === 1 ? "business is" : "businesses are"} farther than {radiusMi} mi.
+                        </p>
+                        <Button size="sm" variant="outline" onClick={() => setSource("google")} className="gap-1">
+                          See Nearby on Google <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </Card>
+                    )}
                   </div>
                 )}
               </section>
