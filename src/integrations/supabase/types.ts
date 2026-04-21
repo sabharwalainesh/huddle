@@ -224,6 +224,36 @@ export type Database = {
           },
         ]
       }
+      google_place_cache: {
+        Row: {
+          business_id: string
+          created_at: string
+          fetched_at: string
+          id: string
+          payload: Json
+          place_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          payload?: Json
+          place_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          payload?: Json
+          place_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
