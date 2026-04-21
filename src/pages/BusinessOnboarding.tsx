@@ -416,7 +416,25 @@ const BusinessOnboarding = () => {
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="phone">Business phone *</Label>
+                      <Label htmlFor="phone" className="flex items-center gap-1.5">
+                        Business phone *
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label="Why we need your phone"
+                                className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                <Info className="h-3.5 w-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs text-xs">
+                              This phone will be used to contact you about your listing — whether or not you've signed up for a personal account.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </Label>
                       <Input id="phone" required maxLength={30} placeholder="+1 555 555 5555" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       {fieldHint("phone")}
                     </div>
@@ -431,8 +449,32 @@ const BusinessOnboarding = () => {
                       {fieldHint("website")}
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="image_url">Image URL</Label>
-                      <Input id="image_url" type="url" placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+                      <Label htmlFor="image_url">Business image</Label>
+                      {imageUrl ? (
+                        <div className="relative rounded-md border overflow-hidden bg-muted">
+                          <img
+                            src={imageUrl}
+                            alt="Business preview"
+                            className="w-full h-32 object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setImageUrl("")}
+                            className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/90 hover:bg-background flex items-center justify-center shadow-sm"
+                            aria-label="Remove image"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                          {prefilled.image_url && originalGoogle.image_url === imageUrl && (
+                            <div className="absolute bottom-1 left-1 text-[10px] bg-background/90 rounded px-1.5 py-0.5 flex items-center gap-1">
+                              <Sparkles className="h-3 w-3 text-primary" /> From Google
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <Input id="image_url" type="url" placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+                      )}
                       {fieldHint("image_url")}
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
