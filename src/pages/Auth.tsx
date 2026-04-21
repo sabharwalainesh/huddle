@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/contexts/A11yContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ const signInSchema = z.object({
 const Auth = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const t = useT();
   const [loading, setLoading] = useState(false);
   const [ownsBusiness, setOwnsBusiness] = useState(false);
 
@@ -94,7 +96,7 @@ const Auth = () => {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+    <main id="main" className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-6 text-primary-foreground">
           <Users className="h-7 w-7" />
@@ -102,42 +104,42 @@ const Auth = () => {
         </Link>
         <Card className="shadow-elegant">
           <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>Join your local community.</CardDescription>
+            <CardTitle>{t("auth.welcome")}</CardTitle>
+            <CardDescription>{t("auth.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
+                <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
               </TabsList>
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="si-email">Email</Label>
+                    <Label htmlFor="si-email">{t("auth.email")}</Label>
                     <Input id="si-email" name="email" type="email" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="si-password">Password</Label>
+                    <Label htmlFor="si-password">{t("auth.password")}</Label>
                     <Input id="si-password" name="password" type="password" required />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Signing in..." : "Sign In"}
+                    {loading ? t("auth.signingIn") : t("auth.signIn")}
                   </Button>
                 </form>
               </TabsContent>
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="su-name">Display name</Label>
+                    <Label htmlFor="su-name">{t("auth.displayName")}</Label>
                     <Input id="su-name" name="displayName" required maxLength={50} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="su-email">Email</Label>
+                    <Label htmlFor="su-email">{t("auth.email")}</Label>
                     <Input id="su-email" name="email" type="email" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="su-password">Password</Label>
+                    <Label htmlFor="su-password">{t("auth.password")}</Label>
                     <Input id="su-password" name="password" type="password" required minLength={8} />
                   </div>
                   <div className="flex items-start gap-3 rounded-md border p-3 bg-muted/30">
@@ -149,15 +151,15 @@ const Auth = () => {
                     />
                     <div className="space-y-1">
                       <Label htmlFor="owns-business" className="cursor-pointer font-medium">
-                        I own a business I want to list
+                        {t("auth.ownsBusiness")}
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        We'll walk you through verification right after signup. You can change this later.
+                        {t("auth.ownsBusinessHint")}
                       </p>
                     </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Creating account..." : "Create account"}
+                    {loading ? t("auth.creating") : t("auth.createAccount")}
                   </Button>
                 </form>
               </TabsContent>
