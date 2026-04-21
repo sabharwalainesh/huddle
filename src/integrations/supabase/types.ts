@@ -41,6 +41,13 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "trending_pulse"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       businesses: {
@@ -97,6 +104,42 @@ export type Database = {
         }
         Relationships: []
       }
+      check_ins: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "check_ins_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "trending_pulse"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           business_id: string
@@ -142,6 +185,13 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coupons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "trending_pulse"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       profiles: {
@@ -177,6 +227,7 @@ export type Database = {
           rating: number
           updated_at: string
           user_id: string
+          verified: boolean
         }
         Insert: {
           business_id: string
@@ -186,6 +237,7 @@ export type Database = {
           rating: number
           updated_at?: string
           user_id: string
+          verified?: boolean
         }
         Update: {
           business_id?: string
@@ -195,6 +247,7 @@ export type Database = {
           rating?: number
           updated_at?: string
           user_id?: string
+          verified?: boolean
         }
         Relationships: [
           {
@@ -203,6 +256,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "trending_pulse"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -253,7 +313,27 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coupons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "trending_pulse"
+            referencedColumns: ["business_id"]
+          },
         ]
+      }
+      trending_pulse: {
+        Row: {
+          avg_rating: number | null
+          business_id: string | null
+          category: string | null
+          image_url: string | null
+          name: string | null
+          pulse_score: number | null
+          recent_bookmarks: number | null
+          recent_check_ins: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
