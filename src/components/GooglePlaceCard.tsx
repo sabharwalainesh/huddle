@@ -22,6 +22,7 @@ export type GooglePlace = {
   websiteUri: string | null;
   phone: string | null;
   photoUrl: string | null;
+  description?: string | null;
 };
 
 type GoogleReview = {
