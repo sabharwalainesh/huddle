@@ -71,6 +71,7 @@ const Admin = () => {
         <Tabs defaultValue="queue">
           <TabsList>
             <TabsTrigger value="queue">Approval queue ({pending.length})</TabsTrigger>
+            <TabsTrigger value="featured">Business of the Week</TabsTrigger>
             <TabsTrigger value="roles">Manage roles</TabsTrigger>
           </TabsList>
 
@@ -82,6 +83,10 @@ const Admin = () => {
             ) : (
               pending.map((b) => <ReviewCard key={b.id} biz={b} onChange={load} />)
             )}
+          </TabsContent>
+
+          <TabsContent value="featured" className="mt-4">
+            <FeaturedManager />
           </TabsContent>
 
           <TabsContent value="roles" className="mt-4">
