@@ -216,7 +216,10 @@ export const AttentionMap = () => {
         ],
         "circle-stroke-width": 2,
         "circle-stroke-color": "rgba(255,255,255,0.95)",
-        "circle-opacity": 1,
+      },
+    });
+
+    // placeholder removed
       },
     });
 
