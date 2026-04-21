@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
-import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft } from "lucide-react";
+import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft, MapPinned, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/StarRating";
 import { Captcha } from "@/components/Captcha";
+import { VerifyVisitPuzzle } from "@/components/VerifyVisitPuzzle";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -38,7 +39,19 @@ const BusinessDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [captchaOk, setCaptchaOk] = useState(false);
+  const [visitVerified, setVisitVerified] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+
+  const checkIn = async () => {
+    if (!user) { navigate("/auth"); return; }
+    if (!business) return;
+    setCheckingIn(true);
+    const { error } = await supabase.from("check_ins").insert({ business_id: business.id, user_id: user.id });
+    setCheckingIn(false);
+    if (error) return toast({ title: "Couldn't check in", description: error.message, variant: "destructive" });
+    toast({ title: "Checked in!", description: "Thanks for supporting local 💛" });
+  };
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -105,11 +118,12 @@ const BusinessDetail = () => {
       user_id: user.id,
       rating: parsed.data.rating,
       comment: parsed.data.comment,
+      verified: visitVerified,
     });
     setPosting(false);
     if (error) return toast({ title: "Couldn't post review", description: error.message, variant: "destructive" });
-    toast({ title: "Review posted!" });
-    setRating(0); setComment("");
+    toast({ title: visitVerified ? "Verified review posted!" : "Review posted!" });
+    setRating(0); setComment(""); setVisitVerified(false);
     load();
   };
 
@@ -117,7 +131,7 @@ const BusinessDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container py-8"><p className="text-muted-foreground">Loading...</p></main>
+        <main id="main" className="container py-8"><p className="text-muted-foreground">Loading...</p></main>
       </div>
     );
   }
@@ -125,7 +139,7 @@ const BusinessDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container py-6 space-y-6">
+      <main id="main" className="container py-6 space-y-6">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" /> Back</Button>
 
         <Card className="overflow-hidden">
@@ -161,6 +175,11 @@ const BusinessDetail = () => {
                   <Globe className="h-4 w-4" /> Website
                 </a>
               )}
+            </div>
+            <div className="pt-2">
+              <Button variant="outline" size="sm" onClick={checkIn} disabled={checkingIn}>
+                <MapPinned className="h-4 w-4" /> {checkingIn ? "Checking in..." : "I'm here — check in"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -210,8 +229,9 @@ const BusinessDetail = () => {
                   <p className="text-xs text-muted-foreground text-right">{comment.length}/1000</p>
                 </div>
                 <Captcha onVerifiedChange={setCaptchaOk} />
+                <VerifyVisitPuzzle onVerifiedChange={setVisitVerified} />
                 <Button type="submit" disabled={posting || !captchaOk || !rating}>
-                  {posting ? "Posting..." : "Post review"}
+                  {posting ? "Posting..." : visitVerified ? "Post verified review" : "Post review"}
                 </Button>
               </form>
             ) : (
@@ -226,9 +246,14 @@ const BusinessDetail = () => {
               <ul className="space-y-4">
                 {reviews.map((r) => (
                   <li key={r.id} className="border-b last:border-0 pb-4 last:pb-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-medium text-sm">{r.profiles?.display_name ?? "Member"}</span>
                       <StarRating value={r.rating} size={12} />
+                      {(r as { verified?: boolean }).verified && (
+                        <Badge variant="secondary" className="gap-1 text-[10px] py-0 h-5 bg-success/15 text-success border-success/30">
+                          <ShieldCheck className="h-3 w-3" /> Verified Visit
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">· {new Date(r.created_at).toLocaleDateString()}</span>
                     </div>
                     <p className="text-sm">{r.comment}</p>
