@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Upload, CheckCircle2, AlertTriangle, Search, Sparkles, MapPin } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, AlertTriangle, Search, Sparkles, MapPin, Info, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import type { GooglePlace } from "@/components/GooglePlaceCard";
 
@@ -136,6 +137,9 @@ const BusinessOnboarding = () => {
     setAddress(p.address ?? "");
     setWebsite(p.websiteUri ?? "");
     setImageUrl(p.photoUrl ?? "");
+    if (p.description && !description) {
+      setDescription(p.description);
+    }
     setOriginalGoogle({
       name: p.name ?? "",
       phone: p.phone ?? "",
