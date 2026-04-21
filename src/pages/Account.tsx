@@ -108,7 +108,8 @@ const Account = () => {
                 <Link to="/admin">{t("account.openAdmin")}</Link>
               </Button>
             </CardContent>
-        </Card>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -164,7 +165,6 @@ const Account = () => {
           onOpenChange={setPrefsOpen}
           onSave={handlePrefsSave}
         />
-        )}
 
         <Card>
           <CardHeader>
