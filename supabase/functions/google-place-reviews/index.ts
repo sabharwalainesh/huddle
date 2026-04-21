@@ -6,11 +6,16 @@ const corsHeaders = {
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
-const BodySchema = z.object({
-  business_id: z.string().uuid(),
-  name: z.string().trim().min(1).max(200),
-  address: z.string().trim().min(1).max(300).optional().nullable(),
-});
+const BodySchema = z.union([
+  z.object({
+    business_id: z.string().uuid(),
+    name: z.string().trim().min(1).max(200),
+    address: z.string().trim().min(1).max(300).optional().nullable(),
+  }),
+  z.object({
+    place_id: z.string().min(1).max(200),
+  }),
+]);
 
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
