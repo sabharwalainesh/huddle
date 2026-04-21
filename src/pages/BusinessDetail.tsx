@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
-import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft, MapPinned, ShieldCheck } from "lucide-react";
+import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft, MapPinned, ShieldCheck, Star, ExternalLink, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
@@ -42,6 +42,44 @@ const BusinessDetail = () => {
   const [visitVerified, setVisitVerified] = useState(false);
   const [posting, setPosting] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
+
+  type GoogleReview = {
+    author: string;
+    authorUri: string | null;
+    authorPhoto: string | null;
+    rating: number;
+    text: string;
+    relativeTime: string;
+    publishTime: string;
+  };
+  type GoogleData = {
+    found: boolean;
+    rating: number | null;
+    userRatingCount: number;
+    googleMapsUri: string | null;
+    reviews: GoogleReview[];
+  };
+  const [googleData, setGoogleData] = useState<GoogleData | null>(null);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+
+  const fetchGoogleReviews = async () => {
+    if (!business) return;
+    setLoadingGoogle(true);
+    const { data, error } = await supabase.functions.invoke("google-place-reviews", {
+      body: { business_id: business.id, name: business.name, address: business.address },
+    });
+    setLoadingGoogle(false);
+    if (error) {
+      return toast({ title: "Couldn't load Google reviews", description: error.message, variant: "destructive" });
+    }
+    if (data?.error) {
+      return toast({ title: "Couldn't load Google reviews", description: String(data.error), variant: "destructive" });
+    }
+    setGoogleData(data as GoogleData);
+    if (!data?.found) {
+      toast({ title: "No Google match found for this business" });
+    }
+  };
 
   const checkIn = async () => {
     if (!user) { navigate("/auth"); return; }
@@ -260,6 +298,75 @@ const BusinessDetail = () => {
                   </li>
                 ))}
               </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Star className="h-5 w-5 text-primary" /> Google reviews
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!googleData ? (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  See what people are saying about this business on Google.
+                </p>
+                <Button onClick={fetchGoogleReviews} disabled={loadingGoogle} variant="outline">
+                  {loadingGoogle ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading...</> : "Show Google reviews"}
+                </Button>
+              </div>
+            ) : !googleData.found ? (
+              <p className="text-sm text-muted-foreground">No matching Google listing was found.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <StarRating value={googleData.rating ?? 0} size={16} />
+                    <span className="text-muted-foreground">
+                      {googleData.rating?.toFixed(1) ?? "—"} · {googleData.userRatingCount} Google review{googleData.userRatingCount === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  {googleData.googleMapsUri && (
+                    <a
+                      href={googleData.googleMapsUri}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                    >
+                      View on Google Maps <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                {googleData.reviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No reviews returned by Google.</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {googleData.reviews.map((r, i) => (
+                      <li key={i} className="border-b last:border-0 pb-4 last:pb-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {r.authorPhoto && (
+                            <img src={r.authorPhoto} alt={`${r.author} avatar`} className="h-5 w-5 rounded-full" loading="lazy" />
+                          )}
+                          {r.authorUri ? (
+                            <a href={r.authorUri} target="_blank" rel="noreferrer" className="font-medium text-sm hover:underline">
+                              {r.author}
+                            </a>
+                          ) : (
+                            <span className="font-medium text-sm">{r.author}</span>
+                          )}
+                          <StarRating value={r.rating} size={12} />
+                          <span className="text-xs text-muted-foreground">· {r.relativeTime}</span>
+                        </div>
+                        <p className="text-sm whitespace-pre-line">{r.text}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-xs text-muted-foreground pt-2 border-t">Powered by Google</p>
+              </>
             )}
           </CardContent>
         </Card>
