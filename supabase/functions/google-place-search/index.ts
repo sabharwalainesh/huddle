@@ -125,9 +125,11 @@ Deno.serve(async (req) => {
 
     const json = await res.json();
     const rawPlaces = (json.places ?? []) as Array<Record<string, unknown>>;
-    const filtered = rawPlaces.filter((p) =>
-      isLocalBusiness(p.primaryType as string | null, p.types as string[] | undefined),
-    );
+    const filtered = rawPlaces.filter((p) => {
+      const count = (p.userRatingCount as number | undefined) ?? 0;
+      if (count > MAX_REVIEWS) return false;
+      return isLocalBusiness(p.primaryType as string | null, p.types as string[] | undefined);
+    });
     const places = filtered.slice(0, maxResults).map((p) => {
       const photo = (p.photos as Array<{ name?: string }> | undefined)?.[0]?.name;
       const photoUrl = photo
