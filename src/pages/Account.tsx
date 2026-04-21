@@ -35,6 +35,24 @@ const Account = () => {
   const [ownsBusiness, setOwnsBusiness] = useState(false);
   const [myBusinesses, setMyBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
+  const { prefs, hasRow: hasPrefRow, save: savePrefs } = useUserPreferences();
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  const handlePrefsSave = async (next: UserPreferences) => {
+    setSavingPrefs(true);
+    const { error } = await savePrefs(next);
+    setSavingPrefs(false);
+    if (error) {
+      toast({ title: "Couldn't save preferences", description: error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Preferences updated" });
+    setPrefsOpen(false);
+  };
+
+  const categoryLabel = (value: string) =>
+    PREF_CATEGORIES.find((c) => c.value === value)?.label ?? value;
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
