@@ -134,6 +134,7 @@ const Index = () => {
         <AttentionMap />
 
         <div className="container py-8 space-y-6">
+        <PreferencesBanner />
         <Card className="p-4 shadow-card">
           <div className="grid gap-3 md:grid-cols-12 md:items-end">
             <div className="md:col-span-5 space-y-1.5">
@@ -245,6 +246,30 @@ const Index = () => {
                     <p className="font-medium mb-1">{t("home.noResults")}</p>
                     <p className="text-sm">{t("home.noResultsHint")}</p>
                   </Card>
+                ) : huddleSplit.matches.length > 0 ? (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Picked for you
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {huddleSplit.matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+                      </div>
+                    </div>
+                    {huddleSplit.rest.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-wide">
+                          <span className="h-px bg-border flex-1" />
+                          More on Huddle
+                          <span className="h-px bg-border flex-1" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          {huddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} />)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {visible.map((b) => <BusinessCard key={b.id} b={b} />)}
@@ -271,6 +296,30 @@ const Index = () => {
                       {geoDenied && !query ? "Type a search to find places on Google." : "Try a different search."}
                     </p>
                   </Card>
+                ) : googleSplit.matches.length > 0 ? (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Matches your vibe
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {googleSplit.matches.map((p) => <GooglePlaceCard key={p.place_id} p={p} />)}
+                      </div>
+                    </div>
+                    {googleSplit.rest.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-wide">
+                          <span className="h-px bg-border flex-1" />
+                          More nearby
+                          <span className="h-px bg-border flex-1" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          {googleSplit.rest.map((p) => <GooglePlaceCard key={p.place_id} p={p} />)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {googlePlaces.map((p) => <GooglePlaceCard key={p.place_id} p={p} />)}
