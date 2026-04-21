@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, Sparkles, Eye, ShieldCheck, UserCircle } from "lucide-react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, Sparkles, ShieldCheck, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useA11y } from "@/contexts/A11yContext";
+import { useT } from "@/contexts/A11yContext";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { AccessibilityPanel } from "@/components/AccessibilityPanel";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +15,13 @@ import {
 
 export const Navbar = () => {
   const { user, signOut } = useAuth();
-  const { highVisibility, toggleHighVisibility } = useA11y();
   const { isAdmin } = useUserRoles();
+  const t = useT();
   const navigate = useNavigate();
 
   return (
     <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
-      <a href="#main" className="skip-link">Skip to content</a>
+      <a href="#main" className="skip-link">{t("nav.skipToContent")}</a>
       <div className="container flex items-center justify-between h-16 gap-2">
         <Link to="/" className="flex items-center gap-2 font-bold text-lg">
           <Users className="h-6 w-6 text-primary" />
@@ -28,50 +29,41 @@ export const Navbar = () => {
         </Link>
         <nav className="flex items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/ask"><Sparkles className="h-4 w-4" /> <span className="hidden sm:inline">Ask</span></Link>
+            <Link to="/ask"><Sparkles className="h-4 w-4" /> <span className="hidden sm:inline">{t("nav.ask")}</span></Link>
           </Button>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/dashboard"><BarChart3 className="h-4 w-4" /> <span className="hidden sm:inline">Insights</span></Link>
+            <Link to="/dashboard"><BarChart3 className="h-4 w-4" /> <span className="hidden sm:inline">{t("nav.insights")}</span></Link>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleHighVisibility}
-            aria-pressed={highVisibility}
-            aria-label="Toggle high-visibility mode"
-            title="High-visibility mode (Shift + ?)"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
+          <AccessibilityPanel />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm">Account</Button>
+                <Button size="sm">{t("nav.account")}</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem asChild>
-                  <Link to="/account"><UserCircle className="h-4 w-4" /> My account</Link>
+                  <Link to="/account"><UserCircle className="h-4 w-4" /> {t("nav.myAccount")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/my-huddle"><Bookmark className="h-4 w-4" /> My Huddle</Link>
+                  <Link to="/my-huddle"><Bookmark className="h-4 w-4" /> {t("nav.myHuddle")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/business/onboarding"><Plus className="h-4 w-4" /> List a business</Link>
+                  <Link to="/business/onboarding"><Plus className="h-4 w-4" /> {t("nav.listBusiness")}</Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link to="/admin"><ShieldCheck className="h-4 w-4" /> Admin panel</Link>
+                    <Link to="/admin"><ShieldCheck className="h-4 w-4" /> {t("nav.adminPanel")}</Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={async () => { await signOut(); navigate("/"); }}>
-                  <LogOut className="h-4 w-4" /> Sign out
+                  <LogOut className="h-4 w-4" /> {t("nav.signout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button asChild size="sm">
-              <Link to="/auth">Sign in</Link>
+              <Link to="/auth">{t("nav.signin")}</Link>
             </Button>
           )}
         </nav>
