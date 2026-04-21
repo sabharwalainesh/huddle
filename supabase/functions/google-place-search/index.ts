@@ -10,8 +10,40 @@ const BodySchema = z.object({
   lat: z.number().min(-90).max(90).optional().nullable(),
   lng: z.number().min(-180).max(180).optional().nullable(),
   radiusMeters: z.number().min(100).max(50000).optional().default(5000),
-  maxResults: z.number().min(1).max(10).optional().default(6),
+  maxResults: z.number().min(1).max(20).optional().default(20),
 });
+
+// Allowed primary types — local consumer-facing small businesses only.
+// Excludes schools, government, hospitals, transit, large chains' parent categories, etc.
+const ALLOWED_TYPES = new Set<string>([
+  // Food & drink
+  "restaurant", "cafe", "bakery", "bar", "meal_takeaway", "meal_delivery",
+  "coffee_shop", "ice_cream_shop", "sandwich_shop", "pizza_restaurant",
+  "breakfast_restaurant", "brunch_restaurant", "fast_food_restaurant",
+  "fine_dining_restaurant", "vegan_restaurant", "vegetarian_restaurant",
+  "juice_shop", "tea_house", "donut_shop", "bagel_shop", "dessert_shop",
+  "wine_bar", "pub", "brewery", "winery",
+  // Retail / shops
+  "store", "clothing_store", "shoe_store", "jewelry_store", "book_store",
+  "gift_shop", "florist", "furniture_store", "home_goods_store",
+  "hardware_store", "bicycle_store", "pet_store", "sporting_goods_store",
+  "toy_store", "convenience_store", "grocery_store", "supermarket",
+  "liquor_store", "thrift_store", "boutique",
+  // Personal services / wellness
+  "hair_salon", "barber_shop", "beauty_salon", "nail_salon", "spa",
+  "tattoo_parlor", "massage", "gym", "yoga_studio", "fitness_center",
+  // Professional / local services
+  "laundry", "dry_cleaner", "tailor", "shoe_repair", "key_locksmith",
+  "auto_repair", "car_wash", "pet_grooming", "veterinary_care",
+  // Entertainment small biz
+  "art_gallery", "art_studio", "music_venue", "bowling_alley",
+]);
+
+function isLocalBusiness(primaryType: string | null | undefined, types?: string[]): boolean {
+  if (primaryType && ALLOWED_TYPES.has(primaryType)) return true;
+  if (types && types.some((t) => ALLOWED_TYPES.has(t))) return true;
+  return false;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -37,6 +69,7 @@ Deno.serve(async (req) => {
       "places.rating",
       "places.userRatingCount",
       "places.primaryType",
+      "places.types",
       "places.googleMapsUri",
       "places.websiteUri",
       "places.nationalPhoneNumber",
@@ -46,9 +79,12 @@ Deno.serve(async (req) => {
     let url: string;
     let body: Record<string, unknown>;
 
+    // Over-fetch to compensate for filtering
+    const fetchCount = Math.min(20, (maxResults ?? 10) * 2);
+
     if (query && query.length > 0) {
       url = "https://places.googleapis.com/v1/places:searchText";
-      body = { textQuery: query, maxResultCount: maxResults };
+      body = { textQuery: query, maxResultCount: fetchCount };
       if (lat != null && lng != null) {
         body.locationBias = {
           circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
@@ -57,7 +93,7 @@ Deno.serve(async (req) => {
     } else if (lat != null && lng != null) {
       url = "https://places.googleapis.com/v1/places:searchNearby";
       body = {
-        maxResultCount: maxResults,
+        maxResultCount: fetchCount,
         locationRestriction: {
           circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
         },
@@ -87,7 +123,11 @@ Deno.serve(async (req) => {
     }
 
     const json = await res.json();
-    const places = (json.places ?? []).map((p: Record<string, unknown>) => {
+    const rawPlaces = (json.places ?? []) as Array<Record<string, unknown>>;
+    const filtered = rawPlaces.filter((p) =>
+      isLocalBusiness(p.primaryType as string | null, p.types as string[] | undefined),
+    );
+    const places = filtered.slice(0, maxResults).map((p) => {
       const photo = (p.photos as Array<{ name?: string }> | undefined)?.[0]?.name;
       const photoUrl = photo
         ? `https://places.googleapis.com/v1/${photo}/media?maxWidthPx=600&key=${apiKey}`
