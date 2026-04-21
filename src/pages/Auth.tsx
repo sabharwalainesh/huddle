@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Users } from "lucide-react";
+import { RecaptchaBox } from "@/components/RecaptchaBox";
 
 const signUpSchema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
@@ -29,6 +30,8 @@ const Auth = () => {
   const t = useT();
   const [loading, setLoading] = useState(false);
   const [ownsBusiness, setOwnsBusiness] = useState(false);
+  const [signInHuman, setSignInHuman] = useState(false);
+  const [signUpHuman, setSignUpHuman] = useState(false);
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
