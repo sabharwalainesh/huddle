@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Users } from "lucide-react";
+import { RecaptchaBox } from "@/components/RecaptchaBox";
 
 const signUpSchema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
@@ -29,6 +30,8 @@ const Auth = () => {
   const t = useT();
   const [loading, setLoading] = useState(false);
   const [ownsBusiness, setOwnsBusiness] = useState(false);
+  const [signInHuman, setSignInHuman] = useState(false);
+  const [signUpHuman, setSignUpHuman] = useState(false);
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
@@ -36,6 +39,10 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!signUpHuman) {
+      toast({ title: "Please confirm you're not a robot", variant: "destructive" });
+      return;
+    }
     const form = new FormData(e.currentTarget);
     const data = {
       email: String(form.get("email")),
@@ -75,6 +82,10 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!signInHuman) {
+      toast({ title: "Please confirm you're not a robot", variant: "destructive" });
+      return;
+    }
     const form = new FormData(e.currentTarget);
     const data = { email: String(form.get("email")), password: String(form.get("password")) };
     const parsed = signInSchema.safeParse(data);
@@ -123,7 +134,8 @@ const Auth = () => {
                     <Label htmlFor="si-password">{t("auth.password")}</Label>
                     <Input id="si-password" name="password" type="password" required />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <RecaptchaBox onVerifiedChange={setSignInHuman} />
+                  <Button type="submit" className="w-full" disabled={loading || !signInHuman}>
                     {loading ? t("auth.signingIn") : t("auth.signIn")}
                   </Button>
                 </form>
@@ -158,7 +170,8 @@ const Auth = () => {
                       </p>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <RecaptchaBox onVerifiedChange={setSignUpHuman} />
+                  <Button type="submit" className="w-full" disabled={loading || !signUpHuman}>
                     {loading ? t("auth.creating") : t("auth.createAccount")}
                   </Button>
                 </form>
