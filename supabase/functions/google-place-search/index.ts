@@ -95,6 +95,18 @@ Deno.serve(async (req) => {
       url = "https://places.googleapis.com/v1/places:searchNearby";
       body = {
         maxResultCount: fetchCount,
+        // Ask Google to only return small-business-friendly categories.
+        // This dramatically improves results in dense urban areas where
+        // generic nearby is dominated by large chains.
+        includedTypes: [
+          "restaurant", "cafe", "bakery", "bar", "coffee_shop", "ice_cream_shop",
+          "sandwich_shop", "pizza_restaurant", "dessert_shop", "wine_bar", "pub",
+          "clothing_store", "book_store", "gift_shop", "florist", "jewelry_store",
+          "shoe_store", "pet_store", "thrift_store", "boutique",
+          "hair_salon", "barber_shop", "beauty_salon", "nail_salon", "spa",
+          "tattoo_parlor", "yoga_studio", "art_gallery",
+        ],
+        rankPreference: "POPULARITY",
         locationRestriction: {
           circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters },
         },
