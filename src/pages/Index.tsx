@@ -318,6 +318,28 @@ const Index = () => {
                     <p className="font-medium mb-1">{t("home.noResults")}</p>
                     <p className="text-sm">{t("home.noResultsHint")}</p>
                   </Card>
+                ) : nearMe && coords && huddleByRange.inRange.length === 0 ? (
+                  <Card className="p-8 text-center space-y-4 border-dashed">
+                    <div className="mx-auto h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Navigation className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium">No Huddle businesses within {radiusMi} mi</p>
+                      <p className="text-sm text-muted-foreground">
+                        {huddleByRange.outOfRange.length > 0
+                          ? `${huddleByRange.outOfRange.length} are farther away. Try widening the radius or check Google for nearby places.`
+                          : "Try widening the radius or check Google for nearby places."}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <Button variant="outline" size="sm" onClick={() => setRadiusMi(Math.min(50, radiusMi + 10))}>
+                        Widen to {Math.min(50, radiusMi + 10)} mi
+                      </Button>
+                      <Button size="sm" onClick={() => setSource("google")} className="gap-1">
+                        Search Nearby on Google <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </Card>
                 ) : huddleSplit.matches.length > 0 ? (
                   <div className="space-y-6">
                     <div className="space-y-3">
@@ -326,7 +348,7 @@ const Index = () => {
                         Picked for you
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {huddleSplit.matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+                        {huddleSplit.matches.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
                       </div>
                     </div>
                     {huddleSplit.rest.length > 0 && (
@@ -337,14 +359,26 @@ const Index = () => {
                           <span className="h-px bg-border flex-1" />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                          {huddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} />)}
+                          {huddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
                         </div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {visible.map((b) => <BusinessCard key={b.id} b={b} />)}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {huddleVisible.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
+                    </div>
+                    {nearMe && coords && huddleByRange.outOfRange.length > 0 && (
+                      <Card className="p-4 flex flex-wrap items-center justify-between gap-3 bg-muted/30 border-dashed">
+                        <p className="text-sm text-muted-foreground">
+                          {huddleByRange.outOfRange.length} more {huddleByRange.outOfRange.length === 1 ? "business is" : "businesses are"} farther than {radiusMi} mi.
+                        </p>
+                        <Button size="sm" variant="outline" onClick={() => setSource("google")} className="gap-1">
+                          See Nearby on Google <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </Card>
+                    )}
                   </div>
                 )}
               </section>
