@@ -33,60 +33,70 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { business_id, name, address } = parsed.data;
+    const input = parsed.data as
+      | { business_id: string; name: string; address?: string | null }
+      | { place_id: string };
+    const byPlaceId = "place_id" in input;
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // 1. Check cache
-    const { data: cached } = await admin
-      .from("google_place_cache")
-      .select("*")
-      .eq("business_id", business_id)
-      .maybeSingle();
+    let resolvedPlaceId: string | null = null;
 
-    if (cached && cached.payload && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_TTL_MS) {
-      return new Response(JSON.stringify({ cached: true, ...cached.payload }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (byPlaceId) {
+      resolvedPlaceId = input.place_id;
+    } else {
+      const { data: cached } = await admin
+        .from("google_place_cache")
+        .select("*")
+        .eq("business_id", input.business_id)
+        .maybeSingle();
+
+      if (cached && cached.payload && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_TTL_MS) {
+        return new Response(JSON.stringify({ cached: true, ...cached.payload }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const query = input.address ? `${input.name} ${input.address}` : input.name;
+      const searchRes = await fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress",
+        },
+        body: JSON.stringify({ textQuery: query, maxResultCount: 1 }),
       });
+
+      if (!searchRes.ok) {
+        const txt = await searchRes.text();
+        return new Response(JSON.stringify({ error: `Google search failed: ${txt}` }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const searchJson = await searchRes.json();
+      resolvedPlaceId = searchJson.places?.[0]?.id ?? null;
+
+      if (!resolvedPlaceId) {
+        const payload = { found: false, reviews: [], rating: null, userRatingCount: 0 };
+        await admin.from("google_place_cache").upsert({
+          business_id: input.business_id,
+          place_id: null,
+          payload,
+          fetched_at: new Date().toISOString(),
+        }, { onConflict: "business_id" });
+        return new Response(JSON.stringify({ cached: false, ...payload }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    // 2. Text Search to find place_id (Places API New)
-    const query = address ? `${name} ${address}` : name;
-    const searchRes = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress",
-      },
-      body: JSON.stringify({ textQuery: query, maxResultCount: 1 }),
-    });
-
-    if (!searchRes.ok) {
-      const txt = await searchRes.text();
-      return new Response(JSON.stringify({ error: `Google search failed: ${txt}` }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const searchJson = await searchRes.json();
-    const place = searchJson.places?.[0];
-    if (!place?.id) {
-      const payload = { found: false, reviews: [], rating: null, userRatingCount: 0 };
-      await admin.from("google_place_cache").upsert({
-        business_id,
-        place_id: null,
-        payload,
-        fetched_at: new Date().toISOString(),
-      }, { onConflict: "business_id" });
-      return new Response(JSON.stringify({ cached: false, ...payload }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const place = { id: resolvedPlaceId! };
 
     // 3. Place Details for reviews
     const detailsRes = await fetch(`https://places.googleapis.com/v1/places/${place.id}`, {
