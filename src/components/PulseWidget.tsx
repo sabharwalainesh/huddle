@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useT } from "@/contexts/A11yContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -18,6 +19,7 @@ interface PulseRow {
 
 export const PulseWidget = () => {
   const [rows, setRows] = useState<PulseRow[]>([]);
+  const t = useT();
 
   const load = async () => {
     const { data } = await supabase.from("trending_pulse").select("*").limit(5);
@@ -26,8 +28,8 @@ export const PulseWidget = () => {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 30_000); // live refresh every 30s
-    return () => clearInterval(t);
+    const tm = setInterval(load, 30_000);
+    return () => clearInterval(tm);
   }, []);
 
   if (!rows.length) return null;
@@ -39,8 +41,8 @@ export const PulseWidget = () => {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Flame className="h-4 w-4 text-primary" />
-          Small Biz Pulse
-          <Badge variant="secondary" className="ml-auto text-xs">Last hour</Badge>
+          {t("pulse.title")}
+          <Badge variant="secondary" className="ml-auto text-xs">{t("pulse.lastHour")}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -55,7 +57,7 @@ export const PulseWidget = () => {
               <div className="flex items-center justify-between text-sm gap-3">
                 <span className="truncate font-medium group-hover:text-primary transition-colors">{r.name}</span>
                 <span className="text-xs text-muted-foreground shrink-0">
-                  {r.recent_check_ins} check-ins · {r.recent_bookmarks} saves
+                  {r.recent_check_ins} {t("pulse.checkIns")} · {r.recent_bookmarks} {t("pulse.saves")}
                 </span>
               </div>
               <div className="h-1.5 mt-1 bg-muted rounded-full overflow-hidden">

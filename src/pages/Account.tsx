@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useT } from "@/contexts/A11yContext";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,7 @@ const statusColor: Record<string, "secondary" | "default" | "destructive" | "out
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin } = useUserRoles();
+  const t = useT();
   const navigate = useNavigate();
   const [ownsBusiness, setOwnsBusiness] = useState(false);
   const [myBusinesses, setMyBusinesses] = useState<Business[]>([]);
@@ -68,8 +70,8 @@ const Account = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container max-w-3xl py-8 space-y-6">
-        <h1 className="text-2xl font-bold">Account</h1>
+      <main id="main" className="container max-w-3xl py-8 space-y-6">
+        <h1 className="text-2xl font-bold">{t("account.title")}</h1>
 
         {isAdmin && (
           <Card className="border-primary/40">
@@ -77,12 +79,12 @@ const Account = () => {
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <div>
-                  <p className="font-medium">You're an admin</p>
-                  <p className="text-xs text-muted-foreground">Review pending businesses and manage user roles.</p>
+                  <p className="font-medium">{t("account.adminBadge")}</p>
+                  <p className="text-xs text-muted-foreground">{t("account.adminHint")}</p>
                 </div>
               </div>
               <Button asChild size="sm">
-                <Link to="/admin">Open admin panel</Link>
+                <Link to="/admin">{t("account.openAdmin")}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -90,11 +92,11 @@ const Account = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Business owner</CardTitle>
-            <CardDescription>Toggle this if you own a local business you want to list on Huddle.</CardDescription>
+            <CardTitle>{t("account.businessOwner")}</CardTitle>
+            <CardDescription>{t("account.businessOwnerHint")}</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
-            <Label htmlFor="owns" className="cursor-pointer">I own a business</Label>
+            <Label htmlFor="owns" className="cursor-pointer">{t("account.iOwn")}</Label>
             <Switch id="owns" checked={ownsBusiness} onCheckedChange={toggleOwnership} />
           </CardContent>
         </Card>
@@ -103,20 +105,20 @@ const Account = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" /> My businesses</CardTitle>
-                <CardDescription>Pending listings are only visible to you and admins until approved.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" /> {t("account.myBusinesses")}</CardTitle>
+                <CardDescription>{t("account.myBusinessesHint")}</CardDescription>
               </div>
               <Button asChild size="sm" variant="outline">
-                <Link to="/business/onboarding"><Plus className="h-4 w-4" /> Add another</Link>
+                <Link to="/business/onboarding"><Plus className="h-4 w-4" /> {t("account.addAnother")}</Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-2">
               {loading ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
+                <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
               ) : myBusinesses.length === 0 ? (
                 <div className="text-center py-6 text-sm text-muted-foreground">
-                  No businesses yet.{" "}
-                  <Link to="/business/onboarding" className="text-primary underline">Start onboarding →</Link>
+                  {t("account.noBusinesses")}{" "}
+                  <Link to="/business/onboarding" className="text-primary underline">{t("account.startOnboarding")}</Link>
                 </div>
               ) : (
                 myBusinesses.map((b) => (
