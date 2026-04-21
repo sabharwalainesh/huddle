@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
 import { PulseWidget } from "@/components/PulseWidget";
+import { AttentionMap } from "@/components/AttentionMap";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,10 @@ const Index = () => {
         </div>
       </section>
 
-      <main id="main" className="container py-8 space-y-6">
+      <main id="main">
+        <AttentionMap />
+
+        <div className="container py-8 space-y-6">
         <Card className="p-4 shadow-card">
           <div className="grid gap-3 md:grid-cols-12 md:items-end">
             <div className="md:col-span-5 space-y-1.5">
@@ -140,6 +144,7 @@ const Index = () => {
           <aside className="lg:sticky lg:top-20">
             <PulseWidget />
           </aside>
+        </div>
         </div>
       </main>
     </div>
