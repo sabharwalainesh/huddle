@@ -2,3 +2,6 @@ project_id = "ijdqiguubxctdwdjeuge"
 
 [functions.huddle-bot]
 verify_jwt = false
+
+[functions.verify-business-doc]
+verify_jwt = true
