@@ -62,6 +62,8 @@ export const GooglePlaceCard = ({ p }: { p: GooglePlace }) => {
           websiteUri: p.websiteUri,
           primaryType: p.primaryType,
           photoUrl: p.photoUrl,
+          rating: p.rating,
+          userRatingCount: p.userRatingCount,
         },
       });
       if (error) throw error;
