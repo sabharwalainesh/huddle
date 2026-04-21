@@ -5,6 +5,7 @@ import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft, MapPinne
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -379,6 +380,7 @@ const BusinessDetail = () => {
           </CardContent>
         </Card>
       </main>
+      <Footer />
     </div>
   );
 };
