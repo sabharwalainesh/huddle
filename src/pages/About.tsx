@@ -113,6 +113,7 @@ const About = () => {
           </Card>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };

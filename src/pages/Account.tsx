@@ -217,6 +217,7 @@ const Account = () => {
           </Card>
         )}
       </main>
+      <Footer />
     </div>
   );
 };
