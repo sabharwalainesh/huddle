@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
-import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft, MapPinned, ShieldCheck } from "lucide-react";
+import { Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft, MapPinned, ShieldCheck, Star, ExternalLink, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
@@ -42,6 +42,44 @@ const BusinessDetail = () => {
   const [visitVerified, setVisitVerified] = useState(false);
   const [posting, setPosting] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
+
+  type GoogleReview = {
+    author: string;
+    authorUri: string | null;
+    authorPhoto: string | null;
+    rating: number;
+    text: string;
+    relativeTime: string;
+    publishTime: string;
+  };
+  type GoogleData = {
+    found: boolean;
+    rating: number | null;
+    userRatingCount: number;
+    googleMapsUri: string | null;
+    reviews: GoogleReview[];
+  };
+  const [googleData, setGoogleData] = useState<GoogleData | null>(null);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+
+  const fetchGoogleReviews = async () => {
+    if (!business) return;
+    setLoadingGoogle(true);
+    const { data, error } = await supabase.functions.invoke("google-place-reviews", {
+      body: { business_id: business.id, name: business.name, address: business.address },
+    });
+    setLoadingGoogle(false);
+    if (error) {
+      return toast({ title: "Couldn't load Google reviews", description: error.message, variant: "destructive" });
+    }
+    if (data?.error) {
+      return toast({ title: "Couldn't load Google reviews", description: String(data.error), variant: "destructive" });
+    }
+    setGoogleData(data as GoogleData);
+    if (!data?.found) {
+      toast({ title: "No Google match found for this business" });
+    }
+  };
 
   const checkIn = async () => {
     if (!user) { navigate("/auth"); return; }
