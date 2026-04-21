@@ -129,6 +129,18 @@ export const translations = {
     "common.save": "Save",
     "common.loading": "Loading...",
     "common.back": "Back",
+
+    // Map
+    "map.title": "Where attention is buzzing",
+    "map.subtitle": "A live heat map of trending and beloved local spots near you. Hover a dot to peek inside.",
+    "map.trending": "Trending now",
+    "map.popular": "All-time popular",
+    "map.locationLabel": "Location",
+    "map.locationPlaceholder": "City, ZIP, or address",
+    "map.go": "Go",
+    "map.useMyLocation": "Use my location",
+    "map.tokenMissing": "Map unavailable",
+    "map.noPinned": "No businesses have map locations yet — owners can add them in onboarding.",
   },
   es: {
     // Nav
@@ -258,6 +270,18 @@ export const translations = {
     "common.save": "Guardar",
     "common.loading": "Cargando...",
     "common.back": "Atrás",
+
+    // Map
+    "map.title": "Dónde se concentra la atención",
+    "map.subtitle": "Un mapa de calor en vivo de los lugares locales más populares y queridos cerca de ti. Pasa el cursor sobre un punto para ver detalles.",
+    "map.trending": "Tendencia ahora",
+    "map.popular": "Populares siempre",
+    "map.locationLabel": "Ubicación",
+    "map.locationPlaceholder": "Ciudad, código postal o dirección",
+    "map.go": "Ir",
+    "map.useMyLocation": "Usar mi ubicación",
+    "map.tokenMissing": "Mapa no disponible",
+    "map.noPinned": "Ningún negocio tiene ubicación en el mapa todavía — los dueños pueden agregarla en el registro.",
   },
 } as const;
 
