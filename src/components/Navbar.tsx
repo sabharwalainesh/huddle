@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, Sparkles, Eye } from "lucide-react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, Sparkles, Eye, ShieldCheck, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useA11y } from "@/contexts/A11yContext";
+import { useUserRoles } from "@/hooks/useUserRoles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import {
 export const Navbar = () => {
   const { user, signOut } = useAuth();
   const { highVisibility, toggleHighVisibility } = useA11y();
+  const { isAdmin } = useUserRoles();
   const navigate = useNavigate();
 
   return (
@@ -46,13 +48,21 @@ export const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button size="sm">Account</Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem asChild>
+                  <Link to="/account"><UserCircle className="h-4 w-4" /> My account</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/my-huddle"><Bookmark className="h-4 w-4" /> My Huddle</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/business/new"><Plus className="h-4 w-4" /> Add business</Link>
+                  <Link to="/business/onboarding"><Plus className="h-4 w-4" /> List a business</Link>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin"><ShieldCheck className="h-4 w-4" /> Admin panel</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={async () => { await signOut(); navigate("/"); }}>
                   <LogOut className="h-4 w-4" /> Sign out
