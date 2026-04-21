@@ -198,7 +198,10 @@ export const AttentionMap = () => {
       id: PT,
       type: "circle",
       source: SRC,
+      minzoom: 11,
       paint: {
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 10.5, 0, 11.5, 1],
+        "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 10.5, 0, 11.5, 1],
         "circle-radius": [
           "interpolate", ["linear"], ["zoom"],
           0, 5,
