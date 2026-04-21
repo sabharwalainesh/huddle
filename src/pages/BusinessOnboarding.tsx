@@ -114,6 +114,15 @@ const BusinessOnboarding = () => {
     // Mark profile so navbar/account pages know they're an owner
     await supabase.from("profiles").update({ owns_business: true }).eq("user_id", user.id);
 
+    // Geocode address in the background so the business appears on the heat map
+    if (id && parsed.data.address) {
+      supabase.functions
+        .invoke("geocode-address", { body: { business_id: id, address: parsed.data.address } })
+        .catch(() => {
+          /* silent — admin can fix later */
+        });
+    }
+
     setSubmitting(false);
     setStep("upload");
   };
