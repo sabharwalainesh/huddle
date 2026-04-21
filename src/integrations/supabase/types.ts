@@ -329,6 +329,33 @@ export type Database = {
           },
         ]
       }
+      user_preferences: {
+        Row: {
+          categories: string[]
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          vibes: string[]
+        }
+        Insert: {
+          categories?: string[]
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          vibes?: string[]
+        }
+        Update: {
+          categories?: string[]
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          vibes?: string[]
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
