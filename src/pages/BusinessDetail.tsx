@@ -124,6 +124,18 @@ const BusinessDetail = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  // Log a page view exactly once per business per page load (sessionStorage dedupe)
+  useEffect(() => {
+    if (!id) return;
+    const key = `huddle:view:${id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    supabase
+      .from("business_views")
+      .insert({ business_id: id, viewer_id: user?.id ?? null })
+      .then(() => { /* fire-and-forget */ });
+  }, [id, user?.id]);
+
   const toggleBookmark = async () => {
     if (!user) { navigate("/auth"); return; }
     if (!business) return;
