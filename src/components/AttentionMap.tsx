@@ -244,14 +244,24 @@ export const AttentionMap = () => {
     });
   };
 
-  // Render layers when data or style changes
+  // Render layers when data or style changes; auto-fit to data once
+  const fittedRef = useRef(false);
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (map.isStyleLoaded()) renderLayers();
-    else map.once("style.load", renderLayers);
+    const run = () => {
+      renderLayers();
+      if (!fittedRef.current && points.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        points.forEach((p) => bounds.extend([p.lng, p.lat]));
+        map.fitBounds(bounds, { padding: 60, maxZoom: 14, duration: 1200 });
+        fittedRef.current = true;
+      }
+    };
+    if (map.isStyleLoaded()) run();
+    else map.once("style.load", run);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featureCollection]);
+  }, [featureCollection, points]);
 
   const flyToCoords = (lng: number, lat: number) => {
     mapRef.current?.flyTo({ center: [lng, lat], zoom: 13, speed: 1.4, curve: 1.6, essential: true });
