@@ -281,7 +281,7 @@ const BusinessOnboarding = () => {
       );
     }
     return (
-      <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+      <p className="text-[11px] text-destructive flex items-center gap-1">
         <AlertTriangle className="h-3 w-3" />
         Changed from Google — this can slow approval
       </p>
