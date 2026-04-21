@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
+import { GooglePlaceCard, type GooglePlace } from "@/components/GooglePlaceCard";
 import { PulseWidget } from "@/components/PulseWidget";
 import { AttentionMap } from "@/components/AttentionMap";
 import { Input } from "@/components/ui/input";
@@ -11,12 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
 import { useT } from "@/contexts/A11yContext";
 import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@/lib/sorting";
 import type { TranslationKey } from "@/lib/i18n";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
+const RESULTS_PER_SECTION = 3;
 
 const Index = () => {
   const t = useT();
@@ -27,6 +30,13 @@ const Index = () => {
   const [minRating, setMinRating] = useState(0);
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<SortKey>("rating");
+  const [source, setSource] = useState<"huddle" | "google">("huddle");
+
+  // Google nearby/search state
+  const [googlePlaces, setGooglePlaces] = useState<GooglePlace[]>([]);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoDenied, setGeoDenied] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -40,10 +50,55 @@ const Index = () => {
     })();
   }, []);
 
+  // Request geolocation when user first switches to Google source
+  useEffect(() => {
+    if (source !== "google" || coords || geoDenied) return;
+    if (!navigator.geolocation) {
+      setGeoDenied(true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => setGeoDenied(true),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 },
+    );
+  }, [source, coords, geoDenied]);
+
+  // Fetch Google places when in google source: on query change (debounced) or coords arrival
+  useEffect(() => {
+    if (source !== "google") return;
+    const trimmed = query.trim();
+    if (!trimmed && !coords) return;
+
+    const handle = setTimeout(async () => {
+      setGoogleLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("google-place-search", {
+          body: {
+            query: trimmed || null,
+            lat: coords?.lat ?? null,
+            lng: coords?.lng ?? null,
+            maxResults: RESULTS_PER_SECTION,
+          },
+        });
+        if (error) throw error;
+        setGooglePlaces(((data as { places?: GooglePlace[] })?.places ?? []).slice(0, RESULTS_PER_SECTION));
+      } catch (e) {
+        toast({ title: "Google search failed", description: (e as Error).message, variant: "destructive" });
+        setGooglePlaces([]);
+      } finally {
+        setGoogleLoading(false);
+      }
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [source, query, coords]);
+
   const visible = useMemo(
     () => sortBusinesses(filterBusinesses(businesses, { query, category, minRating, openNow }), sort),
     [businesses, query, category, minRating, openNow, sort],
   );
+
+  const huddleSlice = source === "huddle" ? visible : visible.slice(0, RESULTS_PER_SECTION);
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,11 +170,35 @@ const Index = () => {
               <Label htmlFor="open" className="text-xs cursor-pointer">{t("home.openNow")}</Label>
             </div>
           </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t">
+            <ToggleGroup
+              type="single"
+              value={source}
+              onValueChange={(v) => v && setSource(v as "huddle" | "google")}
+              className="bg-muted/50 rounded-md p-1"
+            >
+              <ToggleGroupItem value="huddle" size="sm" className="data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                On Huddle
+              </ToggleGroupItem>
+              <ToggleGroupItem value="google" size="sm" className="data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                Nearby on Google
+              </ToggleGroupItem>
+            </ToggleGroup>
+            {source === "google" && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {coords ? "Using your location" : geoDenied ? "Location unavailable — type to search" : "Requesting location…"}
+              </p>
+            )}
+          </div>
         </Card>
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {loading ? t("home.loading") : `${visible.length} ${visible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}`}
+            {source === "huddle"
+              ? loading ? t("home.loading") : `${visible.length} ${visible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}`
+              : googleLoading ? "Searching Google…" : `${googlePlaces.length} nearby on Google`}
           </p>
           {(query || category !== "all" || minRating > 0 || openNow) && (
             <Button variant="ghost" size="sm" onClick={() => { setQuery(""); setCategory("all"); setMinRating(0); setOpenNow(false); }}>
@@ -129,16 +208,49 @@ const Index = () => {
         </div>
 
         <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
-          <div className="space-y-5">
-            {!loading && visible.length === 0 ? (
-              <Card className="p-12 text-center text-muted-foreground">
-                <p className="font-medium mb-1">{t("home.noResults")}</p>
-                <p className="text-sm">{t("home.noResultsHint")}</p>
-              </Card>
+          <div className="space-y-8">
+            {source === "huddle" ? (
+              <section aria-labelledby="huddle-heading" className="space-y-3">
+                <h2 id="huddle-heading" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  On Huddle
+                </h2>
+                {!loading && huddleSlice.length === 0 ? (
+                  <Card className="p-12 text-center text-muted-foreground">
+                    <p className="font-medium mb-1">{t("home.noResults")}</p>
+                    <p className="text-sm">{t("home.noResultsHint")}</p>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {huddleSlice.map((b) => <BusinessCard key={b.id} b={b} />)}
+                  </div>
+                )}
+              </section>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {visible.map((b) => <BusinessCard key={b.id} b={b} />)}
-              </div>
+              <section aria-labelledby="google-heading" className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 id="google-heading" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    Nearby on Google
+                  </h2>
+                  <span className="text-[10px] text-muted-foreground">Powered by Google</span>
+                </div>
+                {googleLoading ? (
+                  <Card className="p-12 text-center text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
+                    <p className="text-sm">Searching Google Places…</p>
+                  </Card>
+                ) : googlePlaces.length === 0 ? (
+                  <Card className="p-12 text-center text-muted-foreground">
+                    <p className="font-medium mb-1">No Google results yet</p>
+                    <p className="text-sm">
+                      {geoDenied && !query ? "Type a search to find places on Google." : "Try a different search."}
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {googlePlaces.map((p) => <GooglePlaceCard key={p.place_id} p={p} />)}
+                  </div>
+                )}
+              </section>
             )}
           </div>
           <aside className="lg:sticky lg:top-20">
