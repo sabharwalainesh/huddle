@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Users } from "lucide-react";
+import { Users, MapPin, Star, ArrowRight } from "lucide-react";
 import { RecaptchaBox } from "@/components/RecaptchaBox";
 
 const signUpSchema = z.object({
@@ -107,78 +106,193 @@ const Auth = () => {
   };
 
   return (
-    <main id="main" className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-2 mb-6 text-primary-foreground">
-          <Users className="h-7 w-7" />
-          <span className="text-2xl font-bold">Huddle</span>
+    <main id="main" className="min-h-[100dvh] bg-background flex">
+      {/* Left panel — branding */}
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-gradient-hero flex-col justify-between p-14">
+        {/* Ambient blobs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/10 blur-[80px] -translate-y-1/3 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white/8 blur-[60px] translate-y-1/4 -translate-x-1/4" />
+        </div>
+
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2.5 text-primary-foreground relative z-10">
+          <div className="h-9 w-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
+            <Users className="h-4.5 w-4.5" strokeWidth={2} />
+          </div>
+          <span className="text-xl font-bold tracking-tight">Huddle</span>
         </Link>
-        <Card className="shadow-elegant">
-          <CardHeader>
-            <CardTitle>{t("auth.welcome")}</CardTitle>
-            <CardDescription>{t("auth.subtitle")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="signin">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
-                <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="si-email">{t("auth.email")}</Label>
-                    <Input id="si-email" name="email" type="email" required />
+
+        {/* Tagline */}
+        <div className="relative z-10 space-y-6 text-primary-foreground">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight leading-[1.1]">
+            Your neighborhood,<br />all in one place.
+          </h2>
+          <p className="text-base opacity-80 leading-relaxed max-w-sm">
+            Discover, review, and support the local businesses that make your block worth living on.
+          </p>
+
+          {/* Mini stat pills */}
+          <div className="flex flex-wrap gap-2.5 pt-2">
+            {[
+              { icon: MapPin, label: "2,847 local businesses" },
+              { icon: Star, label: "14k+ real reviews" },
+            ].map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-3.5 py-1.5 text-sm font-medium"
+              >
+                <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Mobile logo */}
+          <Link to="/" className="flex items-center gap-2 font-bold text-base lg:hidden">
+            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
+              <Users className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+            </div>
+            <span className="tracking-tight">Huddle</span>
+          </Link>
+
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight">{t("auth.welcome")}</h1>
+            <p className="text-sm text-muted-foreground">{t("auth.subtitle")}</p>
+          </div>
+
+          <Tabs defaultValue="signin" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 rounded-full p-1 h-11 bg-muted/60 border border-border/50">
+              <TabsTrigger
+                value="signin"
+                className="rounded-full text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)]"
+              >
+                {t("auth.signIn")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="signup"
+                className="rounded-full text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)]"
+              >
+                {t("auth.signUp")}
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Sign In */}
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="si-email" className="text-sm font-medium">{t("auth.email")}</Label>
+                  <Input
+                    id="si-email"
+                    name="email"
+                    type="email"
+                    required
+                    className="rounded-xl h-11"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="si-password" className="text-sm font-medium">{t("auth.password")}</Label>
+                  <Input
+                    id="si-password"
+                    name="password"
+                    type="password"
+                    required
+                    className="rounded-xl h-11"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <RecaptchaBox onVerifiedChange={setSignInHuman} />
+                <Button
+                  type="submit"
+                  className="w-full rounded-full h-11 pl-6 pr-2 gap-3 group transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+                  disabled={loading || !signInHuman}
+                >
+                  {loading ? t("auth.signingIn") : t("auth.signIn")}
+                  {!loading && (
+                    <span className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105 ml-auto">
+                      <ArrowRight className="h-3 w-3" strokeWidth={2} />
+                    </span>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+
+            {/* Sign Up */}
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="su-name" className="text-sm font-medium">{t("auth.displayName")}</Label>
+                  <Input
+                    id="su-name"
+                    name="displayName"
+                    required
+                    maxLength={50}
+                    className="rounded-xl h-11"
+                    placeholder="Your name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="su-email" className="text-sm font-medium">{t("auth.email")}</Label>
+                  <Input
+                    id="su-email"
+                    name="email"
+                    type="email"
+                    required
+                    className="rounded-xl h-11"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="su-password" className="text-sm font-medium">{t("auth.password")}</Label>
+                  <Input
+                    id="su-password"
+                    name="password"
+                    type="password"
+                    required
+                    minLength={8}
+                    className="rounded-xl h-11"
+                    placeholder="8+ characters"
+                  />
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/30 p-4">
+                  <Checkbox
+                    id="owns-business"
+                    checked={ownsBusiness}
+                    onCheckedChange={(c) => setOwnsBusiness(Boolean(c))}
+                    className="mt-0.5"
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="owns-business" className="cursor-pointer font-medium text-sm">
+                      {t("auth.ownsBusiness")}
+                    </Label>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {t("auth.ownsBusinessHint")}
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="si-password">{t("auth.password")}</Label>
-                    <Input id="si-password" name="password" type="password" required />
-                  </div>
-                  <RecaptchaBox onVerifiedChange={setSignInHuman} />
-                  <Button type="submit" className="w-full" disabled={loading || !signInHuman}>
-                    {loading ? t("auth.signingIn") : t("auth.signIn")}
-                  </Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="su-name">{t("auth.displayName")}</Label>
-                    <Input id="su-name" name="displayName" required maxLength={50} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="su-email">{t("auth.email")}</Label>
-                    <Input id="su-email" name="email" type="email" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="su-password">{t("auth.password")}</Label>
-                    <Input id="su-password" name="password" type="password" required minLength={8} />
-                  </div>
-                  <div className="flex items-start gap-3 rounded-md border p-3 bg-muted/30">
-                    <Checkbox
-                      id="owns-business"
-                      checked={ownsBusiness}
-                      onCheckedChange={(c) => setOwnsBusiness(Boolean(c))}
-                      className="mt-0.5"
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="owns-business" className="cursor-pointer font-medium">
-                        {t("auth.ownsBusiness")}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {t("auth.ownsBusinessHint")}
-                      </p>
-                    </div>
-                  </div>
-                  <RecaptchaBox onVerifiedChange={setSignUpHuman} />
-                  <Button type="submit" className="w-full" disabled={loading || !signUpHuman}>
-                    {loading ? t("auth.creating") : t("auth.createAccount")}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                </div>
+                <RecaptchaBox onVerifiedChange={setSignUpHuman} />
+                <Button
+                  type="submit"
+                  className="w-full rounded-full h-11 pl-6 pr-2 gap-3 group transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+                  disabled={loading || !signUpHuman}
+                >
+                  {loading ? t("auth.creating") : t("auth.createAccount")}
+                  {!loading && (
+                    <span className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105 ml-auto">
+                      <ArrowRight className="h-3 w-3" strokeWidth={2} />
+                    </span>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </main>
   );

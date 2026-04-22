@@ -4,7 +4,6 @@ import { Send, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useA11y, useT } from "@/contexts/A11yContext";
 import { Navbar } from "@/components/Navbar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -32,7 +31,6 @@ const Ask = () => {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Reset greeting when language changes
   useEffect(() => {
     setMessages([{ role: "assistant", content: t("ask.greeting") }]);
   }, [t]);
@@ -76,24 +74,40 @@ const Ask = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[100dvh] bg-background flex flex-col">
       <Navbar />
       <main id="main" className="container max-w-3xl flex-1 flex flex-col py-6 gap-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold">{t("ask.title")}</h1>
+
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Sparkles className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight leading-tight">{t("ask.title")}</h1>
+            <p className="text-xs text-muted-foreground">Powered by local data</p>
+          </div>
         </div>
 
-        <Card className="flex-1 flex flex-col overflow-hidden shadow-card">
-          <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Chat window — outer shell */}
+        <div className="flex-1 flex flex-col p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] min-h-0">
+          {/* Inner core */}
+          <div className="flex-1 rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] flex flex-col overflow-hidden min-h-0">
+
+            {/* Messages */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 min-h-0">
               {messages.map((m, i) => (
                 <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                  {m.role === "assistant" && (
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mr-2.5 mt-0.5">
+                      <Sparkles className="h-3 w-3 text-primary" strokeWidth={1.5} />
+                    </div>
+                  )}
                   <div
                     className={
                       m.role === "user"
-                        ? "max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2 text-sm"
-                        : "max-w-[85%] rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-sm prose prose-sm dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-a:text-primary"
+                        ? "max-w-[80%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2.5 text-sm leading-relaxed"
+                        : "max-w-[80%] rounded-2xl rounded-bl-sm bg-muted/60 border border-border/40 px-4 py-2.5 text-sm prose prose-sm dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-a:text-primary leading-relaxed"
                     }
                   >
                     {m.role === "assistant" ? <ReactMarkdown>{m.content}</ReactMarkdown> : m.content}
@@ -101,21 +115,26 @@ const Ask = () => {
                 </div>
               ))}
               {loading && (
-                <div className="flex justify-start">
-                  <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-sm flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("ask.thinking")}
+                <div className="flex justify-start items-start gap-2.5">
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="h-3 w-3 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div className="rounded-2xl rounded-bl-sm bg-muted/60 border border-border/40 px-4 py-2.5 text-sm flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">{t("ask.thinking")}</span>
                   </div>
                 </div>
               )}
             </div>
 
+            {/* Suggestion pills */}
             {messages.length <= 1 && (
-              <div className="px-4 pb-2 flex flex-wrap gap-2">
+              <div className="px-5 pb-3 flex flex-wrap gap-2">
                 {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="text-xs rounded-full border px-3 py-1 hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="text-xs rounded-full border border-border/60 bg-muted/40 px-3.5 py-1.5 font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]"
                   >
                     {s}
                   </button>
@@ -123,9 +142,10 @@ const Ask = () => {
               </div>
             )}
 
+            {/* Input */}
             <form
               onSubmit={(e) => { e.preventDefault(); send(input); }}
-              className="border-t p-3 flex gap-2"
+              className="border-t border-border/60 p-3 flex gap-2"
             >
               <Input
                 value={input}
@@ -133,13 +153,20 @@ const Ask = () => {
                 placeholder={t("ask.placeholder")}
                 disabled={loading}
                 aria-label={t("ask.title")}
+                className="rounded-full border-border/50 text-sm"
               />
-              <Button type="submit" disabled={loading || !input.trim()} size="icon" aria-label={t("ask.send")}>
-                <Send className="h-4 w-4" />
+              <Button
+                type="submit"
+                disabled={loading || !input.trim()}
+                size="icon"
+                aria-label={t("ask.send")}
+                className="rounded-full shrink-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.95]"
+              >
+                <Send className="h-4 w-4" strokeWidth={1.5} />
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
     </div>
   );

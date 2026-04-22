@@ -9,13 +9,10 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BusinessCard } from "@/components/BusinessCard";
 import { PreferencesBanner } from "@/components/PreferencesBanner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { hasAnyPrefs, scoreBusiness, type UserPreferences } from "@/lib/preferences";
 import type { Business } from "@/lib/sorting";
 
-// Bookmark-only matcher (existing behavior) — used as a fallback when the user
-// has no explicit preferences set yet.
 const huddleMatch = (saved: Business[], all: Business[]): Business[] => {
   if (!saved.length) return [];
   const counts = new Map<string, number>();
@@ -33,8 +30,6 @@ const huddleMatch = (saved: Business[], all: Business[]): Business[] => {
     .map((x) => x.b);
 };
 
-// Preference-driven matcher: rank unsaved businesses by how well they match prefs,
-// breaking ties with rating. Returns top N.
 const prefsMatch = (
   saved: Business[],
   all: Business[],
@@ -87,8 +82,6 @@ const MyHuddle = () => {
   const { prefs } = useUserPreferences();
   const personalize = hasAnyPrefs(prefs);
 
-  // Prefer preference-based matching when the user set them; otherwise fall
-  // back to "based on what you've saved".
   const matches = useMemo(() => {
     if (personalize) return prefsMatch(saved, all, prefs, 6);
     return huddleMatch(saved, all);
@@ -97,22 +90,40 @@ const MyHuddle = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main id="main" className="container py-8 space-y-8">
+      <main id="main" className="container py-10 space-y-10 flex-1">
         <PreferencesBanner />
 
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <BookmarkCheck className="h-5 w-5 text-primary" />
-            <h1 className="text-2xl font-bold">{t("huddle.title")}</h1>
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <BookmarkCheck className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
           </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight leading-tight">{t("huddle.title")}</h1>
+            <p className="text-xs text-muted-foreground">{saved.length} saved {saved.length === 1 ? "place" : "places"}</p>
+          </div>
+        </div>
+
+        {/* Saved businesses */}
+        <section>
           {loading ? (
-            <p className="text-muted-foreground">{t("common.loading")}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-[1.5rem] bg-muted/40 border border-border/40 aspect-[4/3] animate-pulse" />
+              ))}
+            </div>
           ) : saved.length === 0 ? (
-            <Card><CardContent className="p-8 text-center text-muted-foreground">
-              {t("huddle.empty")}
-            </CardContent></Card>
+            <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+              <div className="rounded-[calc(1.5rem-5px)] bg-background p-12 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <div className="h-12 w-12 rounded-2xl bg-muted mx-auto flex items-center justify-center mb-4">
+                  <BookmarkCheck className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                </div>
+                <p className="font-medium text-foreground mb-1">{t("huddle.empty")}</p>
+                <p className="text-sm text-muted-foreground">Browse Discover to start saving places.</p>
+              </div>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {saved.map((b) => <BusinessCard key={b.id} b={b} />)}
@@ -120,26 +131,35 @@ const MyHuddle = () => {
           )}
         </section>
 
+        {/* Picks for you */}
         {matches.length > 0 && (
           <section>
-            <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  {personalize ? "Picked for your vibe" : t("huddle.matchTitle")}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {personalize
-                    ? "Based on the categories and vibes you set in your preferences."
-                    : t("huddle.matchHint")}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+            <div className="p-[5px] rounded-[1.75rem] bg-gradient-to-br from-primary/6 to-accent/5 border border-primary/12">
+              <div className="rounded-[calc(1.75rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <div className="px-7 pt-7 pb-5 border-b border-border/60">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Sparkles className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold tracking-tight">
+                        {personalize ? "Picked for your vibe" : t("huddle.matchTitle")}
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        {personalize
+                          ? "Based on your preferences and saved places."
+                          : t("huddle.matchHint")}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="p-7">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
         )}
       </main>

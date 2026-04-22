@@ -157,12 +157,19 @@ const Discover = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <section className="bg-gradient-hero text-primary-foreground">
-        <div className="container py-12 md:py-16 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold mb-3">{t("home.heroTitle")}</h1>
-          <p className="text-base md:text-lg opacity-90 max-w-xl mx-auto">
-            {t("home.heroSubtitle")}
-          </p>
+      <section className="relative overflow-hidden border-b">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-accent/8" />
+        <div className="container py-14 md:py-20">
+          <div className="max-w-2xl space-y-3">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
+              Explore your area
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground">{t("home.heroTitle")}</h1>
+            <p className="text-base md:text-lg text-muted-foreground max-w-xl leading-relaxed">
+              {t("home.heroSubtitle")}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -172,7 +179,7 @@ const Discover = () => {
 
         <div className="container py-8 space-y-6">
         <PreferencesBanner />
-        <Card className="p-4 shadow-card">
+        <Card className="p-4 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.06)] rounded-2xl border-border/60">
           <div className="grid gap-3 md:grid-cols-12 md:items-end">
             <div className="md:col-span-5 space-y-1.5">
               <Label htmlFor="search" className="text-xs">{t("home.search")}</Label>
