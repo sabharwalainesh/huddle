@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/StarRating";
 import { formatMiles } from "@/lib/geo";
@@ -8,9 +8,10 @@ import type { Business } from "@/lib/sorting";
 interface BusinessCardProps {
   b: Business;
   distanceMi?: number | null;
+  reason?: string | null;
 }
 
-export const BusinessCard = ({ b, distanceMi }: BusinessCardProps) => (
+export const BusinessCard = ({ b, distanceMi, reason }: BusinessCardProps) => (
   <Link to={`/business/${b.id}`} className="block group">
     {/* Outer shell */}
     <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
@@ -61,8 +62,15 @@ export const BusinessCard = ({ b, distanceMi }: BusinessCardProps) => (
               {b.address}
             </p>
           )}
+          {reason && (
+            <p className="text-[11px] text-primary/90 flex items-start gap-1.5 leading-snug pt-1 border-t border-border/40 mt-1">
+              <Sparkles className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
+              <span className="line-clamp-2">{reason}</span>
+            </p>
+          )}
         </div>
       </div>
     </div>
   </Link>
 );
+
