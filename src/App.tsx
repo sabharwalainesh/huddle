@@ -11,6 +11,7 @@ import Landing from "./pages/Landing.tsx";
 import Discover from "./pages/Discover.tsx";
 import Auth from "./pages/Auth.tsx";
 import BusinessDetail from "./pages/BusinessDetail.tsx";
+import GooglePlaceDetail from "./pages/GooglePlaceDetail.tsx";
 import BusinessOnboarding from "./pages/BusinessOnboarding.tsx";
 import MyHuddle from "./pages/MyHuddle.tsx";
 import Account from "./pages/Account.tsx";
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/account" element={<Account />} />
                 <Route path="/business/onboarding" element={<BusinessOnboarding />} />
                 <Route path="/business/:id" element={<BusinessDetail />} />
+                <Route path="/google/:placeId" element={<GooglePlaceDetail />} />
                 <Route path="/my-huddle" element={<MyHuddle />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/ask" element={<Ask />} />
