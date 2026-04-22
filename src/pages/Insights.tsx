@@ -139,7 +139,39 @@ const Insights = () => {
     }
   };
 
-  const exportFullReport = () => {
+  const generateHealth = async () => {
+    if (!selectedBusiness || !selectedStats) return;
+    setHealthLoading(true);
+    setHealth(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("insights-summary", {
+        body: {
+          mode: "health",
+          business: {
+            name: selectedBusiness.name,
+            category: selectedBusiness.category,
+            avg_rating: Number(selectedBusiness.avg_rating),
+            review_count: selectedBusiness.review_count,
+            total_views: selectedStats.total_views,
+            unique_viewers: selectedStats.unique_viewers,
+            views_30d: selectedStats.views_30d,
+            total_bookmarks: selectedStats.total_bookmarks,
+            total_check_ins: selectedStats.total_check_ins,
+            check_ins_30d: selectedStats.check_ins_30d,
+          },
+          recent_reviews: selectedReviews.slice(0, 5).map((r) => ({ rating: r.rating, comment: r.comment })),
+        },
+      });
+      if (error) throw error;
+      const d = data as { summary?: string; health_score?: number };
+      setHealth({ score: d.health_score ?? 0, narrative: d.summary ?? "" });
+    } catch (e) {
+      toast({ title: "Couldn't generate health score", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setHealthLoading(false);
+    }
+  };
+
     if (!selectedBusiness || !selectedStats) return;
     const rows: Record<string, string | number | null | undefined>[] = [
       { section: "Business", field: "name", value: selectedBusiness.name },
