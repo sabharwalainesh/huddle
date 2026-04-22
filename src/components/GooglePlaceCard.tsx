@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MapPin, ExternalLink, Loader2, Plus, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -109,33 +109,44 @@ export const GooglePlaceCard = ({ p }: { p: GooglePlace }) => {
     }
   };
 
+  const detailHref = `/google/${encodeURIComponent(p.place_id)}`;
+
   return (
-    <Card className="overflow-hidden shadow-card flex flex-col">
-      <div className="aspect-[16/10] bg-muted overflow-hidden">
-        {p.photoUrl ? (
-          <img src={p.photoUrl} alt={`${p.name} on Google`} loading="lazy" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-primary opacity-60" />
-        )}
-      </div>
-      <CardContent className="p-4 space-y-2 flex-1 flex flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold leading-tight">{p.name}</h3>
-          <Badge variant="outline" className="shrink-0 text-[10px]">Google</Badge>
+    <Card className="overflow-hidden shadow-card flex flex-col group transition-all duration-300 hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
+      <Link to={detailHref} className="block" aria-label={`View details for ${p.name}`}>
+        <div className="aspect-[16/10] bg-muted overflow-hidden">
+          {p.photoUrl ? (
+            <img
+              src={p.photoUrl}
+              alt={`${p.name} on Google`}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-primary opacity-60" />
+          )}
         </div>
-        {p.rating != null && (
-          <div className="flex items-center gap-2 text-sm">
-            <StarRating value={Number(p.rating)} size={14} />
-            <span className="text-muted-foreground">
-              {Number(p.rating).toFixed(1)} · {p.userRatingCount} on Google
-            </span>
+      </Link>
+      <CardContent className="p-4 space-y-2 flex-1 flex flex-col">
+        <Link to={detailHref} className="space-y-2 block hover:text-foreground">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-semibold leading-tight group-hover:text-primary transition-colors">{p.name}</h3>
+            <Badge variant="outline" className="shrink-0 text-[10px]">Google</Badge>
           </div>
-        )}
-        {p.address && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1 line-clamp-2">
-            <MapPin className="h-3 w-3 shrink-0" /> {p.address}
-          </p>
-        )}
+          {p.rating != null && (
+            <div className="flex items-center gap-2 text-sm">
+              <StarRating value={Number(p.rating)} size={14} />
+              <span className="text-muted-foreground">
+                {Number(p.rating).toFixed(1)} · {p.userRatingCount} on Google
+              </span>
+            </div>
+          )}
+          {p.address && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 line-clamp-2">
+              <MapPin className="h-3 w-3 shrink-0" /> {p.address}
+            </p>
+          )}
+        </Link>
         <div className="flex items-center gap-2 pt-2">
           <Button size="sm" onClick={handleImport} disabled={importing} className="flex-1">
             {importing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
