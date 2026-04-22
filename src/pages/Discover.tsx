@@ -28,7 +28,7 @@ import type { TranslationKey } from "@/lib/i18n";
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
 const GOOGLE_MAX_RESULTS = 20;
 
-const Index = () => {
+const Discover = () => {
   const t = useT();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -448,4 +448,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Discover;
