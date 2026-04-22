@@ -312,6 +312,12 @@ const BusinessDetail = () => {
           </CardContent>
         </Card>
 
+        <ReviewThemes
+          businessId={business.id}
+          businessName={business.name}
+          reviews={reviews.map((r) => ({ rating: r.rating, comment: r.comment }))}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
