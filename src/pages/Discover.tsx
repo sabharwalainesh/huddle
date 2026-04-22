@@ -23,6 +23,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { partitionByPrefs, partitionGoogleByPrefs, hasAnyPrefs } from "@/lib/preferences";
 import { type Business, type SortKey, filterBusinesses, sortBusinesses } from "@/lib/sorting";
 import { distanceToBusinessMi } from "@/lib/geo";
+import { whyThisPlace } from "@/lib/whyThisPlace";
 import type { TranslationKey } from "@/lib/i18n";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
@@ -49,13 +50,21 @@ const Discover = () => {
   const [nearMe, setNearMe] = useState(true);
   const [radiusMi, setRadiusMi] = useState(10);
 
+  const [trendingIds, setTrendingIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.from("businesses").select("*").limit(500);
-      if (error) {
-        toast({ title: t("home.couldntLoad"), description: error.message, variant: "destructive" });
+      const [bRes, tRes] = await Promise.all([
+        supabase.from("businesses").select("*").limit(500),
+        supabase.from("trending_pulse").select("business_id").limit(20),
+      ]);
+      if (bRes.error) {
+        toast({ title: t("home.couldntLoad"), description: bRes.error.message, variant: "destructive" });
       } else {
-        setBusinesses(data ?? []);
+        setBusinesses(bRes.data ?? []);
+      }
+      if (tRes.data) {
+        setTrendingIds(new Set(tRes.data.map((r) => r.business_id).filter((x): x is string => !!x)));
       }
       setLoading(false);
     })();
@@ -358,7 +367,17 @@ const Discover = () => {
                         Picked for you
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {huddleSplit.matches.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
+                        {huddleSplit.matches.map((b) => {
+                          const dist = distanceFor(b);
+                          return (
+                            <BusinessCard
+                              key={b.id}
+                              b={b}
+                              distanceMi={dist}
+                              reason={whyThisPlace(b, { prefs, trendingIds, distanceMi: dist })}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                     {huddleSplit.rest.length > 0 && (
