@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -66,10 +66,7 @@ const Insights = () => {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const { data: biz } = await supabase
-        .from("businesses")
-        .select("*")
-        .eq("owner_id", user.id);
+      const { data: biz } = await supabase.from("businesses").select("*").eq("owner_id", user.id);
       const ownedIds = (biz ?? []).map((b) => b.id);
       if (!ownedIds.length) {
         setBusinesses([]); setStats([]); setReviews([]); setViews([]);
@@ -149,8 +146,6 @@ const Insights = () => {
       { section: "Business", field: "address", value: selectedBusiness.address ?? "" },
       { section: "Business", field: "phone", value: selectedBusiness.phone ?? "" },
       { section: "Business", field: "website", value: selectedBusiness.website ?? "" },
-      { section: "Business", field: "description", value: selectedBusiness.description ?? "" },
-      { section: "Business", field: "tags", value: (selectedBusiness.tags ?? []).join("; ") },
       { section: "Stats", field: "total_views", value: selectedStats.total_views },
       { section: "Stats", field: "unique_viewers", value: selectedStats.unique_viewers },
       { section: "Stats", field: "views_30d", value: selectedStats.views_30d },
@@ -180,30 +175,45 @@ const Insights = () => {
   if (!user) return <Navigate to="/auth" replace />;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main id="main" className="container py-8 space-y-6">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold">Your Insights</h1>
+      <main id="main" className="container py-10 space-y-6 flex-1">
+
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <BarChart3 className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight leading-tight">Your Insights</h1>
+            <p className="text-xs text-muted-foreground">Performance data for your businesses</p>
+          </div>
         </div>
 
         {loading ? (
-          <p className="text-muted-foreground">Loading…</p>
+          <div className="flex items-center gap-2 text-muted-foreground text-sm py-8">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading your data…
+          </div>
         ) : businesses.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center space-y-3">
+          <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+            <div className="rounded-[calc(1.5rem-5px)] bg-background p-12 text-center space-y-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
               <p className="text-muted-foreground">You don't have any businesses listed yet.</p>
-              <Button asChild><a href="/business/onboarding">List your business</a></Button>
-            </CardContent>
-          </Card>
+              <Button
+                asChild
+                className="rounded-full px-6"
+              >
+                <a href="/business/onboarding">List your business</a>
+              </Button>
+            </div>
+          </div>
         ) : (
-          <>
+          <div className="space-y-6">
             {businesses.length > 1 && (
               <div className="max-w-sm">
                 <Select value={selectedId ?? undefined} onValueChange={setSelectedId}>
-                  <SelectTrigger><SelectValue placeholder="Pick a business" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="rounded-xl"><SelectValue placeholder="Pick a business" /></SelectTrigger>
+                  <SelectContent className="rounded-xl">
                     {businesses.map((b) => (
                       <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                     ))}
@@ -214,100 +224,121 @@ const Insights = () => {
 
             {selectedBusiness && selectedStats && (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatCard icon={<Eye className="h-4 w-4" />} label="Total views" value={selectedStats.total_views} sub={`${selectedStats.views_30d} last 30d`} />
-                  <StatCard icon={<Users className="h-4 w-4" />} label="Unique viewers" value={selectedStats.unique_viewers} />
-                  <StatCard icon={<MapPin className="h-4 w-4" />} label="Check-ins" value={selectedStats.total_check_ins} sub={`${selectedStats.check_ins_30d} last 30d`} />
-                  <StatCard icon={<Bookmark className="h-4 w-4" />} label="Bookmarks" value={selectedStats.total_bookmarks} />
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <StatCard icon={<Eye className="h-4 w-4" strokeWidth={1.5} />} label="Total views" value={selectedStats.total_views} sub={`${selectedStats.views_30d} last 30d`} />
+                  <StatCard icon={<Users className="h-4 w-4" strokeWidth={1.5} />} label="Unique viewers" value={selectedStats.unique_viewers} />
+                  <StatCard icon={<MapPin className="h-4 w-4" strokeWidth={1.5} />} label="Check-ins" value={selectedStats.total_check_ins} sub={`${selectedStats.check_ins_30d} last 30d`} />
+                  <StatCard icon={<Bookmark className="h-4 w-4" strokeWidth={1.5} />} label="Bookmarks" value={selectedStats.total_bookmarks} />
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatCard icon={<Star className="h-4 w-4" />} label="Reviews" value={selectedStats.review_count} />
-                  <StatCard icon={<Star className="h-4 w-4" />} label="Avg rating" value={Number(selectedStats.avg_rating).toFixed(2)} />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <StatCard icon={<Star className="h-4 w-4" strokeWidth={1.5} />} label="Reviews" value={selectedStats.review_count} />
+                  <StatCard icon={<Star className="h-4 w-4" strokeWidth={1.5} />} label="Avg rating" value={Number(selectedStats.avg_rating).toFixed(2)} />
                   <StatCard
-                    icon={<Sparkles className="h-4 w-4" />}
+                    icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
                     label="View → check-in"
                     value={selectedStats.total_views > 0 ? `${((selectedStats.total_check_ins / selectedStats.total_views) * 100).toFixed(1)}%` : "—"}
                   />
                   <StatCard
-                    icon={<Sparkles className="h-4 w-4" />}
+                    icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
                     label="View → review"
                     value={selectedStats.total_views > 0 ? `${((selectedStats.review_count / selectedStats.total_views) * 100).toFixed(1)}%` : "—"}
                   />
                 </div>
 
+                {/* Actions */}
                 <div className="flex flex-wrap gap-2">
-                  <Button onClick={generateSummary} disabled={summaryLoading} variant="default">
-                    {summaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  <Button
+                    onClick={generateSummary}
+                    disabled={summaryLoading}
+                    className="rounded-full gap-2"
+                  >
+                    {summaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" strokeWidth={1.5} />}
                     AI summary
                   </Button>
-                  <Button onClick={exportFullReport} variant="outline">
-                    <Download className="h-4 w-4" /> Export report (CSV)
+                  <Button onClick={exportFullReport} variant="outline" className="rounded-full gap-2">
+                    <Download className="h-4 w-4" strokeWidth={1.5} /> Export report
                   </Button>
-                  <Button onClick={exportReviews} variant="outline" disabled={!selectedReviews.length}>
-                    <Download className="h-4 w-4" /> Export reviews (CSV)
+                  <Button onClick={exportReviews} variant="outline" disabled={!selectedReviews.length} className="rounded-full gap-2">
+                    <Download className="h-4 w-4" strokeWidth={1.5} /> Export reviews
                   </Button>
                 </div>
 
+                {/* AI summary */}
                 {(summary || summaryLoading) && (
-                  <Card className="border-primary/30">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" /> AI summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm whitespace-pre-wrap leading-relaxed">
-                      {summaryLoading ? "Thinking…" : summary}
-                    </CardContent>
-                  </Card>
+                  <div className="p-[5px] rounded-[1.5rem] bg-primary/5 border border-primary/12">
+                    <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                      <div className="px-6 pt-5 pb-4 border-b border-border/60 flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+                        </div>
+                        <span className="font-semibold text-sm">AI summary</span>
+                      </div>
+                      <div className="px-6 py-5 text-sm leading-relaxed whitespace-pre-wrap text-foreground/80">
+                        {summaryLoading ? (
+                          <span className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
+                          </span>
+                        ) : summary}
+                      </div>
+                    </div>
+                  </div>
                 )}
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Views — last 14 days</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer config={{ views: { label: "Views", color: "hsl(var(--primary))" } }} className="h-64 w-full">
-                      <ResponsiveContainer>
-                        <BarChart data={viewsByDay}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                          <XAxis dataKey="day" className="text-xs" />
-                          <YAxis allowDecimals={false} className="text-xs" />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="views" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
+                {/* Views chart */}
+                <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+                  <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                    <div className="px-6 pt-6 pb-5 border-b border-border/60">
+                      <p className="font-semibold tracking-tight">Views — last 14 days</p>
+                    </div>
+                    <div className="p-6">
+                      <ChartContainer config={{ views: { label: "Views", color: "hsl(var(--primary))" } }} className="h-64 w-full">
+                        <ResponsiveContainer>
+                          <BarChart data={viewsByDay}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                            <XAxis dataKey="day" className="text-xs" tick={{ fontSize: 11 }} />
+                            <YAxis allowDecimals={false} className="text-xs" tick={{ fontSize: 11 }} />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Bar dataKey="views" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </div>
+                  </div>
+                </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Business details</CardTitle>
-                    <CardDescription>The information shown to visitors on Huddle.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <DetailRow label="Name" value={selectedBusiness.name} />
-                    <DetailRow label="Category" value={selectedBusiness.category} />
-                    <DetailRow label="Status" value={<Badge variant="outline" className="capitalize">{selectedBusiness.status}</Badge>} />
-                    <DetailRow label="Address" value={selectedBusiness.address ?? "—"} />
-                    <DetailRow label="Phone" value={selectedBusiness.phone ?? "—"} />
-                    <DetailRow label="Website" value={selectedBusiness.website ?? "—"} />
-                    <DetailRow label="Description" value={selectedBusiness.description || "—"} />
-                    <DetailRow
-                      label="Tags"
-                      value={
-                        selectedBusiness.tags?.length ? (
-                          <div className="flex flex-wrap gap-1">
-                            {selectedBusiness.tags.map((t) => <Badge key={t} variant="secondary">{t}</Badge>)}
-                          </div>
-                        ) : "—"
-                      }
-                    />
-                  </CardContent>
-                </Card>
+                {/* Business details */}
+                <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+                  <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                    <div className="px-6 pt-6 pb-5 border-b border-border/60">
+                      <p className="font-semibold tracking-tight">Business details</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">The information shown to visitors on Huddle.</p>
+                    </div>
+                    <div className="divide-y divide-border/50">
+                      <DetailRow label="Name" value={selectedBusiness.name} />
+                      <DetailRow label="Category" value={selectedBusiness.category} />
+                      <DetailRow label="Status" value={<Badge variant="outline" className="capitalize rounded-full text-[11px]">{selectedBusiness.status}</Badge>} />
+                      <DetailRow label="Address" value={selectedBusiness.address ?? "—"} />
+                      <DetailRow label="Phone" value={selectedBusiness.phone ?? "—"} />
+                      <DetailRow label="Website" value={selectedBusiness.website ?? "—"} />
+                      <DetailRow
+                        label="Tags"
+                        value={
+                          selectedBusiness.tags?.length ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {selectedBusiness.tags.map((t) => (
+                                <Badge key={t} variant="secondary" className="rounded-full text-[11px] px-2.5">{t}</Badge>
+                              ))}
+                            </div>
+                          ) : "—"
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
               </>
             )}
-          </>
+          </div>
         )}
       </main>
       <Footer />
@@ -316,21 +347,21 @@ const Insights = () => {
 };
 
 const StatCard = ({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string | number; sub?: string }) => (
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+  <div className="p-[4px] rounded-[1.25rem] bg-foreground/[0.03] border border-border/50">
+    <div className="rounded-[calc(1.25rem-4px)] bg-background p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-2">
         {icon}{label}
       </div>
-      <p className="text-2xl font-bold mt-1">{value}</p>
-      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-    </CardContent>
-  </Card>
+      <p className="text-2xl font-bold tracking-tight tabular-nums">{value}</p>
+      {sub && <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">{sub}</p>}
+    </div>
+  </div>
 );
 
 const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="grid grid-cols-3 gap-3 py-1.5 border-b last:border-0">
-    <span className="text-muted-foreground">{label}</span>
-    <div className="col-span-2">{value}</div>
+  <div className="grid grid-cols-3 gap-3 px-6 py-3.5 last:pb-5">
+    <span className="text-sm text-muted-foreground">{label}</span>
+    <div className="col-span-2 text-sm">{value}</div>
   </div>
 );
 
