@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home } from "lucide-react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -43,6 +43,9 @@ export const Navbar = () => {
               </Link>
             </Button>
           )}
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/feed"><Video className="h-4 w-4" /> <span className="hidden sm:inline">Feed</span></Link>
+          </Button>
           <Button asChild variant="ghost" size="sm">
             <Link to="/about"><Info className="h-4 w-4" /> <span className="hidden sm:inline">About</span></Link>
           </Button>
