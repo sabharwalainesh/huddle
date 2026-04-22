@@ -98,11 +98,30 @@ Deno.serve(async (req) => {
 
     const place = { id: resolvedPlaceId! };
 
-    // 3. Place Details for reviews
+    // 3. Place Details for reviews + extra info for the detail page
     const detailsRes = await fetch(`https://places.googleapis.com/v1/places/${place.id}`, {
       headers: {
         "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "id,displayName,formattedAddress,rating,userRatingCount,reviews,googleMapsUri",
+        "X-Goog-FieldMask": [
+          "id",
+          "displayName",
+          "formattedAddress",
+          "location",
+          "rating",
+          "userRatingCount",
+          "reviews",
+          "googleMapsUri",
+          "websiteUri",
+          "nationalPhoneNumber",
+          "internationalPhoneNumber",
+          "primaryType",
+          "types",
+          "photos",
+          "editorialSummary",
+          "generativeSummary",
+          "regularOpeningHours",
+          "priceLevel",
+        ].join(","),
       },
     });
 
@@ -115,14 +134,32 @@ Deno.serve(async (req) => {
     }
 
     const details = await detailsRes.json();
+    const photoNames = (details.photos as Array<{ name?: string }> | undefined) ?? [];
+    const photoUrls = photoNames
+      .slice(0, 6)
+      .map((ph) => ph.name ? `https://places.googleapis.com/v1/${ph.name}/media?maxWidthPx=1200&key=${apiKey}` : null)
+      .filter((u): u is string => !!u);
+    const editorial = (details.editorialSummary as { text?: string } | undefined)?.text ?? null;
+    const generative = (details.generativeSummary as { overview?: { text?: string } } | undefined)?.overview?.text ?? null;
+    const openingHours = (details.regularOpeningHours as { weekdayDescriptions?: string[] } | undefined)?.weekdayDescriptions ?? null;
     const payload = {
       found: true,
       place_id: place.id,
       name: details.displayName?.text ?? null,
       formatted_address: details.formattedAddress ?? null,
+      lat: (details.location as { latitude?: number } | undefined)?.latitude ?? null,
+      lng: (details.location as { longitude?: number } | undefined)?.longitude ?? null,
       rating: details.rating ?? null,
       userRatingCount: details.userRatingCount ?? 0,
       googleMapsUri: details.googleMapsUri ?? null,
+      websiteUri: details.websiteUri ?? null,
+      phone: details.nationalPhoneNumber ?? details.internationalPhoneNumber ?? null,
+      primaryType: details.primaryType ?? null,
+      types: details.types ?? [],
+      photos: photoUrls,
+      description: editorial ?? generative ?? null,
+      opening_hours: openingHours,
+      price_level: details.priceLevel ?? null,
       reviews: (details.reviews ?? []).map((r: Record<string, unknown>) => ({
         author: (r.authorAttribution as { displayName?: string })?.displayName ?? "Google user",
         authorUri: (r.authorAttribution as { uri?: string })?.uri ?? null,
