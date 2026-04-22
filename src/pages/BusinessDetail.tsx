@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/StarRating";
 import { ReceiptVerifier } from "@/components/ReceiptVerifier";
+import { ReviewThemes } from "@/components/ReviewThemes";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -310,6 +311,12 @@ const BusinessDetail = () => {
             )}
           </CardContent>
         </Card>
+
+        <ReviewThemes
+          businessId={business.id}
+          businessName={business.name}
+          reviews={reviews.map((r) => ({ rating: r.rating, comment: r.comment }))}
+        />
 
         <Card>
           <CardHeader>
