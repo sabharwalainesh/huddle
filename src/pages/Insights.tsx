@@ -172,6 +172,7 @@ const Insights = () => {
     }
   };
 
+  const exportFullReport = () => {
     if (!selectedBusiness || !selectedStats) return;
     const rows: Record<string, string | number | null | undefined>[] = [
       { section: "Business", field: "name", value: selectedBusiness.name },
