@@ -284,8 +284,17 @@ const Insights = () => {
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2">
                   <Button
+                    onClick={generateHealth}
+                    disabled={healthLoading}
+                    className="rounded-full gap-2"
+                  >
+                    {healthLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" strokeWidth={1.5} />}
+                    Health score
+                  </Button>
+                  <Button
                     onClick={generateSummary}
                     disabled={summaryLoading}
+                    variant="outline"
                     className="rounded-full gap-2"
                   >
                     {summaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" strokeWidth={1.5} />}
@@ -298,6 +307,45 @@ const Insights = () => {
                     <Download className="h-4 w-4" strokeWidth={1.5} /> Export reviews
                   </Button>
                 </div>
+
+                {/* Health score */}
+                {(health || healthLoading) && (
+                  <div className="p-[5px] rounded-[1.5rem] bg-gradient-to-br from-primary/10 to-accent/8 border border-primary/15">
+                    <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] overflow-hidden">
+                      <div className="px-6 pt-5 pb-4 border-b border-border/60 flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+                        </div>
+                        <span className="font-semibold text-sm">Business health score</span>
+                      </div>
+                      {healthLoading ? (
+                        <div className="px-6 py-8 text-sm text-muted-foreground flex items-center gap-2">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Calculating…
+                        </div>
+                      ) : health && (
+                        <div className="px-6 py-5 grid sm:grid-cols-[auto_1fr] gap-5 items-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="text-5xl font-bold tracking-tight tabular-nums text-primary">
+                              {health.score}
+                            </div>
+                            <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">
+                              out of 100
+                            </div>
+                            <div className="w-24 h-1.5 rounded-full bg-muted mt-2 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-primary transition-all"
+                                style={{ width: `${health.score}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                            {health.narrative}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* AI summary */}
                 {(summary || summaryLoading) && (
