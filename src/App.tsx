@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AskHuddleWidget } from "@/components/AskHuddleWidget";
 import Landing from "./pages/Landing.tsx";
 import Discover from "./pages/Discover.tsx";
+import Feed from "./pages/Feed.tsx";
 import Auth from "./pages/Auth.tsx";
 import BusinessDetail from "./pages/BusinessDetail.tsx";
 import BusinessOnboarding from "./pages/BusinessOnboarding.tsx";
@@ -36,6 +37,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/discover" element={<Discover />} />
+                <Route path="/feed" element={<Feed />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/business/onboarding" element={<BusinessOnboarding />} />
