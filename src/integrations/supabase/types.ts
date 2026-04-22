@@ -456,6 +456,96 @@ export type Database = {
         }
         Relationships: []
       }
+      video_likes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
+      video_views: {
+        Row: {
+          created_at: string
+          id: string
+          video_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          video_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          video_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          business_id: string | null
+          caption: string
+          category: string | null
+          created_at: string
+          id: string
+          lat: number | null
+          like_count: number
+          lng: number | null
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+          video_url: string
+          view_count: number
+        }
+        Insert: {
+          business_id?: string | null
+          caption?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          lat?: number | null
+          like_count?: number
+          lng?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+          video_url: string
+          view_count?: number
+        }
+        Update: {
+          business_id?: string | null
+          caption?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          lat?: number | null
+          like_count?: number
+          lng?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       active_coupons: {
