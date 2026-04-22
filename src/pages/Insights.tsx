@@ -61,6 +61,8 @@ const Insights = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [health, setHealth] = useState<{ score: number; narrative: string } | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
