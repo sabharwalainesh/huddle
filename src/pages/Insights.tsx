@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Download, BarChart3, Eye, Users, Bookmark, MapPin, Star, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +63,7 @@ const Insights = () => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [health, setHealth] = useState<{ score: number; narrative: string } | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
+  const autoHealthRan = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -93,6 +94,12 @@ const Insights = () => {
   const selectedStats = useMemo(() => stats.find((s) => s.business_id === selectedId) ?? null, [stats, selectedId]);
   const selectedReviews = useMemo(() => reviews.filter((r) => r.business_id === selectedId), [reviews, selectedId]);
   const selectedViews = useMemo(() => views.filter((v) => v.business_id === selectedId), [views, selectedId]);
+
+  // Reset AI output when the user switches businesses
+  useEffect(() => {
+    setSummary("");
+    setHealth(null);
+  }, [selectedId]);
 
   const viewsByDay = useMemo(() => {
     const days = 14;
@@ -172,6 +179,15 @@ const Insights = () => {
     }
   };
 
+  // Auto-generate health score once per business selection
+  useEffect(() => {
+    if (!selectedBusiness || !selectedStats) return;
+    if (autoHealthRan.current === selectedBusiness.id) return;
+    autoHealthRan.current = selectedBusiness.id;
+    generateHealth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBusiness?.id, selectedStats]);
+
   const exportFullReport = () => {
     if (!selectedBusiness || !selectedStats) return;
     const rows: Record<string, string | number | null | undefined>[] = [
@@ -204,6 +220,24 @@ const Insights = () => {
         created_at: r.created_at,
       })),
     );
+  };
+
+  const scoreColor = (s: number) => {
+    if (s >= 75) return "text-emerald-500";
+    if (s >= 40) return "text-amber-500";
+    return "text-destructive";
+  };
+
+  const scoreBg = (s: number) => {
+    if (s >= 75) return "bg-emerald-500";
+    if (s >= 40) return "bg-amber-500";
+    return "bg-destructive";
+  };
+
+  const scoreLabel = (s: number) => {
+    if (s >= 75) return "Strong";
+    if (s >= 40) return "Growing";
+    return "Needs work";
   };
 
   if (authLoading) return null;
@@ -325,15 +359,18 @@ const Insights = () => {
                       ) : health && (
                         <div className="px-6 py-5 grid sm:grid-cols-[auto_1fr] gap-5 items-center">
                           <div className="flex flex-col items-center justify-center">
-                            <div className="text-5xl font-bold tracking-tight tabular-nums text-primary">
+                            <div className={`text-5xl font-bold tracking-tight tabular-nums ${scoreColor(health.score)}`}>
                               {health.score}
                             </div>
                             <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">
                               out of 100
                             </div>
+                            <div className={`mt-1.5 text-[10px] font-semibold uppercase tracking-wider ${scoreColor(health.score)}`}>
+                              {scoreLabel(health.score)}
+                            </div>
                             <div className="w-24 h-1.5 rounded-full bg-muted mt-2 overflow-hidden">
                               <div
-                                className="h-full rounded-full bg-primary transition-all"
+                                className={`h-full rounded-full transition-all ${scoreBg(health.score)}`}
                                 style={{ width: `${health.score}%` }}
                               />
                             </div>
