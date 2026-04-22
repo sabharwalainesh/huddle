@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -18,6 +18,8 @@ export const Navbar = () => {
   const { isAdmin } = useUserRoles();
   const t = useT();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
 
   return (
     <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
@@ -28,6 +30,11 @@ export const Navbar = () => {
           <span>Huddle</span>
         </Link>
         <nav className="flex items-center gap-1 sm:gap-2">
+          {!isHome && (
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/" aria-label="Home"><Home className="h-4 w-4" /> <span className="hidden sm:inline">Home</span></Link>
+            </Button>
+          )}
           {user && (
             <Button asChild variant="ghost" size="sm">
               <Link to={isAdmin ? "/dashboard" : "/insights"}>
