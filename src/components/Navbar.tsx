@@ -39,6 +39,9 @@ export const Navbar = () => {
           <Button asChild variant="ghost" size="sm">
             <Link to="/about"><Info className="h-4 w-4" /> <span className="hidden sm:inline">About</span></Link>
           </Button>
+          <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+            <Link to="/discover">Get Started</Link>
+          </Button>
           <AccessibilityPanel />
           {user ? (
             <DropdownMenu>
