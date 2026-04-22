@@ -105,109 +105,127 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main id="main" className="container py-8 space-y-6">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold">{t("dash.title")}</h1>
+      <main id="main" className="container py-10 space-y-6 flex-1">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <BarChart3 className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight leading-tight">{t("dash.title")}</h1>
+            <p className="text-xs text-muted-foreground">Platform-wide analytics</p>
+          </div>
         </div>
 
         {loading ? (
-          <p className="text-muted-foreground">{t("dash.loading")}</p>
+          <p className="text-sm text-muted-foreground py-8">{t("dash.loading")}</p>
         ) : (
           <>
-            <div className="grid md:grid-cols-3 gap-4">
-              <Card><CardContent className="p-5">
-                <p className="text-xs text-muted-foreground uppercase">{t("dash.businesses")}</p>
-                <p className="text-3xl font-bold mt-1">{businesses.length}</p>
-              </CardContent></Card>
-              <Card><CardContent className="p-5">
-                <p className="text-xs text-muted-foreground uppercase">{t("dash.totalReviews")}</p>
-                <p className="text-3xl font-bold mt-1">{reviews.length}</p>
-              </CardContent></Card>
-              <Card><CardContent className="p-5">
-                <p className="text-xs text-muted-foreground uppercase">{t("dash.avgRating")}</p>
-                <p className="text-3xl font-bold mt-1">
-                  {businesses.length
+            <div className="grid md:grid-cols-3 gap-3">
+              {[
+                { label: t("dash.businesses"), value: businesses.length },
+                { label: t("dash.totalReviews"), value: reviews.length },
+                {
+                  label: t("dash.avgRating"),
+                  value: businesses.length
                     ? (businesses.reduce((s, b) => s + Number(b.avg_rating), 0) / businesses.length).toFixed(2)
-                    : "—"}
-                </p>
-              </CardContent></Card>
+                    : "—",
+                },
+              ].map(({ label, value }) => (
+                <div key={label} className="p-[4px] rounded-[1.25rem] bg-foreground/[0.03] border border-border/50">
+                  <div className="rounded-[calc(1.25rem-4px)] bg-background p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-2">{label}</p>
+                    <p className="text-3xl font-bold tracking-tight tabular-nums">{value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">{t("dash.topCategories")}</CardTitle>
-                <Button size="sm" variant="outline" onClick={exportCategories}>
-                  <Download className="h-4 w-4" /> CSV
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {categoryData.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("dash.noData")}</p>
-                ) : (
-                  <ChartContainer config={{ count: { label: "Businesses", color: "hsl(var(--primary))" } }} className="h-64 w-full">
+            <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+              <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <div className="px-6 pt-6 pb-5 border-b border-border/60 flex items-center justify-between">
+                  <p className="font-semibold tracking-tight">{t("dash.topCategories")}</p>
+                  <Button size="sm" variant="outline" onClick={exportCategories} className="rounded-full gap-1.5">
+                    <Download className="h-3.5 w-3.5" strokeWidth={1.5} /> CSV
+                  </Button>
+                </div>
+                <div className="p-6">
+                  {categoryData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t("dash.noData")}</p>
+                  ) : (
+                    <ChartContainer config={{ count: { label: "Businesses", color: "hsl(var(--primary))" } }} className="h-64 w-full">
+                      <ResponsiveContainer>
+                        <BarChart data={categoryData}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                          <XAxis dataKey="category" className="text-xs" tick={{ fontSize: 11 }} />
+                          <YAxis allowDecimals={false} className="text-xs" tick={{ fontSize: 11 }} />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+              <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <div className="px-6 pt-6 pb-5 border-b border-border/60 flex items-center justify-between">
+                  <p className="font-semibold tracking-tight">{t("dash.highestRated")}</p>
+                  <Button size="sm" variant="outline" onClick={exportTop} className="rounded-full gap-1.5">
+                    <Download className="h-3.5 w-3.5" strokeWidth={1.5} /> CSV
+                  </Button>
+                </div>
+                <div className="p-2">
+                  {topRated.length === 0 ? (
+                    <p className="text-sm text-muted-foreground px-4 py-4">{t("dash.noReviews")}</p>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr>
+                          {[t("dash.business"), t("dash.rating"), t("dash.recentAvg"), t("dash.reviews")].map((h) => (
+                            <th key={h} className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/50">
+                        {topRated.map((r) => (
+                          <tr key={r.name} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-3 font-medium">{r.name}</td>
+                            <td className="px-4 py-3 tabular-nums">{r.rating.toFixed(2)}</td>
+                            <td className="px-4 py-3 tabular-nums">{r.recent_avg ? r.recent_avg.toFixed(2) : "—"}</td>
+                            <td className="px-4 py-3 tabular-nums">{r.review_count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+              <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <div className="px-6 pt-6 pb-5 border-b border-border/60">
+                  <p className="font-semibold tracking-tight">{t("dash.velocity")}</p>
+                </div>
+                <div className="p-6">
+                  <ChartContainer config={{ reviews: { label: "Reviews", color: "hsl(var(--accent))" } }} className="h-64 w-full">
                     <ResponsiveContainer>
-                      <BarChart data={categoryData}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                        <XAxis dataKey="category" className="text-xs" />
-                        <YAxis allowDecimals={false} className="text-xs" />
+                      <BarChart data={reviewVelocity}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                        <XAxis dataKey="day" className="text-xs" tick={{ fontSize: 11 }} />
+                        <YAxis allowDecimals={false} className="text-xs" tick={{ fontSize: 11 }} />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="reviews" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">{t("dash.highestRated")}</CardTitle>
-                <Button size="sm" variant="outline" onClick={exportTop}>
-                  <Download className="h-4 w-4" /> CSV
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {topRated.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("dash.noReviews")}</p>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead className="text-left text-xs text-muted-foreground uppercase">
-                      <tr><th className="py-2">{t("dash.business")}</th><th>{t("dash.rating")}</th><th>{t("dash.recentAvg")}</th><th>{t("dash.reviews")}</th></tr>
-                    </thead>
-                    <tbody>
-                      {topRated.map((r) => (
-                        <tr key={r.name} className="border-t">
-                          <td className="py-2 font-medium">{r.name}</td>
-                          <td>{r.rating.toFixed(2)}</td>
-                          <td>{r.recent_avg ? r.recent_avg.toFixed(2) : "—"}</td>
-                          <td>{r.review_count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle className="text-lg">{t("dash.velocity")}</CardTitle></CardHeader>
-              <CardContent>
-                <ChartContainer config={{ reviews: { label: "Reviews", color: "hsl(var(--accent))" } }} className="h-64 w-full">
-                  <ResponsiveContainer>
-                    <BarChart data={reviewVelocity}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="day" className="text-xs" />
-                      <YAxis allowDecimals={false} className="text-xs" />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="reviews" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+                </div>
+              </div>
+            </div>
           </>
         )}
       </main>

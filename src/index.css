@@ -115,7 +115,10 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Outfit', system-ui, sans-serif;
     font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -185,26 +188,56 @@
 .reveal {
   opacity: 0;
   transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 800ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 800ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 800ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
-.reveal-fade-up { transform: translateY(24px); }
+.reveal-fade-up { transform: translateY(28px); filter: blur(2px); }
 .reveal-fade { transform: none; }
-.reveal-scale { transform: scale(0.96); }
-.reveal-fade-left { transform: translateX(-24px); }
-.reveal-fade-right { transform: translateX(24px); }
+.reveal-scale { transform: scale(0.97); filter: blur(1px); }
+.reveal-fade-left { transform: translateX(-28px); filter: blur(2px); }
+.reveal-fade-right { transform: translateX(28px); filter: blur(2px); }
 
 .reveal[data-visible="true"] {
   opacity: 1;
   transform: none;
+  filter: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1 !important;
     transform: none !important;
+    filter: none !important;
     transition: none !important;
+  }
+  .animate-float,
+  .animate-pulse-dot {
+    animation: none !important;
   }
 }
 
