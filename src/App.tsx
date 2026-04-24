@@ -19,6 +19,8 @@ import Admin from "./pages/Admin.tsx";
 import Ask from "./pages/Ask.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Insights from "./pages/Insights.tsx";
+import BusinessDashboard from "./pages/BusinessDashboard.tsx";
+import BusinessDashboardDetail from "./pages/BusinessDashboardDetail.tsx";
 import About from "./pages/About.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RequireAdmin } from "./components/RequireAdmin";
@@ -47,6 +49,8 @@ const App = () => (
                 <Route path="/ask" element={<Ask />} />
                 <Route path="/dashboard" element={<RequireAdmin><Dashboard /></RequireAdmin>} />
                 <Route path="/insights" element={<Insights />} />
+                <Route path="/business-dashboard" element={<BusinessDashboard />} />
+                <Route path="/business-dashboard/:id" element={<BusinessDashboardDetail />} />
                 <Route path="/about" element={<About />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
