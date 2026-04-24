@@ -22,8 +22,20 @@ const Landing = () => {
     const prev = activeLoop === 0 ? loopRefA : loopRefB;
     next.current?.play();
     setActiveLoop(activeLoop === 0 ? 1 : 0);
-    // reset the outgoing video after the crossfade so it's ready next time
     setTimeout(() => { if (prev.current) prev.current.currentTime = 0; }, 800);
+  };
+
+  const watchAgain = () => {
+    // Stop and reset both loop videos
+    [loopRefA, loopRefB].forEach((ref) => {
+      if (ref.current) { ref.current.pause(); ref.current.currentTime = 0; }
+    });
+    setActiveLoop(0);
+    setVideoEnded(false);
+    // Small delay so opacity transition fires before play() to avoid a flash
+    setTimeout(() => {
+      if (videoRef.current) { videoRef.current.currentTime = 0; videoRef.current.play(); }
+    }, 50);
   };
 
   return (
@@ -89,18 +101,30 @@ const Landing = () => {
                 </p>
               </div>
 
-              <Button
-                asChild
-                size="lg"
-                className="rounded-full pl-8 pr-2.5 gap-4 group text-base transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shadow-[0_0_32px_rgba(0,0,0,0.4)]"
-              >
-                <Link to="/discover">
-                  Get Started
-                  <span className="h-9 w-9 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
-                    <ArrowRight className="h-4 w-4" strokeWidth={2} />
-                  </span>
-                </Link>
-              </Button>
+              <div className="flex flex-col items-center gap-3">
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-full pl-8 pr-2.5 gap-4 group text-base transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shadow-[0_0_32px_rgba(0,0,0,0.4)]"
+                >
+                  <Link to="/discover">
+                    Get Started
+                    <span className="h-9 w-9 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
+                      <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                    </span>
+                  </Link>
+                </Button>
+                <button
+                  onClick={watchAgain}
+                  className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors duration-300 group"
+                >
+                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 group-hover:-rotate-45 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 8a6 6 0 1 0 1.5-4" />
+                    <path d="M2 4v4h4" />
+                  </svg>
+                  Watch again
+                </button>
+              </div>
             </div>
           </div>
         </section>
