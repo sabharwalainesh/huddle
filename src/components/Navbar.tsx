@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home } from "lucide-react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home, Building2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -41,26 +41,18 @@ export const Navbar = () => {
           {!isHome && (
             <NavPill to="/" icon={<Home className="h-3.5 w-3.5" strokeWidth={1.5} />} label="Home" />
           )}
-          {user && (
-            <NavPill
-              to={isAdmin ? "/dashboard" : "/insights"}
-              icon={<BarChart3 className="h-3.5 w-3.5" strokeWidth={1.5} />}
-              label={t("nav.insights")}
-            />
-          )}
           <NavPill to="/about" icon={<Info className="h-3.5 w-3.5" strokeWidth={1.5} />} label="About" />
+          <NavPill to="/discover" icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.5} />} label="Discover" />
+          {user && (
+            <NavPill to="/my-huddle" icon={<Bookmark className="h-3.5 w-3.5" strokeWidth={1.5} />} label="My Huddle" />
+          )}
+          {user && (
+            <NavPill to="/business-dashboard" icon={<Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />} label="Business" />
+          )}
         </nav>
 
         {/* Right side actions */}
         <div className="flex items-center gap-1.5 pr-1">
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="hidden md:inline-flex rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-300"
-          >
-            <Link to="/discover">Discover</Link>
-          </Button>
           <AccessibilityPanel />
           {user ? (
             <DropdownMenu>
@@ -77,7 +69,7 @@ export const Navbar = () => {
                   <Link to="/account"><UserCircle className="h-4 w-4" strokeWidth={1.5} /> {t("nav.myAccount")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl gap-2">
-                  <Link to="/my-huddle"><Bookmark className="h-4 w-4" strokeWidth={1.5} /> {t("nav.myHuddle")}</Link>
+                  <Link to="/business-dashboard"><BarChart3 className="h-4 w-4" strokeWidth={1.5} /> My Businesses</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl gap-2">
                   <Link to="/business/onboarding"><Plus className="h-4 w-4" strokeWidth={1.5} /> {t("nav.listBusiness")}</Link>
