@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Search, Sparkles, MapPin, Users, Star, Bookmark, MessageSquare } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -6,123 +7,66 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
 
 const Landing = () => {
+  const [videoEnded, setVideoEnded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main id="main" className="flex-1">
 
-        {/* ── Hero ──────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden min-h-[100dvh] flex items-center">
-          {/* Ambient glow blobs */}
-          <div className="absolute inset-0 -z-10 pointer-events-none">
-            <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full bg-primary/6 blur-[140px] translate-x-1/3 -translate-y-1/4" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-accent/6 blur-[120px] -translate-x-1/4 translate-y-1/4" />
-          </div>
+        {/* ── Hero: full-screen video ────────────────────────────── */}
+        <section className="relative h-[100dvh] -mt-20 overflow-hidden bg-black">
+          <video
+            ref={videoRef}
+            src="/intro.mp4"
+            autoPlay
+            muted
+            playsInline
+            onCanPlay={() => { if (videoRef.current) videoRef.current.playbackRate = 1; }}
+            onEnded={() => setVideoEnded(true)}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
 
-          <div className="container pt-8 pb-24 md:pt-16 md:pb-32">
-            <div className="grid md:grid-cols-[1fr_400px] gap-16 items-center">
+          {/* Subtle gradient always present so Navbar stays readable */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
 
-              {/* Left: copy */}
-              <div className="space-y-8">
-                <Reveal delay={0}>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/6 px-3.5 py-1.5 text-[11px] font-semibold text-primary tracking-[0.14em] uppercase">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
-                    Community-powered discovery
-                  </span>
-                </Reveal>
+          {/* Post-video CTA overlay — fades in when video ends */}
+          <div
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-10 transition-opacity duration-1000 ease-out ${
+              videoEnded ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            {/* Dark backdrop that dims the frozen last frame */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
 
-                <Reveal delay={80}>
-                  <h1 className="text-5xl md:text-[4.5rem] font-bold tracking-[-0.03em] leading-[1.04]">
-                    Find what makes<br />
-                    your{" "}
-                    <span className="text-primary">neighborhood</span>
-                    <br />
-                    worth showing up for.
-                  </h1>
-                </Reveal>
-
-                <Reveal delay={160}>
-                  <p className="text-lg text-muted-foreground leading-relaxed max-w-[50ch]">
-                    Real check-ins, real reviews, real recommendations from
-                    people who actually live and shop where you do.
-                  </p>
-                </Reveal>
-
-                <Reveal delay={240}>
-                  <div className="flex flex-wrap gap-3">
-                    {/* Button-in-button CTA */}
-                    <Button
-                      asChild
-                      size="lg"
-                      className="rounded-full pl-6 pr-2 gap-3 group transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-                    >
-                      <Link to="/discover">
-                        Start Discovering
-                        <span className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
-                          <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-                        </span>
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="outline"
-                      className="rounded-full px-6 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-                    >
-                      <Link to="/about">Learn more</Link>
-                    </Button>
-                  </div>
-                </Reveal>
+            {/* Content sits above the backdrop */}
+            <div className="relative z-10 flex flex-col items-center gap-8 text-center px-6">
+              <div className="space-y-4">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold text-white/80 tracking-[0.16em] uppercase backdrop-blur-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
+                  Community-powered discovery
+                </span>
+                <h1 className="text-7xl md:text-[8rem] font-bold tracking-[-0.04em] leading-none text-white">
+                  Huddle
+                </h1>
+                <p className="text-lg md:text-xl text-white/60 max-w-[38ch] leading-relaxed">
+                  Find what makes your neighborhood worth showing up for.
+                </p>
               </div>
 
-              {/* Right: decorative stat card */}
-              <Reveal delay={320} variant="fade-left">
-                <div className="relative hidden md:block animate-float">
-                  {/* Outer shell (double-bezel) */}
-                  <div className="p-[6px] rounded-[1.75rem] bg-foreground/[0.04] border border-border/50 shadow-[0_20px_48px_-16px_rgba(0,0,0,0.1)]">
-                    {/* Inner core */}
-                    <div className="rounded-[calc(1.75rem-6px)] bg-background p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-5">
-                        Active this week
-                      </p>
-                      <div className="space-y-5">
-                        {[
-                          { label: "Local businesses", value: "2,847" },
-                          { label: "Neighbor reviews", value: "14,392" },
-                          { label: "Check-ins today", value: "318" },
-                        ].map((s) => (
-                          <div key={s.label} className="flex items-baseline justify-between gap-4">
-                            <span className="text-sm text-muted-foreground">{s.label}</span>
-                            <span className="text-2xl font-bold tracking-tight tabular-nums">{s.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating preview card */}
-                  <div className="absolute -bottom-5 -left-8 p-[4px] rounded-2xl bg-background border border-border/60 shadow-[0_12px_32px_-10px_rgba(0,0,0,0.12)]">
-                    <div className="rounded-[calc(1rem-4px)] bg-background px-4 py-3 flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <MapPin className="h-4 w-4 text-primary" strokeWidth={1.5} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold leading-tight">Rosario's Bakery</p>
-                        <div className="flex items-center gap-0.5 mt-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3 w-3 ${i < 5 ? "text-warning fill-warning" : "text-border"}`}
-                              strokeWidth={1}
-                            />
-                          ))}
-                          <span className="text-[10px] text-muted-foreground ml-1.5 tabular-nums">4.9 · 47 reviews</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full pl-8 pr-2.5 gap-4 group text-base transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shadow-[0_0_32px_rgba(0,0,0,0.4)]"
+              >
+                <Link to="/discover">
+                  Get Started
+                  <span className="h-9 w-9 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
+                    <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                  </span>
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
