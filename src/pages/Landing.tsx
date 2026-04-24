@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Search, Sparkles, MapPin, Users, Star, Bookmark, MessageSquare } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -8,7 +8,23 @@ import { Reveal } from "@/components/Reveal";
 
 const Landing = () => {
   const [videoEnded, setVideoEnded] = useState(false);
+  const [activeLoop, setActiveLoop] = useState<0 | 1>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const loopRefA = useRef<HTMLVideoElement>(null);
+  const loopRefB = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoEnded) loopRefA.current?.play();
+  }, [videoEnded]);
+
+  const handleLoopEnd = () => {
+    const next = activeLoop === 0 ? loopRefB : loopRefA;
+    const prev = activeLoop === 0 ? loopRefA : loopRefB;
+    next.current?.play();
+    setActiveLoop(activeLoop === 0 ? 1 : 0);
+    // reset the outgoing video after the crossfade so it's ready next time
+    setTimeout(() => { if (prev.current) prev.current.currentTime = 0; }, 800);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -17,6 +33,7 @@ const Landing = () => {
 
         {/* ── Hero: full-screen video ────────────────────────────── */}
         <section className="relative h-[100dvh] -mt-20 overflow-hidden bg-black">
+          {/* Intro video — fades out when done */}
           <video
             ref={videoRef}
             src="/intro.mp4"
@@ -25,8 +42,25 @@ const Landing = () => {
             playsInline
             onCanPlay={() => { if (videoRef.current) videoRef.current.playbackRate = 1; }}
             onEnded={() => setVideoEnded(true)}
-            className="absolute inset-0 w-full h-full object-cover"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoEnded ? "opacity-0" : "opacity-100"}`}
           />
+
+          {/* Loop video A & B — crossfade between them on each cycle */}
+          {([loopRefA, loopRefB] as const).map((ref, i) => (
+            <video
+              key={i}
+              ref={ref}
+              src="/intro_2.mp4"
+              muted
+              playsInline
+              onEnded={activeLoop === i ? handleLoopEnd : undefined}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{
+                opacity: videoEnded && activeLoop === i ? 1 : 0,
+                transition: "opacity 0.8s ease-in-out",
+              }}
+            />
+          ))}
 
           {/* Subtle gradient always present so Navbar stays readable */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
@@ -37,8 +71,8 @@ const Landing = () => {
               videoEnded ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             }`}
           >
-            {/* Dark backdrop that dims the frozen last frame */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+            {/* Dim layer over the looping background video */}
+            <div className="absolute inset-0 bg-black/55" />
 
             {/* Content sits above the backdrop */}
             <div className="relative z-10 flex flex-col items-center gap-8 text-center px-6">
