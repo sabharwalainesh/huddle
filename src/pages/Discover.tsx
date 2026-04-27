@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles, Navigation, ArrowRight } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles, Navigation, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
@@ -28,6 +28,67 @@ import type { TranslationKey } from "@/lib/i18n";
 
 const CATEGORIES = ["all", "food", "retail", "services", "health", "entertainment", "other"] as const;
 const GOOGLE_MAX_RESULTS = 20;
+const HUDDLE_PAGE_SIZE = 10;
+
+function HuddlePagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+
+  const getPageNumbers = () => {
+    const pages: (number | "...")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (page > 3) pages.push("...");
+      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+      if (page < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-1 pt-4">
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 w-8 p-0"
+        disabled={page === 1}
+        onClick={() => { onPage(page - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      {getPageNumbers().map((p, i) =>
+        p === "..." ? (
+          <span key={`ellipsis-${i}`} className="h-8 w-8 flex items-center justify-center text-sm text-muted-foreground">…</span>
+        ) : (
+          <Button
+            key={p}
+            variant={p === page ? "default" : "outline"}
+            size="sm"
+            className="h-8 w-8 p-0 text-xs"
+            onClick={() => { onPage(p as number); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            aria-label={`Page ${p}`}
+            aria-current={p === page ? "page" : undefined}
+          >
+            {p}
+          </Button>
+        )
+      )}
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 w-8 p-0"
+        disabled={page === totalPages}
+        onClick={() => { onPage(page + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        aria-label="Next page"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
 
 const Discover = () => {
   const t = useT();
@@ -51,6 +112,7 @@ const Discover = () => {
   const [radiusMi, setRadiusMi] = useState(10);
 
   const [trendingIds, setTrendingIds] = useState<Set<string>>(new Set());
+  const [huddlePage, setHuddlePage] = useState(1);
 
   useEffect(() => {
     (async () => {
@@ -115,6 +177,11 @@ const Discover = () => {
     return () => clearTimeout(handle);
   }, [source, query, coords]);
 
+  // Reset to page 1 whenever filters, sort, source, or location radius changes
+  useEffect(() => {
+    setHuddlePage(1);
+  }, [query, category, minRating, openNow, sort, source, nearMe, radiusMi, coords]);
+
   const { prefs } = useUserPreferences();
   const personalize = hasAnyPrefs(prefs);
 
@@ -157,6 +224,18 @@ const Discover = () => {
     if (!personalize) return { matches: [] as GooglePlace[], rest: googlePlaces };
     return partitionGoogleByPrefs(googlePlaces, prefs);
   }, [googlePlaces, prefs, personalize]);
+
+  // Pagination for Huddle source
+  const huddleTotalPages = Math.max(1, Math.ceil(huddleVisible.length / HUDDLE_PAGE_SIZE));
+  const pagedHuddleVisible = useMemo(() => {
+    const start = (huddlePage - 1) * HUDDLE_PAGE_SIZE;
+    return huddleVisible.slice(start, start + HUDDLE_PAGE_SIZE);
+  }, [huddleVisible, huddlePage]);
+
+  const pagedHuddleSplit = useMemo(() => {
+    if (!personalize || category !== "all") return { matches: [] as Business[], rest: pagedHuddleVisible };
+    return partitionByPrefs(pagedHuddleVisible, prefs);
+  }, [pagedHuddleVisible, prefs, personalize, category]);
 
   // Distance lookup for badges (only meaningful when we have coords + Huddle source)
   const distanceFor = (b: Business): number | null =>
@@ -315,7 +394,7 @@ const Discover = () => {
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {source === "huddle"
-              ? loading ? t("home.loading") : `${huddleVisible.length} ${huddleVisible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}${nearMe && coords ? ` within ${radiusMi} mi` : ""}`
+              ? loading ? t("home.loading") : `${huddleVisible.length} ${huddleVisible.length === 1 ? t("home.businessCount") : t("home.businessCountPlural")}${nearMe && coords ? ` within ${radiusMi} mi` : ""}${huddleTotalPages > 1 ? ` · page ${huddlePage} of ${huddleTotalPages}` : ""}`
               : googleLoading ? "Searching Google…" : `${googlePlaces.length} nearby on Google`}
           </p>
           {(query || category !== "all" || minRating > 0 || openNow) && (
@@ -359,7 +438,7 @@ const Discover = () => {
                       </Button>
                     </div>
                   </Card>
-                ) : huddleSplit.matches.length > 0 ? (
+                ) : pagedHuddleSplit.matches.length > 0 ? (
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-xs font-medium text-primary">
@@ -367,7 +446,7 @@ const Discover = () => {
                         Picked for you
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {huddleSplit.matches.map((b) => {
+                        {pagedHuddleSplit.matches.map((b) => {
                           const dist = distanceFor(b);
                           return (
                             <BusinessCard
@@ -380,7 +459,7 @@ const Discover = () => {
                         })}
                       </div>
                     </div>
-                    {huddleSplit.rest.length > 0 && (
+                    {pagedHuddleSplit.rest.length > 0 && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-wide">
                           <span className="h-px bg-border flex-1" />
@@ -388,15 +467,16 @@ const Discover = () => {
                           <span className="h-px bg-border flex-1" />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                          {huddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
+                          {pagedHuddleSplit.rest.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
                         </div>
                       </div>
                     )}
+                    <HuddlePagination page={huddlePage} totalPages={huddleTotalPages} onPage={setHuddlePage} />
                   </div>
                 ) : (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      {huddleVisible.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
+                      {pagedHuddleVisible.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
                     </div>
                     {nearMe && coords && huddleByRange.outOfRange.length > 0 && (
                       <Card className="p-4 flex flex-wrap items-center justify-between gap-3 bg-muted/30 border-dashed">
@@ -408,6 +488,7 @@ const Discover = () => {
                         </Button>
                       </Card>
                     )}
+                    <HuddlePagination page={huddlePage} totalPages={huddleTotalPages} onPage={setHuddlePage} />
                   </div>
                 )}
               </section>
