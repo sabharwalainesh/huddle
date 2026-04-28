@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { A11yProvider } from "@/contexts/A11yContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AskHuddleWidget } from "@/components/AskHuddleWidget";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Landing from "./pages/Landing.tsx";
 import Discover from "./pages/Discover.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -59,6 +60,7 @@ const App = () => (
             </A11yProvider>
           </AuthProvider>
         </BrowserRouter>
+        <SpeedInsights />
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
