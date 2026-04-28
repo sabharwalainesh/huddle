@@ -2,13 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Eye, Bookmark, MapPin, Star, Sparkles, Loader2, TrendingUp,
-  ArrowLeft, ExternalLink, Pencil, RefreshCw, ChevronRight,
+  ArrowLeft, ExternalLink, Pencil, RefreshCw, ChevronRight, Download,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -26,6 +31,33 @@ interface InsightRow {
   total_check_ins: number | null;
   check_ins_30d: number | null;
 }
+
+const toCsv = (rows: Record<string, string | number | null | undefined>[]): string => {
+  if (!rows.length) return "";
+  const headers = Object.keys(rows[0]);
+  const escape = (v: unknown) => {
+    const s = v == null ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
+};
+
+const downloadCsv = (filename: string, rows: Record<string, string | number | null | undefined>[]) => {
+  const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+};
+
+const EXPORT_SECTIONS = [
+  { id: "info",    label: "Business info",        desc: "Name, category, address, phone, website" },
+  { id: "stats",   label: "Performance stats",    desc: "Views, check-ins, bookmarks, ratings" },
+  { id: "reviews", label: "Recent reviews",       desc: "Rating, comment, and date for each review" },
+  { id: "summary", label: "AI community summary", desc: "The generated AI summary text (if available)" },
+] as const;
+
+type SectionId = (typeof EXPORT_SECTIONS)[number]["id"];
 
 const statusStyle: Record<string, string> = {
   approved:    "bg-success/15 text-success border-success/30",
@@ -73,6 +105,10 @@ const BusinessDashboardDetail = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportSections, setExportSections] = useState<Set<SectionId>>(
+    new Set(["info", "stats", "reviews"]),
+  );
   const autoRan = useRef(false);
 
   useEffect(() => {
@@ -133,6 +169,59 @@ const BusinessDashboardDetail = () => {
     } finally {
       setSummaryLoading(false);
     }
+  };
+
+  const runExport = () => {
+    if (!business) return;
+    const slug = business.name.replace(/\W+/g, "-");
+    const allRows: Record<string, string | number | null | undefined>[] = [];
+
+    if (exportSections.has("info")) {
+      allRows.push(
+        { section: "Business Info", field: "name",     value: business.name },
+        { section: "Business Info", field: "category", value: business.category },
+        { section: "Business Info", field: "status",   value: business.status },
+        { section: "Business Info", field: "address",  value: business.address ?? "" },
+        { section: "Business Info", field: "phone",    value: business.phone ?? "" },
+        { section: "Business Info", field: "website",  value: business.website ?? "" },
+      );
+    }
+
+    if (exportSections.has("stats") && stats) {
+      allRows.push(
+        { section: "Stats", field: "total_views",      value: stats.total_views ?? 0 },
+        { section: "Stats", field: "views_30d",        value: stats.views_30d ?? 0 },
+        { section: "Stats", field: "unique_viewers",   value: stats.unique_viewers ?? 0 },
+        { section: "Stats", field: "total_check_ins",  value: stats.total_check_ins ?? 0 },
+        { section: "Stats", field: "check_ins_30d",    value: stats.check_ins_30d ?? 0 },
+        { section: "Stats", field: "total_bookmarks",  value: stats.total_bookmarks ?? 0 },
+        { section: "Stats", field: "review_count",     value: stats.review_count ?? 0 },
+        { section: "Stats", field: "avg_rating",       value: stats.avg_rating ? Number(stats.avg_rating).toFixed(2) : "—" },
+      );
+    }
+
+    if (exportSections.has("reviews") && reviews.length > 0) {
+      reviews.forEach((r, i) => {
+        allRows.push({
+          section: "Review",
+          field: `review_${i + 1}`,
+          value: `${r.rating ?? "—"} stars — ${r.comment ?? "(no comment)"} (${new Date(r.created_at).toLocaleDateString()})`,
+        });
+      });
+    }
+
+    if (exportSections.has("summary") && summary) {
+      allRows.push({ section: "AI Summary", field: "summary", value: summary });
+    }
+
+    if (!allRows.length) {
+      toast({ title: "Nothing to export", description: "Select at least one section first.", variant: "destructive" });
+      return;
+    }
+
+    downloadCsv(`huddle-report-${slug}.csv`, allRows);
+    setExportOpen(false);
+    toast({ title: "Report downloaded", description: `huddle-report-${slug}.csv` });
   };
 
   if (!user) return null;
@@ -201,6 +290,81 @@ const BusinessDashboardDetail = () => {
               <StatCard icon={MapPin} label="Check-ins" value={(stats?.total_check_ins ?? 0).toLocaleString()} sub={`${stats?.check_ins_30d ?? 0} this month`} color="success" />
               <StatCard icon={Star} label="Avg rating" value={stats?.avg_rating ? Number(stats.avg_rating).toFixed(1) : "—"} sub={`${stats?.review_count ?? 0} review${(stats?.review_count ?? 0) !== 1 ? "s" : ""}`} color="warning" />
             </div>
+
+            {/* Export report button */}
+            <div className="flex items-center justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setExportOpen(true)}
+                className="rounded-full px-4 gap-2"
+              >
+                <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
+                Export report
+              </Button>
+            </div>
+
+            {/* Export dialog */}
+            <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+              <DialogContent className="rounded-2xl sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Download className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                    Customize your report
+                  </DialogTitle>
+                  <DialogDescription>
+                    Choose what to include in the exported CSV file.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-3 py-2">
+                  {EXPORT_SECTIONS.map((s) => {
+                    const disabled = s.id === "summary" && !summary;
+                    return (
+                      <label
+                        key={s.id}
+                        className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${
+                          exportSections.has(s.id) && !disabled
+                            ? "border-primary/30 bg-primary/5"
+                            : "border-border/50 bg-muted/20 hover:bg-muted/40"
+                        } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                      >
+                        <Checkbox
+                          id={`export-${s.id}`}
+                          checked={exportSections.has(s.id)}
+                          disabled={disabled}
+                          onCheckedChange={(checked) => {
+                            setExportSections((prev) => {
+                              const next = new Set(prev);
+                              if (checked) next.add(s.id);
+                              else next.delete(s.id);
+                              return next;
+                            });
+                          }}
+                          className="mt-0.5 shrink-0"
+                        />
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium leading-none">{s.label}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {s.id === "summary" && !summary ? "Generate the AI summary first to include it" : s.desc}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button variant="outline" onClick={() => setExportOpen(false)} className="rounded-full">
+                    Cancel
+                  </Button>
+                  <Button onClick={runExport} disabled={exportSections.size === 0} className="rounded-full gap-2">
+                    <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    Download CSV
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* AI summary */}
             <div className="p-[5px] rounded-[2rem] bg-gradient-to-br from-primary/8 via-background to-accent/5 border border-primary/15">
