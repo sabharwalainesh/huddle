@@ -228,6 +228,15 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+@keyframes scroll-arrow {
+  0%, 100% { transform: translateY(0px); opacity: 0.6; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+
+.animate-scroll-arrow {
+  animation: scroll-arrow 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1 !important;
@@ -236,7 +245,8 @@
     transition: none !important;
   }
   .animate-float,
-  .animate-pulse-dot {
+  .animate-pulse-dot,
+  .animate-scroll-arrow {
     animation: none !important;
   }
 }

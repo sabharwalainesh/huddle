@@ -72,19 +72,28 @@ export const AskHuddleWidget = () => {
 
   return (
     <>
-      {/* Floating launcher button */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label={open ? t("ask.send") : t("ask.title")}
-        className={cn(
-          "fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full shadow-elegant",
-          "bg-gradient-primary text-primary-foreground",
-          "flex items-center justify-center transition-transform hover:scale-105 active:scale-95",
+      {/* Floating launcher + hint label */}
+      <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5">
+        {/* "Ask the AI" hint pill — only when closed */}
+        {!open && (
+          <div className="flex items-center gap-1.5 rounded-full bg-background/95 border border-border/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.15)] px-3 py-1.5 backdrop-blur-sm pointer-events-none select-none">
+            <MessageCircle className="h-3 w-3 text-primary shrink-0" strokeWidth={1.5} />
+            <span className="text-xs font-medium text-foreground/80 whitespace-nowrap">Ask the AI</span>
+          </div>
         )}
-      >
-        {open ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
-      </button>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-label={open ? t("ask.send") : t("ask.title")}
+          className={cn(
+            "h-14 w-14 rounded-full shadow-elegant shrink-0",
+            "bg-gradient-primary text-primary-foreground",
+            "flex items-center justify-center transition-transform hover:scale-105 active:scale-95",
+          )}
+        >
+          {open ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
+        </button>
+      </div>
 
       {/* Chat panel */}
       {open && (

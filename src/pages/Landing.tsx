@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Search, Sparkles, MapPin, Users, Star, Bookmark, MessageSquare } from "lucide-react";
+import { ArrowRight, Search, Sparkles, MapPin, Users, Star, Bookmark, MessageSquare, ChevronDown } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ const Landing = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const loopRefA = useRef<HTMLVideoElement>(null);
   const loopRefB = useRef<HTMLVideoElement>(null);
+  const featuresRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (videoEnded) loopRefA.current?.play();
@@ -127,10 +128,30 @@ const Landing = () => {
               </div>
             </div>
           </div>
+
+          {/* Scroll-down arrow — appears after video ends */}
+          <div
+            className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-1000 ${
+              videoEnded ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <button
+              onClick={() => featuresRef.current?.scrollIntoView({ behavior: "smooth" })}
+              aria-label="Scroll to content"
+              className="group flex flex-col items-center gap-2 text-white/50 hover:text-white/90 transition-colors duration-300 focus:outline-none"
+            >
+              <span className="text-[9px] font-semibold tracking-[0.18em] uppercase text-white/40 group-hover:text-white/70 transition-colors duration-300">
+                Scroll
+              </span>
+              <div className="relative h-10 w-10 rounded-full border border-white/20 group-hover:border-white/50 transition-all duration-300 flex items-center justify-center group-hover:shadow-[0_0_16px_rgba(255,255,255,0.1)]">
+                <ChevronDown className="h-5 w-5 animate-scroll-arrow" strokeWidth={1.5} />
+              </div>
+            </button>
+          </div>
         </section>
 
         {/* ── Features ──────────────────────────────────────────── */}
-        <section className="container py-28 md:py-36">
+        <section ref={featuresRef} className="container py-28 md:py-36">
           <Reveal>
             <div className="mb-16 space-y-3 max-w-xl">
               <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-primary">
