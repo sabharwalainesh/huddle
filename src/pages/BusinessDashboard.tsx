@@ -183,6 +183,12 @@ const BusinessDashboard = () => {
                           </div>
                         )}
                       </div>
+
+                      {/* Manage CTA */}
+                      <div className="flex items-center justify-between pt-0.5">
+                        <span className="text-[11px] text-muted-foreground/60">Tap to manage</span>
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" strokeWidth={1.5} />
+                      </div>
                     </div>
                   </div>
                 </Link>

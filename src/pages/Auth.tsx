@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -14,14 +16,42 @@ import { Users, MapPin, Star, ArrowRight } from "lucide-react";
 import { RecaptchaBox } from "@/components/RecaptchaBox";
 
 const signUpSchema = z.object({
-  email: z.string().trim().email("Invalid email").max(255),
-  password: z.string().min(8, "At least 8 characters").max(72),
-  displayName: z.string().trim().min(2, "At least 2 characters").max(50),
+  email: z.string().trim().email("Enter a valid email address").max(255),
+  password: z
+    .string()
+    .min(8, "At least 8 characters required")
+    .max(72, "Password too long")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Must contain at least one number"),
+  displayName: z
+    .string()
+    .trim()
+    .min(2, "At least 2 characters required")
+    .max(50, "50 characters max")
+    .regex(/[a-zA-Z]/, "Must contain at least one letter"),
 });
+
 const signInSchema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
   password: z.string().min(1, "Password required").max(72),
 });
+
+type SignUpForm = z.infer<typeof signUpSchema>;
+type SignInForm = z.infer<typeof signInSchema>;
+
+// Compute password strength score 0-4 based on: length>=8, uppercase, lowercase, digit
+function passwordStrength(pw: string): number {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  return score;
+}
+
+const strengthColors = ["bg-destructive", "bg-destructive", "bg-amber-400", "bg-amber-400", "bg-emerald-500"];
+const strengthLabels = ["", "Weak", "Weak", "Fair", "Strong"];
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -31,6 +61,24 @@ const Auth = () => {
   const [ownsBusiness, setOwnsBusiness] = useState(false);
   const [signInHuman, setSignInHuman] = useState(false);
   const [signUpHuman, setSignUpHuman] = useState(false);
+
+  const signUpForm = useForm<SignUpForm>({ resolver: zodResolver(signUpSchema) });
+  const signInForm = useForm<SignInForm>({ resolver: zodResolver(signInSchema) });
+
+  const {
+    register: registerUp,
+    handleSubmit: handleSubmitUp,
+    watch: watchUp,
+    formState: { errors: errorsUp },
+  } = signUpForm;
+
+  const {
+    register: registerIn,
+    handleSubmit: handleSubmitIn,
+    formState: { errors: errorsIn },
+  } = signInForm;
+
+  const signUpPassword = watchUp("password") ?? "";
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
@@ -43,31 +91,19 @@ const Auth = () => {
     });
   };
 
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSignUp = handleSubmitUp(async (data) => {
     if (!signUpHuman) {
       toast({ title: "Please confirm you're not a robot", variant: "destructive" });
       return;
     }
-    const form = new FormData(e.currentTarget);
-    const data = {
-      email: String(form.get("email")),
-      password: String(form.get("password")),
-      displayName: String(form.get("displayName")),
-    };
-    const parsed = signUpSchema.safeParse(data);
-    if (!parsed.success) {
-      toast({ title: "Check your inputs", description: parsed.error.issues[0].message, variant: "destructive" });
-      return;
-    }
     setLoading(true);
     const { data: signUpData, error } = await supabase.auth.signUp({
-      email: parsed.data.email,
-      password: parsed.data.password,
+      email: data.email,
+      password: data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
         data: {
-          display_name: parsed.data.displayName,
+          display_name: data.displayName,
           owns_business: ownsBusiness,
         },
       },
@@ -92,25 +128,17 @@ const Auth = () => {
       toast({ title: "Welcome to Huddle!" });
       navigate("/");
     }
-  };
+  });
 
-  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSignIn = handleSubmitIn(async (data) => {
     if (!signInHuman) {
       toast({ title: "Please confirm you're not a robot", variant: "destructive" });
       return;
     }
-    const form = new FormData(e.currentTarget);
-    const data = { email: String(form.get("email")), password: String(form.get("password")) };
-    const parsed = signInSchema.safeParse(data);
-    if (!parsed.success) {
-      toast({ title: "Check your inputs", description: parsed.error.issues[0].message, variant: "destructive" });
-      return;
-    }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
-      email: parsed.data.email,
-      password: parsed.data.password,
+      email: data.email,
+      password: data.password,
     });
     setLoading(false);
     if (error) {
@@ -118,7 +146,9 @@ const Auth = () => {
       return;
     }
     navigate("/");
-  };
+  });
+
+  const pwScore = passwordStrength(signUpPassword);
 
   return (
     <main id="main" className="min-h-[100dvh] bg-background flex">
@@ -229,23 +259,27 @@ const Auth = () => {
                   <Label htmlFor="si-email" className="text-sm font-medium">{t("auth.email")}</Label>
                   <Input
                     id="si-email"
-                    name="email"
                     type="email"
-                    required
+                    {...registerIn("email")}
                     className="rounded-xl h-11"
                     placeholder="you@example.com"
                   />
+                  {errorsIn.email && (
+                    <p className="text-[11px] text-destructive font-medium mt-1">{errorsIn.email.message}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="si-password" className="text-sm font-medium">{t("auth.password")}</Label>
                   <Input
                     id="si-password"
-                    name="password"
                     type="password"
-                    required
+                    {...registerIn("password")}
                     className="rounded-xl h-11"
                     placeholder="••••••••"
                   />
+                  {errorsIn.password && (
+                    <p className="text-[11px] text-destructive font-medium mt-1">{errorsIn.password.message}</p>
+                  )}
                 </div>
                 <RecaptchaBox onVerifiedChange={setSignInHuman} />
                 <Button
@@ -270,35 +304,59 @@ const Auth = () => {
                   <Label htmlFor="su-name" className="text-sm font-medium">{t("auth.displayName")}</Label>
                   <Input
                     id="su-name"
-                    name="displayName"
-                    required
-                    maxLength={50}
+                    {...registerUp("displayName")}
                     className="rounded-xl h-11"
                     placeholder="Your name"
                   />
+                  {errorsUp.displayName && (
+                    <p className="text-[11px] text-destructive font-medium mt-1">{errorsUp.displayName.message}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="su-email" className="text-sm font-medium">{t("auth.email")}</Label>
                   <Input
                     id="su-email"
-                    name="email"
                     type="email"
-                    required
+                    {...registerUp("email")}
                     className="rounded-xl h-11"
                     placeholder="you@example.com"
                   />
+                  {errorsUp.email && (
+                    <p className="text-[11px] text-destructive font-medium mt-1">{errorsUp.email.message}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="su-password" className="text-sm font-medium">{t("auth.password")}</Label>
                   <Input
                     id="su-password"
-                    name="password"
                     type="password"
-                    required
-                    minLength={8}
+                    {...registerUp("password")}
                     className="rounded-xl h-11"
                     placeholder="8+ characters"
                   />
+                  {errorsUp.password && (
+                    <p className="text-[11px] text-destructive font-medium mt-1">{errorsUp.password.message}</p>
+                  )}
+                  {/* Password strength bar */}
+                  {signUpPassword.length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      <div className="flex gap-1">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                              i < pwScore ? strengthColors[pwScore] : "bg-border"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {pwScore > 0 && (
+                        <p className={`text-[11px] font-medium ${pwScore >= 4 ? "text-emerald-600" : pwScore >= 3 ? "text-amber-600" : "text-destructive"}`}>
+                          {strengthLabels[pwScore]}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/30 p-4">
                   <Checkbox
