@@ -8,9 +8,13 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -51,6 +55,16 @@ const downloadCsv = (filename: string, rows: Record<string, string | number | nu
   URL.revokeObjectURL(url);
 };
 
+const EXPORT_SECTIONS = [
+  { id: "info",    label: "Business info",       desc: "Name, category, address, phone, website" },
+  { id: "stats",   label: "Performance stats",   desc: "Views, unique viewers, check-ins, bookmarks, ratings" },
+  { id: "reviews", label: "Reviews",             desc: "Rating, comment, verified status, and date" },
+  { id: "views",   label: "Views timeline",      desc: "Daily view counts for the last 14 days" },
+  { id: "summary", label: "AI summary",          desc: "Generated AI summary text (requires generation first)" },
+] as const;
+
+type SectionId = (typeof EXPORT_SECTIONS)[number]["id"];
+
 const Insights = () => {
   const { user, loading: authLoading } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -64,6 +78,8 @@ const Insights = () => {
   const [health, setHealth] = useState<{ score: number; narrative: string } | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
   const autoHealthRan = useRef<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportSections, setExportSections] = useState<Set<SectionId>>(new Set(["info", "stats", "reviews"]));
 
   useEffect(() => {
     if (!user) return;
@@ -188,38 +204,64 @@ const Insights = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBusiness?.id, selectedStats]);
 
-  const exportFullReport = () => {
-    if (!selectedBusiness || !selectedStats) return;
-    const rows: Record<string, string | number | null | undefined>[] = [
-      { section: "Business", field: "name", value: selectedBusiness.name },
-      { section: "Business", field: "category", value: selectedBusiness.category },
-      { section: "Business", field: "status", value: selectedBusiness.status },
-      { section: "Business", field: "address", value: selectedBusiness.address ?? "" },
-      { section: "Business", field: "phone", value: selectedBusiness.phone ?? "" },
-      { section: "Business", field: "website", value: selectedBusiness.website ?? "" },
-      { section: "Stats", field: "total_views", value: selectedStats.total_views },
-      { section: "Stats", field: "unique_viewers", value: selectedStats.unique_viewers },
-      { section: "Stats", field: "views_30d", value: selectedStats.views_30d },
-      { section: "Stats", field: "total_bookmarks", value: selectedStats.total_bookmarks },
-      { section: "Stats", field: "total_check_ins", value: selectedStats.total_check_ins },
-      { section: "Stats", field: "check_ins_30d", value: selectedStats.check_ins_30d },
-      { section: "Stats", field: "review_count", value: selectedStats.review_count },
-      { section: "Stats", field: "avg_rating", value: Number(selectedStats.avg_rating) },
-    ];
-    downloadCsv(`huddle-insights-${selectedBusiness.name.replace(/\W+/g, "-")}.csv`, rows);
-  };
-
-  const exportReviews = () => {
+  const runExport = () => {
     if (!selectedBusiness) return;
-    downloadCsv(
-      `huddle-reviews-${selectedBusiness.name.replace(/\W+/g, "-")}.csv`,
-      selectedReviews.map((r) => ({
-        rating: r.rating,
-        verified: r.verified ? "yes" : "no",
-        comment: r.comment,
-        created_at: r.created_at,
-      })),
-    );
+    const slug = selectedBusiness.name.replace(/\W+/g, "-");
+    const allRows: Record<string, string | number | null | undefined>[] = [];
+
+    if (exportSections.has("info")) {
+      allRows.push(
+        { section: "Business Info", field: "name",     value: selectedBusiness.name },
+        { section: "Business Info", field: "category", value: selectedBusiness.category },
+        { section: "Business Info", field: "status",   value: selectedBusiness.status },
+        { section: "Business Info", field: "address",  value: selectedBusiness.address ?? "" },
+        { section: "Business Info", field: "phone",    value: selectedBusiness.phone ?? "" },
+        { section: "Business Info", field: "website",  value: selectedBusiness.website ?? "" },
+      );
+    }
+
+    if (exportSections.has("stats") && selectedStats) {
+      allRows.push(
+        { section: "Stats", field: "total_views",      value: selectedStats.total_views },
+        { section: "Stats", field: "unique_viewers",   value: selectedStats.unique_viewers },
+        { section: "Stats", field: "views_30d",        value: selectedStats.views_30d },
+        { section: "Stats", field: "total_bookmarks",  value: selectedStats.total_bookmarks },
+        { section: "Stats", field: "total_check_ins",  value: selectedStats.total_check_ins },
+        { section: "Stats", field: "check_ins_30d",    value: selectedStats.check_ins_30d },
+        { section: "Stats", field: "review_count",     value: selectedStats.review_count },
+        { section: "Stats", field: "avg_rating",       value: selectedStats.avg_rating ? Number(selectedStats.avg_rating).toFixed(2) : "—" },
+      );
+    }
+
+    if (exportSections.has("reviews") && selectedReviews.length) {
+      selectedReviews.forEach((r, i) => {
+        allRows.push({
+          section: "Review",
+          field: `review_${i + 1}`,
+          value: `${r.rating ?? "—"} stars — ${r.comment ?? "(no comment)"} (${new Date(r.created_at).toLocaleDateString()})`,
+          verified: r.verified ? "yes" : "no",
+        });
+      });
+    }
+
+    if (exportSections.has("views") && viewsByDay.length) {
+      viewsByDay.forEach(({ day, views: count }) => {
+        allRows.push({ section: "Views", field: day, value: count });
+      });
+    }
+
+    if (exportSections.has("summary") && summary) {
+      allRows.push({ section: "AI Summary", field: "summary", value: summary });
+    }
+
+    if (!allRows.length) {
+      toast({ title: "Nothing to export", description: "Select at least one section.", variant: "destructive" });
+      return;
+    }
+
+    downloadCsv(`huddle-insights-${slug}.csv`, allRows);
+    setExportOpen(false);
+    toast({ title: "Report downloaded", description: `huddle-insights-${slug}.csv` });
   };
 
   const scoreColor = (s: number) => {
@@ -334,13 +376,77 @@ const Insights = () => {
                     {summaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" strokeWidth={1.5} />}
                     AI summary
                   </Button>
-                  <Button onClick={exportFullReport} variant="outline" className="rounded-full gap-2">
-                    <Download className="h-4 w-4" strokeWidth={1.5} /> Export report
-                  </Button>
-                  <Button onClick={exportReviews} variant="outline" disabled={!selectedReviews.length} className="rounded-full gap-2">
-                    <Download className="h-4 w-4" strokeWidth={1.5} /> Export reviews
+                  <Button onClick={() => setExportOpen(true)} variant="outline" className="rounded-full gap-2">
+                    <Download className="h-4 w-4" strokeWidth={1.5} /> Export
                   </Button>
                 </div>
+
+                {/* Export dialog */}
+                <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+                  <DialogContent className="rounded-2xl sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Download className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                        Customize your report
+                      </DialogTitle>
+                      <DialogDescription>
+                        Choose what to include in the exported CSV file.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3 py-2">
+                      {EXPORT_SECTIONS.map((s) => {
+                        const disabled =
+                          (s.id === "summary" && !summary) ||
+                          (s.id === "reviews" && !selectedReviews.length) ||
+                          (s.id === "stats" && !selectedStats);
+                        const disabledNote =
+                          s.id === "summary" && !summary
+                            ? "Generate the AI summary first to include it"
+                            : s.id === "reviews" && !selectedReviews.length
+                            ? "No reviews yet for this business"
+                            : s.id === "stats" && !selectedStats
+                            ? "No stats available yet"
+                            : s.desc;
+                        return (
+                          <label
+                            key={s.id}
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${
+                              exportSections.has(s.id) && !disabled
+                                ? "border-primary/30 bg-primary/5"
+                                : "border-border/50 bg-muted/20 hover:bg-muted/40"
+                            } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                          >
+                            <Checkbox
+                              id={`export-${s.id}`}
+                              checked={exportSections.has(s.id)}
+                              disabled={disabled}
+                              onCheckedChange={(checked) => {
+                                setExportSections((prev) => {
+                                  const next = new Set(prev);
+                                  if (checked) next.add(s.id);
+                                  else next.delete(s.id);
+                                  return next;
+                                });
+                              }}
+                              className="mt-0.5 shrink-0"
+                            />
+                            <div className="space-y-0.5">
+                              <p className="text-sm font-medium leading-none">{s.label}</p>
+                              <p className="text-xs text-muted-foreground">{disabledNote}</p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-2">
+                      <Button variant="outline" onClick={() => setExportOpen(false)} className="rounded-full">Cancel</Button>
+                      <Button onClick={runExport} disabled={exportSections.size === 0} className="rounded-full gap-2">
+                        <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        Download CSV
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
 
                 {/* Health score */}
                 {(health || healthLoading) && (
