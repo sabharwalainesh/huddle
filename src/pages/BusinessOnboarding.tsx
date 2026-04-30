@@ -20,8 +20,12 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { formatPhoneInput, phoneError } from "@/lib/phone";
 
 const detailsSchema = z.object({
-  name: z.string().trim().min(2, "Name is required"),
-  category: z.string().min(1),
+  name: z
+    .string().trim()
+    .min(2, "Business name is required (min 2 characters)")
+    .max(100, "100 characters max")
+    .regex(/[a-zA-Z]/, "Name must contain at least one letter"),
+  category: z.string().min(1, "Please select a category"),
   phone: z
     .string()
     .trim()
@@ -30,10 +34,18 @@ const detailsSchema = z.object({
       const digits = v.replace(/\D/g, "");
       return digits.length >= 7 && digits.length <= 15;
     }, "Enter a valid phone number"),
-  description: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-  website: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
-  image_url: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
+  description: z.string().trim().max(2000, "2000 characters max").optional(),
+  address: z.string().trim().max(300, "300 characters max").optional(),
+  website: z
+    .string().trim()
+    .url("Must be a valid URL starting with https://")
+    .optional()
+    .or(z.literal("")),
+  image_url: z
+    .string().trim()
+    .url("Must be a valid image URL")
+    .optional()
+    .or(z.literal("")),
 });
 
 type Step = "details" | "upload" | "verifying" | "result";
@@ -74,6 +86,9 @@ const BusinessOnboarding = () => {
   const [website, setWebsite] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
+
+  // Inline field errors from schema validation
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Track which fields were filled by Google (for "less likely to be approved" warnings)
   const [prefilled, setPrefilled] = useState<PrefilledFields>({});
@@ -191,9 +206,22 @@ const BusinessOnboarding = () => {
   const onSubmitDetails = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) return;
+
+    // Clear previous field errors on each submission attempt
+    setFieldErrors({});
+
     const raw = { name, category, phone, description, address, website, image_url: imageUrl };
     const parsed = detailsSchema.safeParse(raw);
     if (!parsed.success) {
+      // Extract all field errors
+      const newErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const field = String(issue.path[0]);
+        if (!newErrors[field]) {
+          newErrors[field] = issue.message;
+        }
+      }
+      setFieldErrors(newErrors);
       toast({ title: "Check your inputs", description: parsed.error.issues[0].message, variant: "destructive" });
       return;
     }
@@ -413,7 +441,10 @@ const BusinessOnboarding = () => {
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="name">Business name *</Label>
                       <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
-                      {fieldHint("name")}
+                      {fieldErrors.name && (
+                        <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.name}</p>
+                      )}
+                      {!fieldErrors.name && fieldHint("name")}
                     </div>
                     <div className="space-y-1.5">
                       <Label>Category *</Label>
@@ -425,6 +456,9 @@ const BusinessOnboarding = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.category && (
+                        <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.category}</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="phone" className="flex items-center gap-1.5">
@@ -455,12 +489,15 @@ const BusinessOnboarding = () => {
                         onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                         aria-invalid={phone.length > 0 && phoneError(phone) !== null}
                       />
-                      {phone.length > 0 && phoneError(phone) ? (
+                      {fieldErrors.phone && (
+                        <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.phone}</p>
+                      )}
+                      {!fieldErrors.phone && phone.length > 0 && phoneError(phone) ? (
                         <p className="text-[11px] text-destructive flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3" /> {phoneError(phone)}
                         </p>
                       ) : (
-                        fieldHint("phone")
+                        !fieldErrors.phone && fieldHint("phone")
                       )}
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
@@ -471,12 +508,18 @@ const BusinessOnboarding = () => {
                         onChange={setAddress}
                         placeholder="Start typing an address..."
                       />
-                      {fieldHint("address")}
+                      {fieldErrors.address && (
+                        <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.address}</p>
+                      )}
+                      {!fieldErrors.address && fieldHint("address")}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="website">Website</Label>
                       <Input id="website" type="url" placeholder="https://..." value={website} onChange={(e) => setWebsite(e.target.value)} />
-                      {fieldHint("website")}
+                      {fieldErrors.website && (
+                        <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.website}</p>
+                      )}
+                      {!fieldErrors.website && fieldHint("website")}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="image_url">Business image</Label>
@@ -505,11 +548,17 @@ const BusinessOnboarding = () => {
                       ) : (
                         <Input id="image_url" type="url" placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
                       )}
-                      {fieldHint("image_url")}
+                      {fieldErrors.image_url && (
+                        <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.image_url}</p>
+                      )}
+                      {!fieldErrors.image_url && fieldHint("image_url")}
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="description">Description</Label>
                       <Textarea id="description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+                      {fieldErrors.description && (
+                        <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.description}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 justify-end">

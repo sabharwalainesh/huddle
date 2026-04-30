@@ -37,7 +37,7 @@ interface InsightRow {
 }
 
 const reviewSchema = z.object({
-  rating: z.number().int().min(1).max(5),
+  rating: z.number().int().min(1, "Please select a rating").max(5),
   comment: z.string().trim().min(10, "Please write at least 10 characters").max(1000),
 });
 
@@ -90,6 +90,9 @@ const BusinessDetail = () => {
   const [visitVerified, setVisitVerified] = useState(false);
   const [posting, setPosting] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
+
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [ratingError, setRatingError] = useState<string | null>(null);
 
   const [googleData, setGoogleData] = useState<GoogleData | null>(null);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
@@ -190,8 +193,27 @@ const BusinessDetail = () => {
     e.preventDefault();
     if (!user) { navigate("/auth"); return; }
     if (!business) return;
+
+    // Clear previous inline errors before re-validation
+    setCommentError(null);
+    setRatingError(null);
+
     const parsed = reviewSchema.safeParse({ rating, comment });
-    if (!parsed.success) return toast({ title: "Invalid review", description: parsed.error.issues[0].message, variant: "destructive" });
+    if (!parsed.success) {
+      const issues = parsed.error.issues;
+      // Separate rating vs comment errors for inline display
+      for (const issue of issues) {
+        const field = issue.path[0];
+        if (field === "rating") {
+          setRatingError(issue.message);
+        } else if (field === "comment") {
+          setCommentError(issue.message);
+        }
+      }
+      toast({ title: "Invalid review", description: issues[0].message, variant: "destructive" });
+      return;
+    }
+
     setPosting(true);
     const { error } = await supabase.from("reviews").insert({
       business_id: business.id,
@@ -204,6 +226,7 @@ const BusinessDetail = () => {
     if (error) return toast({ title: "Couldn't post review", description: error.message, variant: "destructive" });
     toast({ title: visitVerified ? "Verified review posted!" : "Review posted!" });
     setRating(0); setComment(""); setVisitVerified(false);
+    setCommentError(null); setRatingError(null);
     load();
   };
 
@@ -456,6 +479,9 @@ const BusinessDetail = () => {
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground uppercase tracking-wide">Your rating</Label>
                     <StarRating value={rating} onChange={setRating} size={26} />
+                    {ratingError && (
+                      <p className="text-[11px] text-destructive font-medium">{ratingError}</p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="comment" className="text-xs text-muted-foreground uppercase tracking-wide">Your experience</Label>
@@ -468,7 +494,10 @@ const BusinessDetail = () => {
                       placeholder="Share your experience (10–1000 characters)"
                       className="rounded-xl"
                     />
-                    <p className="text-xs text-muted-foreground text-right">{comment.length}/1000</p>
+                    {commentError && (
+                      <p className="text-[11px] text-destructive font-medium">{commentError}</p>
+                    )}
+                    <p className="text-[11px] text-right text-muted-foreground">{comment.length}/1000</p>
                   </div>
                   {business && <ReceiptVerifier businessId={business.id} onVerifiedChange={setVisitVerified} />}
                   <Button type="submit" disabled={posting || !rating} className="rounded-full gap-2">

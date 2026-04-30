@@ -404,6 +404,16 @@ const Discover = () => {
           )}
         </div>
 
+        {/* Navigation hint */}
+        <div className="flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
+            Tap any card to view details, save it, or check in
+          </span>
+          <span className="text-border/60 select-none">·</span>
+          <span>Use filters above to narrow results</span>
+        </div>
+
         <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
           <div className="space-y-8">
             {source === "huddle" ? (

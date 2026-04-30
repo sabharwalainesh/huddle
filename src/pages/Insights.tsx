@@ -56,14 +56,26 @@ const downloadCsv = (filename: string, rows: Record<string, string | number | nu
 };
 
 const EXPORT_SECTIONS = [
-  { id: "info",    label: "Business info",       desc: "Name, category, address, phone, website" },
-  { id: "stats",   label: "Performance stats",   desc: "Views, unique viewers, check-ins, bookmarks, ratings" },
-  { id: "reviews", label: "Reviews",             desc: "Rating, comment, verified status, and date" },
-  { id: "views",   label: "Views timeline",      desc: "Daily view counts for the last 14 days" },
-  { id: "summary", label: "AI summary",          desc: "Generated AI summary text (requires generation first)" },
+  { id: "info",    label: "Business info",  desc: "Name, category, address, phone, website" },
+  { id: "reviews", label: "Reviews",        desc: "Rating, comment, verified status, and date" },
+  { id: "views",   label: "Views timeline", desc: "Daily view counts for the last 14 days" },
+  { id: "summary", label: "AI summary",     desc: "Generated AI summary text (requires generation first)" },
 ] as const;
 
 type SectionId = (typeof EXPORT_SECTIONS)[number]["id"];
+
+const STAT_METRICS = [
+  { id: "total_views",     label: "Total views",           field: "total_views" },
+  { id: "views_30d",       label: "Views (last 30 days)",  field: "views_30d" },
+  { id: "unique_viewers",  label: "Unique viewers",        field: "unique_viewers" },
+  { id: "total_check_ins", label: "Check-ins (total)",     field: "total_check_ins" },
+  { id: "check_ins_30d",   label: "Check-ins (last 30d)",  field: "check_ins_30d" },
+  { id: "total_bookmarks", label: "Bookmarks",             field: "total_bookmarks" },
+  { id: "review_count",    label: "Review count",          field: "review_count" },
+  { id: "avg_rating",      label: "Avg rating",            field: "avg_rating" },
+] as const;
+
+type StatMetricId = (typeof STAT_METRICS)[number]["id"];
 
 const Insights = () => {
   const { user, loading: authLoading } = useAuth();
@@ -79,7 +91,10 @@ const Insights = () => {
   const [healthLoading, setHealthLoading] = useState(false);
   const autoHealthRan = useRef<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
-  const [exportSections, setExportSections] = useState<Set<SectionId>>(new Set(["info", "stats", "reviews"]));
+  const [exportSections, setExportSections] = useState<Set<SectionId>>(new Set(["info", "reviews"]));
+  const [exportStatMetrics, setExportStatMetrics] = useState<Set<StatMetricId>>(
+    new Set(STAT_METRICS.map((m) => m.id)),
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -220,17 +235,22 @@ const Insights = () => {
       );
     }
 
-    if (exportSections.has("stats") && selectedStats) {
-      allRows.push(
-        { section: "Stats", field: "total_views",      value: selectedStats.total_views },
-        { section: "Stats", field: "unique_viewers",   value: selectedStats.unique_viewers },
-        { section: "Stats", field: "views_30d",        value: selectedStats.views_30d },
-        { section: "Stats", field: "total_bookmarks",  value: selectedStats.total_bookmarks },
-        { section: "Stats", field: "total_check_ins",  value: selectedStats.total_check_ins },
-        { section: "Stats", field: "check_ins_30d",    value: selectedStats.check_ins_30d },
-        { section: "Stats", field: "review_count",     value: selectedStats.review_count },
-        { section: "Stats", field: "avg_rating",       value: selectedStats.avg_rating ? Number(selectedStats.avg_rating).toFixed(2) : "—" },
-      );
+    if (selectedStats && exportStatMetrics.size > 0) {
+      const statValueMap: Record<string, string | number | null | undefined> = {
+        total_views:     selectedStats.total_views,
+        views_30d:       selectedStats.views_30d,
+        unique_viewers:  selectedStats.unique_viewers,
+        total_check_ins: selectedStats.total_check_ins,
+        check_ins_30d:   selectedStats.check_ins_30d,
+        total_bookmarks: selectedStats.total_bookmarks,
+        review_count:    selectedStats.review_count,
+        avg_rating:      selectedStats.avg_rating != null ? Number(selectedStats.avg_rating).toFixed(2) : "—",
+      };
+      STAT_METRICS.forEach((m) => {
+        if (exportStatMetrics.has(m.id)) {
+          allRows.push({ section: "Stats", field: m.field, value: statValueMap[m.field] });
+        }
+      });
     }
 
     if (exportSections.has("reviews") && selectedReviews.length) {
@@ -383,7 +403,7 @@ const Insights = () => {
 
                 {/* Export dialog */}
                 <Dialog open={exportOpen} onOpenChange={setExportOpen}>
-                  <DialogContent className="rounded-2xl sm:max-w-md">
+                  <DialogContent className="rounded-2xl sm:max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2">
                         <Download className="h-4 w-4 text-primary" strokeWidth={1.5} />
@@ -393,19 +413,81 @@ const Insights = () => {
                         Choose what to include in the exported CSV file.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-3 py-2">
+
+                    <div className="space-y-4 py-2">
+                      {/* Performance stats — expanded per-metric */}
+                      <div className="rounded-xl border border-border/50 overflow-hidden">
+                        <div className="flex items-center justify-between gap-3 px-3.5 py-3 bg-muted/30 border-b border-border/50">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold">Performance stats</p>
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
+                              {exportStatMetrics.size}/{STAT_METRICS.length}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setExportStatMetrics(new Set(STAT_METRICS.map((m) => m.id)))}
+                              className="text-[11px] text-primary hover:underline font-medium"
+                            >
+                              All
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setExportStatMetrics(new Set())}
+                              className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                            >
+                              None
+                            </button>
+                          </div>
+                        </div>
+                        <div className="divide-y divide-border/40">
+                          {STAT_METRICS.map((m) => {
+                            const disabled = !selectedStats;
+                            const checked = exportStatMetrics.has(m.id);
+                            return (
+                              <label
+                                key={m.id}
+                                className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer transition-colors ${
+                                  checked && !disabled ? "bg-primary/5" : "hover:bg-muted/30"
+                                } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                              >
+                                <Checkbox
+                                  checked={checked}
+                                  disabled={disabled}
+                                  onCheckedChange={(v) =>
+                                    setExportStatMetrics((prev) => {
+                                      const next = new Set(prev);
+                                      if (v) next.add(m.id); else next.delete(m.id);
+                                      return next;
+                                    })
+                                  }
+                                  className="shrink-0"
+                                />
+                                <span className="text-sm">{m.label}</span>
+                                {selectedStats && (
+                                  <span className="ml-auto text-xs font-mono text-muted-foreground tabular-nums">
+                                    {m.id === "avg_rating"
+                                      ? selectedStats.avg_rating != null ? Number(selectedStats.avg_rating).toFixed(2) : "—"
+                                      : ((selectedStats as Record<string, unknown>)[m.field] ?? 0).toLocaleString()}
+                                  </span>
+                                )}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Other sections */}
                       {EXPORT_SECTIONS.map((s) => {
                         const disabled =
                           (s.id === "summary" && !summary) ||
-                          (s.id === "reviews" && !selectedReviews.length) ||
-                          (s.id === "stats" && !selectedStats);
-                        const disabledNote =
+                          (s.id === "reviews" && !selectedReviews.length);
+                        const note =
                           s.id === "summary" && !summary
                             ? "Generate the AI summary first to include it"
                             : s.id === "reviews" && !selectedReviews.length
                             ? "No reviews yet for this business"
-                            : s.id === "stats" && !selectedStats
-                            ? "No stats available yet"
                             : s.desc;
                         return (
                           <label
@@ -417,30 +499,33 @@ const Insights = () => {
                             } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
                           >
                             <Checkbox
-                              id={`export-${s.id}`}
                               checked={exportSections.has(s.id)}
                               disabled={disabled}
-                              onCheckedChange={(checked) => {
+                              onCheckedChange={(v) =>
                                 setExportSections((prev) => {
                                   const next = new Set(prev);
-                                  if (checked) next.add(s.id);
-                                  else next.delete(s.id);
+                                  if (v) next.add(s.id); else next.delete(s.id);
                                   return next;
-                                });
-                              }}
+                                })
+                              }
                               className="mt-0.5 shrink-0"
                             />
                             <div className="space-y-0.5">
                               <p className="text-sm font-medium leading-none">{s.label}</p>
-                              <p className="text-xs text-muted-foreground">{disabledNote}</p>
+                              <p className="text-xs text-muted-foreground">{note}</p>
                             </div>
                           </label>
                         );
                       })}
                     </div>
+
                     <DialogFooter className="gap-2 sm:gap-2">
                       <Button variant="outline" onClick={() => setExportOpen(false)} className="rounded-full">Cancel</Button>
-                      <Button onClick={runExport} disabled={exportSections.size === 0} className="rounded-full gap-2">
+                      <Button
+                        onClick={runExport}
+                        disabled={exportSections.size === 0 && exportStatMetrics.size === 0}
+                        className="rounded-full gap-2"
+                      >
                         <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
                         Download CSV
                       </Button>

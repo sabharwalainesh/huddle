@@ -129,22 +129,27 @@ const Landing = () => {
             </div>
           </div>
 
-          {/* Scroll-down arrow — appears after video ends */}
+          {/* Scroll-down indicator — appears after video ends */}
           <div
-            className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-1000 ${
+            className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-1000 ${
               videoEnded ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
           >
             <button
               onClick={() => featuresRef.current?.scrollIntoView({ behavior: "smooth" })}
-              aria-label="Scroll to content"
-              className="group flex flex-col items-center gap-2 text-white/50 hover:text-white/90 transition-colors duration-300 focus:outline-none"
+              aria-label="Scroll to explore features"
+              className="group flex flex-col items-center gap-3 focus:outline-none"
             >
-              <span className="text-[9px] font-semibold tracking-[0.18em] uppercase text-white/40 group-hover:text-white/70 transition-colors duration-300">
-                Scroll
+              <span className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/70 group-hover:text-white transition-colors duration-300">
+                Scroll to explore
               </span>
-              <div className="relative h-10 w-10 rounded-full border border-white/20 group-hover:border-white/50 transition-all duration-300 flex items-center justify-center group-hover:shadow-[0_0_16px_rgba(255,255,255,0.1)]">
-                <ChevronDown className="h-5 w-5 animate-scroll-arrow" strokeWidth={1.5} />
+              <div className="relative flex items-center justify-center">
+                {/* Pulsing outer ring */}
+                <span className="absolute h-14 w-14 rounded-full border-2 border-white/40 animate-scroll-ring" />
+                {/* Static ring */}
+                <div className="relative h-14 w-14 rounded-full border-2 border-white/60 group-hover:border-white group-hover:bg-white/10 backdrop-blur-sm transition-all duration-300 flex items-center justify-center shadow-[0_0_24px_rgba(255,255,255,0.12)] group-hover:shadow-[0_0_32px_rgba(255,255,255,0.25)]">
+                  <ChevronDown className="h-7 w-7 text-white animate-scroll-arrow" strokeWidth={2} />
+                </div>
               </div>
             </button>
           </div>
