@@ -6,7 +6,7 @@ import { z } from "zod";
 import {
   Eye, Bookmark, MapPin, Star, Loader2, ArrowLeft,
   ExternalLink, BarChart3, ChevronRight, Save, X,
-  MessageSquare, Building2,
+  MessageSquare, Building2, Tag, Plus, Trash2, AlertCircle, UserCircle, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,16 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Business = Tables<"businesses">;
 type Review = Tables<"reviews"> & { profiles?: { display_name: string } | null };
+type Coupon = Tables<"coupons">;
+
+const couponSchema = z.object({
+  title:       z.string().trim().min(2, "Title required").max(80),
+  description: z.string().trim().max(200).optional(),
+  discount:    z.string().trim().max(30).optional(),
+  code:        z.string().trim().max(30).optional(),
+  expires_at:  z.string().min(1, "Expiry date required"),
+});
+type CouponForm = z.infer<typeof couponSchema>;
 
 interface InsightRow {
   business_id: string;
@@ -74,11 +84,20 @@ const editSchema = z.object({
       "Each tag must be 30 characters or fewer"
     )
     .optional(),
+  founder_name:      z.string().trim().max(80).optional(),
+  founder_bio:       z.string().trim().max(500).optional(),
+  founder_photo_url: z.string().trim().url("Must be a valid image URL").optional().or(z.literal("")),
 });
 
 type EditForm = z.infer<typeof editSchema>;
 
 const CATEGORIES = ["food", "retail", "services", "health", "entertainment", "other"];
+
+const EDITORIAL_TAG_OPTIONS = [
+  "Hidden Gem", "Community Favorite", "Family-Owned", "Women-Owned",
+  "Veteran-Owned", "Minority-Owned", "Eco-Friendly", "Locally Sourced",
+  "Long-Standing", "Best in Neighborhood", "Dog-Friendly", "Cash Only",
+] as const;
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   approved:     { label: "Approved",     className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/25" },
@@ -126,10 +145,16 @@ const BusinessDashboardDetail = () => {
   const [business, setBusiness] = useState<Business | null>(null);
   const [stats, setStats] = useState<InsightRow | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [hoursReports, setHoursReports] = useState<{ id: string; message: string; created_at: string }[]>([]);
+  const [editorialTags, setEditorialTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [couponSaving, setCouponSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const form = useForm<EditForm>({ resolver: zodResolver(editSchema) });
+  const couponForm = useForm<CouponForm>({ resolver: zodResolver(couponSchema) });
   const { register, handleSubmit, setValue, watch, reset, formState: { errors, isDirty } } = form;
 
   useEffect(() => {
@@ -140,10 +165,12 @@ const BusinessDashboardDetail = () => {
     if (!user || !id) return;
     (async () => {
       setLoading(true);
-      const [bizRes, statsRes, revRes] = await Promise.all([
+      const [bizRes, statsRes, revRes, cpRes, hrRes] = await Promise.all([
         supabase.from("businesses").select("*").eq("id", id).eq("owner_id", user.id).maybeSingle(),
         supabase.from("business_insights_summary").select("*").eq("business_id", id).maybeSingle(),
         supabase.from("reviews").select("*").eq("business_id", id).order("created_at", { ascending: false }),
+        supabase.from("coupons").select("*").eq("business_id", id).order("expires_at", { ascending: true }),
+        supabase.from("hours_reports").select("id, message, created_at").eq("business_id", id).order("created_at", { ascending: false }).limit(10),
       ]);
       if (!bizRes.data) { navigate("/business-dashboard"); return; }
       const biz = bizRes.data as Business;
@@ -158,7 +185,10 @@ const BusinessDashboardDetail = () => {
         reviewRows.forEach((r) => { r.profiles = { display_name: map.get(r.user_id) ?? "Member" }; });
       }
       setReviews(reviewRows);
+      setCoupons((cpRes.data ?? []) as Coupon[]);
+      setHoursReports((hrRes.data ?? []) as { id: string; message: string; created_at: string }[]);
 
+      setEditorialTags(biz.editorial_tags ?? []);
       reset({
         name: biz.name,
         description: biz.description ?? "",
@@ -167,6 +197,9 @@ const BusinessDashboardDetail = () => {
         phone: biz.phone ?? "",
         website: biz.website ?? "",
         tags: (biz.tags ?? []).join(", "),
+        founder_name:      biz.founder_name ?? "",
+        founder_bio:       biz.founder_bio ?? "",
+        founder_photo_url: biz.founder_photo_url ?? "",
       });
       setLoading(false);
     })();
@@ -186,12 +219,50 @@ const BusinessDashboardDetail = () => {
       phone: data.phone ?? null,
       website: data.website || null,
       tags,
+      founder_name:      data.founder_name?.trim() || null,
+      founder_bio:       data.founder_bio?.trim() || null,
+      founder_photo_url: data.founder_photo_url?.trim() || null,
+      editorial_tags:    editorialTags,
     }).eq("id", business.id);
     setSaving(false);
     if (error) return toast({ title: "Save failed", description: error.message, variant: "destructive" });
     toast({ title: "Listing updated" });
-    setBusiness((prev) => prev ? { ...prev, ...data, tags } : prev);
+    setBusiness((prev) => prev ? {
+      ...prev, ...data, tags,
+      founder_name:      data.founder_name?.trim() || null,
+      founder_bio:       data.founder_bio?.trim() || null,
+      founder_photo_url: data.founder_photo_url?.trim() || null,
+      editorial_tags:    editorialTags,
+    } : prev);
     reset(data);
+  };
+
+  const onCreateCoupon = async (data: CouponForm) => {
+    if (!business || !user) return;
+    setCouponSaving(true);
+    const { data: row, error } = await supabase.from("coupons").insert({
+      business_id: business.id,
+      owner_id: user.id,
+      title: data.title,
+      description: data.description ?? "",
+      discount: data.discount || null,
+      code: data.code || null,
+      expires_at: new Date(data.expires_at).toISOString(),
+    }).select().single();
+    setCouponSaving(false);
+    if (error) return toast({ title: "Couldn't create deal", description: error.message, variant: "destructive" });
+    setCoupons((prev) => [...prev, row as Coupon]);
+    couponForm.reset();
+    toast({ title: "Deal created" });
+  };
+
+  const deleteCoupon = async (cpId: string) => {
+    setDeletingId(cpId);
+    const { error } = await supabase.from("coupons").delete().eq("id", cpId);
+    setDeletingId(null);
+    if (error) return toast({ title: "Couldn't delete deal", description: error.message, variant: "destructive" });
+    setCoupons((prev) => prev.filter((c) => c.id !== cpId));
+    toast({ title: "Deal removed" });
   };
 
   if (!user) return null;
@@ -282,6 +353,14 @@ const BusinessDashboardDetail = () => {
                     </span>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="deals" className="rounded-full text-xs font-semibold px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">
+                  Deals
+                  {coupons.length > 0 && (
+                    <span className="ml-1.5 text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-semibold tabular-nums">
+                      {coupons.length}
+                    </span>
+                  )}
+                </TabsTrigger>
               </TabsList>
 
               {/* ── OVERVIEW TAB ────────────────────────────────────────────── */}
@@ -357,6 +436,34 @@ const BusinessDashboardDetail = () => {
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Hours reports from community */}
+                {hoursReports.length > 0 && (
+                  <div className="p-[5px] rounded-[1.5rem] bg-amber-500/[0.04] border border-amber-500/20">
+                    <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                      <div className="px-6 pt-5 pb-4 border-b border-border/60 flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-500" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-sm">Hours reports from visitors</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">Customers flagged your hours may be incorrect</p>
+                        </div>
+                        <span className="ml-auto text-xs font-semibold bg-amber-500/15 text-amber-600 px-2 py-0.5 rounded-full">{hoursReports.length}</span>
+                      </div>
+                      <div className="divide-y divide-border/40">
+                        {hoursReports.map((r) => (
+                          <div key={r.id} className="px-6 py-3 flex items-start justify-between gap-4">
+                            <p className="text-sm text-foreground/80">{r.message || "Hours may have changed."}</p>
+                            <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
+                              {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -486,6 +593,82 @@ const BusinessDashboardDetail = () => {
                       </Field>
                     </div>
 
+                    {/* ── Founder profile ──────────────────────────────────── */}
+                    <div className="px-7 pb-7 pt-2 border-t border-border/50 mt-2 space-y-5">
+                      <div className="flex items-center gap-2 pt-5">
+                        <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <UserCircle className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+                        </div>
+                        <p className="text-sm font-semibold tracking-tight">Founder profile</p>
+                        <p className="text-xs text-muted-foreground">· Shown on your public listing</p>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <Field label="Founder name" error={errors.founder_name?.message}>
+                          <Input
+                            {...register("founder_name")}
+                            className="rounded-xl"
+                            placeholder="e.g. Maria Chen"
+                          />
+                        </Field>
+                        <Field label="Founder photo URL" error={errors.founder_photo_url?.message}>
+                          <Input
+                            {...register("founder_photo_url")}
+                            className="rounded-xl"
+                            placeholder="https://example.com/photo.jpg"
+                          />
+                        </Field>
+                        <div className="md:col-span-2">
+                          <Field
+                            label="Founder bio"
+                            error={errors.founder_bio?.message}
+                            hint={`${(watch("founder_bio") ?? "").length}/500`}
+                          >
+                            <Textarea
+                              {...register("founder_bio")}
+                              rows={3}
+                              className="rounded-xl resize-none"
+                              placeholder="Share the story behind the business — who you are and why you started it…"
+                            />
+                          </Field>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Editorial tags ───────────────────────────────────── */}
+                    <div className="px-7 pb-7 pt-2 border-t border-border/50 space-y-4">
+                      <div className="flex items-center gap-2 pt-5">
+                        <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+                        </div>
+                        <p className="text-sm font-semibold tracking-tight">Community badges</p>
+                        <p className="text-xs text-muted-foreground">· Select all that apply</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {EDITORIAL_TAG_OPTIONS.map((tag) => {
+                          const active = editorialTags.includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() =>
+                                setEditorialTags((prev) =>
+                                  active ? prev.filter((t) => t !== tag) : [...prev, tag]
+                                )
+                              }
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                                active
+                                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                  : "bg-background text-muted-foreground border-border/60 hover:border-primary/40 hover:text-foreground"
+                              }`}
+                            >
+                              {active && <Sparkles className="h-3 w-3" strokeWidth={1.5} />}
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* Status notice */}
                     {business.status !== "approved" && (
                       <div className="mx-7 mb-7 px-4 py-3.5 rounded-xl bg-amber-500/8 border border-amber-500/20">
@@ -587,6 +770,116 @@ const BusinessDashboardDetail = () => {
                   </div>
                 </div>
               </TabsContent>
+              {/* ── DEALS TAB ───────────────────────────────────────────────── */}
+              <TabsContent value="deals" className="mt-0 space-y-5">
+
+                {/* Create deal form */}
+                <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+                  <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                    <div className="px-6 pt-5 pb-4 border-b border-border/60 flex items-center gap-2.5">
+                      <div className="h-7 w-7 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Plus className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+                      </div>
+                      <span className="font-semibold text-sm">Create a deal</span>
+                    </div>
+                    <form onSubmit={couponForm.handleSubmit(onCreateCoupon)} className="px-6 py-5 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Title *</Label>
+                          <Input {...couponForm.register("title")} placeholder="e.g. 20% off your first order" className="rounded-xl" />
+                          {couponForm.formState.errors.title && (
+                            <p className="text-[11px] text-destructive font-medium">{couponForm.formState.errors.title.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Discount label</Label>
+                          <Input {...couponForm.register("discount")} placeholder="e.g. 20% OFF, BOGO, Free coffee" className="rounded-xl" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Promo code</Label>
+                          <Input {...couponForm.register("code")} placeholder="e.g. HUDDLE20 (optional)" className="rounded-xl font-mono" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Expires *</Label>
+                          <Input
+                            {...couponForm.register("expires_at")}
+                            type="date"
+                            min={new Date().toISOString().slice(0, 10)}
+                            className="rounded-xl"
+                          />
+                          {couponForm.formState.errors.expires_at && (
+                            <p className="text-[11px] text-destructive font-medium">{couponForm.formState.errors.expires_at.message}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Description</Label>
+                        <Input {...couponForm.register("description")} placeholder="Any extra details (terms, limits, etc.)" className="rounded-xl" />
+                      </div>
+                      <Button type="submit" disabled={couponSaving} className="rounded-full gap-2">
+                        {couponSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Tag className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                        {couponSaving ? "Creating…" : "Create deal"}
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+
+                {/* Existing deals */}
+                <div className="space-y-3">
+                  {coupons.length === 0 ? (
+                    <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50">
+                      <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] px-6 py-10 text-center space-y-1">
+                        <Tag className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" strokeWidth={1.5} />
+                        <p className="text-sm font-medium text-muted-foreground">No active deals yet</p>
+                        <p className="text-xs text-muted-foreground/70">Create one above — it shows to customers on your listing.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    coupons.map((c) => {
+                      const expired = new Date(c.expires_at) < new Date();
+                      return (
+                        <div
+                          key={c.id}
+                          className={`p-[5px] rounded-[1.5rem] border ${expired ? "border-border/30 bg-foreground/[0.01]" : "border-primary/15 bg-primary/[0.02]"}`}
+                        >
+                          <div className={`rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] px-5 py-4 flex items-start justify-between gap-4`}>
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${expired ? "bg-muted" : "bg-primary/10"}`}>
+                                <Tag className={`h-3.5 w-3.5 ${expired ? "text-muted-foreground" : "text-primary"}`} strokeWidth={1.5} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className={`font-semibold text-sm ${expired ? "text-muted-foreground line-through" : ""}`}>{c.title}</p>
+                                  {c.discount && <Badge className="rounded-full text-[10px] h-5 px-2 shrink-0">{c.discount}</Badge>}
+                                  {expired && <Badge variant="outline" className="rounded-full text-[10px] h-5 px-2 text-destructive border-destructive/30">Expired</Badge>}
+                                </div>
+                                {c.description && <p className="text-xs text-muted-foreground mt-0.5">{c.description}</p>}
+                                <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
+                                  {c.code && <span className="font-mono font-semibold text-foreground bg-muted px-1.5 py-0.5 rounded">{c.code}</span>}
+                                  <span>Expires {new Date(c.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteCoupon(c.id)}
+                              disabled={deletingId === c.id}
+                              className="h-8 w-8 p-0 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                              aria-label="Delete deal"
+                            >
+                              {deletingId === c.id
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </TabsContent>
+
             </Tabs>
           </>
         ) : null}

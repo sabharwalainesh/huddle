@@ -4,7 +4,8 @@ import { z } from "zod";
 import {
   Bookmark, BookmarkCheck, Globe, MapPin, Phone, Tag, ArrowLeft,
   MapPinned, ShieldCheck, Star, ExternalLink, Loader2, Eye, Users,
-  BarChart3, ArrowRight,
+  BarChart3, ArrowRight, Navigation, Clock, AlertCircle, CheckCircle2,
+  ChevronDown, ChevronUp, Sparkles, UserCircle, Share2, Camera, Bell, BellOff, X, ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,15 +15,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { StarRating } from "@/components/StarRating";
 import { ReceiptVerifier } from "@/components/ReceiptVerifier";
 import { ReviewThemes } from "@/components/ReviewThemes";
+import { RecaptchaBox } from "@/components/RecaptchaBox";
 import { toast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Business = Tables<"businesses">;
 type Review = Tables<"reviews"> & { profiles?: { display_name: string } | null };
 type Coupon = Tables<"coupons">;
+type BusinessPhoto = { id: string; photo_url: string; user_id: string; created_at: string };
 
 interface InsightRow {
   business_id: string;
@@ -73,6 +77,53 @@ const StatPill = ({
   </div>
 );
 
+// ── Hours helpers ─────────────────────────────────────────────────────────────
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+const DAY_LABELS: Record<string, string> = {
+  sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday",
+  thu: "Thursday", fri: "Friday", sat: "Saturday",
+};
+
+type HoursMap = Record<string, { open?: string; close?: string } | null>;
+
+const fmt12 = (t: string) => {
+  const [hStr, mStr] = t.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+};
+
+const getOpenStatus = (hours: unknown): { open: boolean; label: string } => {
+  if (!hours || typeof hours !== "object") return { open: false, label: "Hours not listed" };
+  const map = hours as HoursMap;
+  const now = new Date();
+  const todayKey = DAY_KEYS[now.getDay()];
+  const entry = map[todayKey];
+  if (!entry?.open || !entry?.close) return { open: false, label: "Closed today" };
+  const [oh, om] = entry.open.split(":").map(Number);
+  const [ch, cm] = entry.close.split(":").map(Number);
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const openMin = oh * 60 + om;
+  const closeMin = ch * 60 + cm;
+  if (cur < openMin) return { open: false, label: `Opens at ${fmt12(entry.open)}` };
+  if (cur > closeMin) return { open: false, label: `Closed · opened at ${fmt12(entry.open)}` };
+  return { open: true, label: `Open until ${fmt12(entry.close)}` };
+};
+
+const buildMapsUrl = (b: { lat?: number | null; lng?: number | null; address?: string | null }): string => {
+  if (b.lat && b.lng) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
+  }
+  if (b.address) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.address)}`;
+  }
+  return "";
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const BusinessDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -88,6 +139,7 @@ const BusinessDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [visitVerified, setVisitVerified] = useState(false);
+  const [humanVerified, setHumanVerified] = useState(false);
   const [posting, setPosting] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
 
@@ -96,6 +148,17 @@ const BusinessDetail = () => {
 
   const [googleData, setGoogleData] = useState<GoogleData | null>(null);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
+
+  const [hoursExpanded, setHoursExpanded] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportMsg, setReportMsg] = useState("");
+  const [reportSending, setReportSending] = useState(false);
+
+  const [photos, setPhotos] = useState<BusinessPhoto[]>([]);
+  const [watched, setWatched] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [photoView, setPhotoView] = useState<string | null>(null);
 
   const fetchGoogleReviews = async () => {
     if (!business) return;
@@ -123,10 +186,11 @@ const BusinessDetail = () => {
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
-    const [bRes, rRes, cRes] = await Promise.all([
+    const [bRes, rRes, cRes, photosRes] = await Promise.all([
       supabase.from("businesses").select("*").eq("id", id).maybeSingle(),
       supabase.from("reviews").select("*").eq("business_id", id).order("created_at", { ascending: false }),
       supabase.from("active_coupons").select("*").eq("business_id", id),
+      supabase.from("business_photos").select("id, photo_url, user_id, created_at").eq("business_id", id).order("created_at", { ascending: false }),
     ]);
     if (bRes.error || !bRes.data) {
       toast({ title: "Business not found", variant: "destructive" });
@@ -145,10 +209,15 @@ const BusinessDetail = () => {
     }
     setReviews(reviewRows);
     setCoupons((cRes.data ?? []) as Coupon[]);
+    setPhotos((photosRes.data ?? []) as BusinessPhoto[]);
 
     if (user) {
-      const { data: bm } = await supabase.from("bookmarks").select("id").eq("user_id", user.id).eq("business_id", id).maybeSingle();
-      setBookmarked(!!bm);
+      const [bmRes, watchRes] = await Promise.all([
+        supabase.from("bookmarks").select("id").eq("user_id", user.id).eq("business_id", id).maybeSingle(),
+        supabase.from("deal_watches").select("id").eq("user_id", user.id).eq("business_id", id).maybeSingle(),
+      ]);
+      setBookmarked(!!bmRes.data);
+      setWatched(!!watchRes.data);
 
       if (user.id === biz.owner_id) {
         const { data: statsData } = await supabase
@@ -189,6 +258,42 @@ const BusinessDetail = () => {
     }
   };
 
+  const toggleWatch = async () => {
+    if (!user) { navigate("/auth"); return; }
+    if (!business) return;
+    if (watched) {
+      await supabase.from("deal_watches").delete().eq("user_id", user.id).eq("business_id", business.id);
+      setWatched(false);
+    } else {
+      await supabase.from("deal_watches").insert({ user_id: user.id, business_id: business.id });
+      setWatched(true);
+      toast({ title: "Watching deals", description: "You'll get notified when new deals are posted." });
+    }
+  };
+
+  const uploadPhoto = async (file: File) => {
+    if (!user) { navigate("/auth"); return; }
+    if (!business) return;
+    setUploadingPhoto(true);
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${business.id}/${user.id}_${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("business-photos").upload(path, file, { upsert: false });
+    if (upErr) {
+      setUploadingPhoto(false);
+      return toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
+    }
+    const { data: urlData } = supabase.storage.from("business-photos").getPublicUrl(path);
+    const { error: dbErr } = await supabase.from("business_photos").insert({
+      business_id: business.id,
+      user_id: user.id,
+      photo_url: urlData.publicUrl,
+    });
+    setUploadingPhoto(false);
+    if (dbErr) return toast({ title: "Couldn't save photo", description: dbErr.message, variant: "destructive" });
+    toast({ title: "Photo shared!" });
+    load();
+  };
+
   const submitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { navigate("/auth"); return; }
@@ -198,10 +303,14 @@ const BusinessDetail = () => {
     setCommentError(null);
     setRatingError(null);
 
+    if (!humanVerified) {
+      toast({ title: "Please confirm you're not a robot", variant: "destructive" });
+      return;
+    }
+
     const parsed = reviewSchema.safeParse({ rating, comment });
     if (!parsed.success) {
       const issues = parsed.error.issues;
-      // Separate rating vs comment errors for inline display
       for (const issue of issues) {
         const field = issue.path[0];
         if (field === "rating") {
@@ -225,7 +334,7 @@ const BusinessDetail = () => {
     setPosting(false);
     if (error) return toast({ title: "Couldn't post review", description: error.message, variant: "destructive" });
     toast({ title: visitVerified ? "Verified review posted!" : "Review posted!" });
-    setRating(0); setComment(""); setVisitVerified(false);
+    setRating(0); setComment(""); setVisitVerified(false); setHumanVerified(false);
     setCommentError(null); setRatingError(null);
     load();
   };
@@ -243,6 +352,25 @@ const BusinessDetail = () => {
   }
 
   const isOwner = user?.id === business.owner_id;
+
+  const submitHoursReport = async () => {
+    if (!business) return;
+    setReportSending(true);
+    const { error } = await supabase.from("hours_reports").insert({
+      business_id: business.id,
+      user_id: user?.id ?? null,
+      message: reportMsg.trim() || "Hours may have changed.",
+    });
+    setReportSending(false);
+    if (error) return toast({ title: "Couldn't send report", description: error.message, variant: "destructive" });
+    toast({ title: "Thanks for the heads-up!", description: "The owner will be notified to review their hours." });
+    setReportOpen(false);
+    setReportMsg("");
+  };
+
+  const mapsUrl = buildMapsUrl(business);
+  const openStatus = getOpenStatus(business.hours);
+  const hoursMap = (business.hours && typeof business.hours === "object") ? business.hours as HoursMap : null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -296,6 +424,13 @@ const BusinessDetail = () => {
                   <MapPinned className="h-3.5 w-3.5" strokeWidth={1.5} />
                   {checkingIn ? "Checking in…" : "Check in"}
                 </Button>
+                {mapsUrl && (
+                  <Button asChild size="sm" className="rounded-full gap-2">
+                    <a href={mapsUrl} target="_blank" rel="noreferrer">
+                      <Navigation className="h-3.5 w-3.5" strokeWidth={1.5} /> Take me there
+                    </a>
+                  </Button>
+                )}
                 {business.website && (
                   <Button asChild variant="outline" size="sm" className="rounded-full gap-2">
                     <a href={business.website} target="_blank" rel="noreferrer">
@@ -304,16 +439,36 @@ const BusinessDetail = () => {
                   </Button>
                 )}
               </div>
-              <Button
-                onClick={toggleBookmark}
-                variant={bookmarked ? "default" : "outline"}
-                size="sm"
-                className="rounded-full gap-2"
-              >
-                {bookmarked
-                  ? <><BookmarkCheck className="h-3.5 w-3.5" strokeWidth={1.5} /> Saved</>
-                  : <><Bookmark className="h-3.5 w-3.5" strokeWidth={1.5} /> Save</>}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={toggleBookmark}
+                  variant={bookmarked ? "default" : "outline"}
+                  size="sm"
+                  className="rounded-full gap-2"
+                >
+                  {bookmarked
+                    ? <><BookmarkCheck className="h-3.5 w-3.5" strokeWidth={1.5} /> Saved</>
+                    : <><Bookmark className="h-3.5 w-3.5" strokeWidth={1.5} /> Save</>}
+                </Button>
+                <Button
+                  onClick={toggleWatch}
+                  variant={watched ? "default" : "outline"}
+                  size="sm"
+                  className="rounded-full gap-2"
+                >
+                  {watched
+                    ? <><BellOff className="h-3.5 w-3.5" strokeWidth={1.5} /> Watching</>
+                    : <><Bell className="h-3.5 w-3.5" strokeWidth={1.5} /> Watch deals</>}
+                </Button>
+                <Button
+                  onClick={() => setShareOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full gap-2"
+                >
+                  <Share2 className="h-3.5 w-3.5" strokeWidth={1.5} /> Share
+                </Button>
+              </div>
             </div>
 
             {/* Info */}
@@ -335,6 +490,69 @@ const BusinessDetail = () => {
                   </span>
                 )}
               </div>
+              {/* Open Now status */}
+              <div className="flex items-start gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setHoursExpanded((v) => !v)}
+                  className="flex items-center gap-2 group"
+                  aria-label="Toggle hours"
+                >
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    openStatus.open
+                      ? "bg-emerald-500/12 text-emerald-600 border border-emerald-500/25"
+                      : "bg-zinc-100 text-zinc-500 border border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-700"
+                  }`}>
+                    {openStatus.open
+                      ? <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
+                      : <Clock className="h-3 w-3" strokeWidth={2} />}
+                    {openStatus.open ? "Open now" : "Closed"}
+                  </span>
+                  <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                    {openStatus.label}
+                  </span>
+                  {hoursMap && (
+                    hoursExpanded
+                      ? <ChevronUp className="h-3 w-3 text-muted-foreground" strokeWidth={2} />
+                      : <ChevronDown className="h-3 w-3 text-muted-foreground" strokeWidth={2} />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReportOpen(true)}
+                  className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors underline-offset-2 hover:underline"
+                >
+                  Hours incorrect?
+                </button>
+              </div>
+
+              {/* Full hours table */}
+              {hoursExpanded && hoursMap && (
+                <div className="rounded-xl border border-border/50 bg-muted/20 overflow-hidden">
+                  {DAY_KEYS.map((key) => {
+                    const now = new Date();
+                    const isToday = DAY_KEYS[now.getDay()] === key;
+                    const entry = hoursMap[key];
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-center justify-between px-4 py-2 text-sm border-b last:border-0 border-border/40 ${isToday ? "bg-primary/5" : ""}`}
+                      >
+                        <span className={`font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}>
+                          {DAY_LABELS[key]}
+                          {isToday && <span className="ml-1.5 text-[10px] uppercase tracking-wide opacity-60">today</span>}
+                        </span>
+                        <span className={`tabular-nums ${isToday ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+                          {entry?.open && entry?.close
+                            ? `${fmt12(entry.open)} – ${fmt12(entry.close)}`
+                            : "Closed"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {business.tags && business.tags.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" strokeWidth={1.5} />
@@ -343,9 +561,242 @@ const BusinessDetail = () => {
                   ))}
                 </div>
               )}
+
+              {/* Editorial / community badges */}
+              {business.editorial_tags && business.editorial_tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {business.editorial_tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20"
+                    >
+                      <Sparkles className="h-3 w-3 shrink-0" strokeWidth={1.5} />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Founder profile */}
+        {(business.founder_name || business.founder_bio) && (
+          <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
+            <div className="rounded-[calc(2rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <UserCircle className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="font-semibold tracking-tight">Meet the founder</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">The person behind {business.name}</p>
+                </div>
+              </div>
+              <div className="px-7 py-6 flex items-start gap-5">
+                {business.founder_photo_url && (
+                  <div className="shrink-0">
+                    <img
+                      src={business.founder_photo_url}
+                      alt={business.founder_name ?? "Founder"}
+                      className="h-20 w-20 rounded-2xl object-cover border border-border/50 shadow-sm"
+                    />
+                  </div>
+                )}
+                <div className="space-y-1.5 min-w-0">
+                  {business.founder_name && (
+                    <div>
+                      <p className="font-semibold tracking-tight leading-none">{business.founder_name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Founder · {business.name}</p>
+                    </div>
+                  )}
+                  {business.founder_bio && (
+                    <p className="text-sm text-foreground/80 leading-relaxed mt-2">{business.founder_bio}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Community photos */}
+        {(photos.length > 0 || user) && (
+          <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
+            <div className="rounded-[calc(2rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <ImageIcon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <p className="font-semibold tracking-tight">Community photos</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{photos.length} photo{photos.length !== 1 ? "s" : ""} from visitors</p>
+                  </div>
+                </div>
+                {user && (
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadPhoto(file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button variant="outline" size="sm" className="rounded-full gap-2 pointer-events-none" disabled={uploadingPhoto} asChild>
+                      <span>
+                        {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                        {uploadingPhoto ? "Uploading…" : "Add photo"}
+                      </span>
+                    </Button>
+                  </label>
+                )}
+              </div>
+              {photos.length === 0 ? (
+                <div className="px-7 py-10 flex flex-col items-center gap-2 text-muted-foreground">
+                  <ImageIcon className="h-8 w-8 opacity-25" strokeWidth={1} />
+                  <p className="text-sm">No photos yet — be the first to share one!</p>
+                </div>
+              ) : (
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {photos.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPhotoView(p.photo_url)}
+                      className="aspect-square rounded-2xl overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+                    >
+                      <img
+                        src={p.photo_url}
+                        alt="Community photo"
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Report hours dialog */}
+        <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+          <DialogContent className="rounded-2xl sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-500" strokeWidth={1.5} />
+                Report incorrect hours
+              </DialogTitle>
+              <DialogDescription>
+                Let us know what's changed — the owner will be notified to update their listing.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-1">
+              <Label className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                What's wrong? (optional)
+              </Label>
+              <Textarea
+                rows={3}
+                maxLength={300}
+                value={reportMsg}
+                onChange={(e) => setReportMsg(e.target.value)}
+                placeholder="e.g. They now close at 6 PM on weekdays, not 8 PM"
+                className="rounded-xl resize-none"
+              />
+              <p className="text-[11px] text-right text-muted-foreground">{reportMsg.length}/300</p>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setReportOpen(false)} className="rounded-full">Cancel</Button>
+              <Button onClick={submitHoursReport} disabled={reportSending} className="rounded-full gap-2">
+                {reportSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                {reportSending ? "Sending…" : "Send report"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Share dialog */}
+        <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+          <DialogContent className="rounded-2xl sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Share2 className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                Share {business.name}
+              </DialogTitle>
+              <DialogDescription>Spread the word about this local business.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-1">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border/50 text-sm font-mono text-muted-foreground overflow-hidden">
+                <span className="truncate flex-1">{`${window.location.origin}/business/${business.id}`}</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(`${window.location.origin}/business/${business.id}`);
+                    toast({ title: "Link copied!" });
+                  }}
+                  className="shrink-0 text-xs text-primary font-semibold hover:underline"
+                >
+                  Copy
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {
+                    label: "WhatsApp",
+                    href: `https://wa.me/?text=${encodeURIComponent(`Check out ${business.name} on Huddle! ${window.location.origin}/business/${business.id}`)}`,
+                  },
+                  {
+                    label: "X / Twitter",
+                    href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${business.name} on Huddle!`)}&url=${encodeURIComponent(`${window.location.origin}/business/${business.id}`)}`,
+                  },
+                  {
+                    label: "SMS",
+                    href: `sms:?body=${encodeURIComponent(`Check out ${business.name} on Huddle! ${window.location.origin}/business/${business.id}`)}`,
+                  },
+                ].map(({ label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center px-3 py-2.5 rounded-xl border border-border/50 bg-muted/20 text-sm font-medium hover:bg-muted/40 transition-colors"
+                  >
+                    {label}
+                  </a>
+                ))}
+              </div>
+              {typeof navigator.share === "function" && (
+                <Button
+                  className="w-full rounded-full gap-2"
+                  onClick={async () => {
+                    await navigator.share({ title: business.name, text: `Check out ${business.name} on Huddle!`, url: `${window.location.origin}/business/${business.id}` });
+                  }}
+                >
+                  <Share2 className="h-3.5 w-3.5" strokeWidth={1.5} /> Share via…
+                </Button>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Photo lightbox */}
+        <Dialog open={!!photoView} onOpenChange={(o) => { if (!o) setPhotoView(null); }}>
+          <DialogContent className="rounded-2xl p-2 sm:max-w-2xl bg-black/90 border-white/10">
+            <button
+              type="button"
+              onClick={() => setPhotoView(null)}
+              className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            >
+              <X className="h-4 w-4 text-white" strokeWidth={1.5} />
+            </button>
+            {photoView && (
+              <img src={photoView} alt="Full-size community photo" className="w-full rounded-xl object-contain max-h-[80vh]" />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Owner insights panel */}
         {isOwner && (
@@ -500,7 +951,8 @@ const BusinessDetail = () => {
                     <p className="text-[11px] text-right text-muted-foreground">{comment.length}/1000</p>
                   </div>
                   {business && <ReceiptVerifier businessId={business.id} onVerifiedChange={setVisitVerified} />}
-                  <Button type="submit" disabled={posting || !rating} className="rounded-full gap-2">
+                  <RecaptchaBox onVerifiedChange={setHumanVerified} />
+                  <Button type="submit" disabled={posting || !rating || !humanVerified} className="rounded-full gap-2">
                     {posting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                     {posting ? "Posting…" : visitVerified ? "Post verified review" : "Post review"}
                   </Button>
