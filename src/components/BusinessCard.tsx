@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Navigation, Sparkles } from "lucide-react";
+import { MapPin, Navigation, Sparkles, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/StarRating";
 import { formatMiles } from "@/lib/geo";
@@ -29,6 +29,13 @@ export const BusinessCard = ({ b, distanceMi, reason }: BusinessCardProps) => (
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
               <MapPin className="h-8 w-8 text-primary/40" strokeWidth={1.5} />
+            </div>
+          )}
+          {/* Editorial badge — top-left overlay */}
+          {b.editorial_tags && b.editorial_tags.length > 0 && (
+            <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-amber-500/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm">
+              <Sparkles className="h-2.5 w-2.5 shrink-0" strokeWidth={2} />
+              {b.editorial_tags[0]}
             </div>
           )}
           {distanceMi != null && (

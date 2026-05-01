@@ -87,6 +87,10 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          editorial_tags: string[] | null
+          founder_bio: string | null
+          founder_name: string | null
+          founder_photo_url: string | null
           hours: Json
           id: string
           image_url: string | null
@@ -114,6 +118,10 @@ export type Database = {
           category: string
           created_at?: string
           description?: string
+          editorial_tags?: string[] | null
+          founder_bio?: string | null
+          founder_name?: string | null
+          founder_photo_url?: string | null
           hours?: Json
           id?: string
           image_url?: string | null
@@ -141,6 +149,10 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          editorial_tags?: string[] | null
+          founder_bio?: string | null
+          founder_name?: string | null
+          founder_photo_url?: string | null
           hours?: Json
           id?: string
           image_url?: string | null

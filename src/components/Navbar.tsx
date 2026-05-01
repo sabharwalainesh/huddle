@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home, Building2, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home, Building2, MapPin, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -12,6 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+
+type Notification = { id: string; message: string; is_read: boolean; created_at: string };
 
 export const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -20,6 +24,38 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === "/";
+
+  const [unread, setUnread] = useState(0);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [bellOpen, setBellOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) { setUnread(0); setNotifications([]); return; }
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("id, message, is_read, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      const rows = (data ?? []) as Notification[];
+      setNotifications(rows);
+      setUnread(rows.filter((n) => !n.is_read).length);
+    };
+    fetch();
+    const channel = supabase
+      .channel(`notif:${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, fetch)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  const markAllRead = async () => {
+    if (!user) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    setUnread(0);
+  };
 
   return (
     <header className="sticky top-0 z-40 px-4 py-3 pointer-events-none">
@@ -54,6 +90,45 @@ export const Navbar = () => {
         {/* Right side actions */}
         <div className="flex items-center gap-1.5 pr-1">
           <AccessibilityPanel />
+          {user && (
+            <DropdownMenu open={bellOpen} onOpenChange={(o) => { setBellOpen(o); if (o) markAllRead(); }}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="relative h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-4 w-4" strokeWidth={1.5} />
+                  {unread > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center px-1 tabular-nums">
+                      {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 rounded-2xl p-1.5 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12)]">
+                <div className="px-3 py-2 flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Notifications</p>
+                </div>
+                <DropdownMenuSeparator className="my-1" />
+                {notifications.length === 0 ? (
+                  <div className="px-3 py-5 text-center text-sm text-muted-foreground">No notifications yet</div>
+                ) : (
+                  notifications.slice(0, 8).map((n) => (
+                    <div
+                      key={n.id}
+                      className={`px-3 py-2.5 rounded-xl text-sm leading-snug ${n.is_read ? "text-muted-foreground" : "text-foreground font-medium bg-primary/5"}`}
+                    >
+                      {n.message}
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-normal">
+                        {new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
