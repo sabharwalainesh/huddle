@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home, Building2, MapPin, Bell } from "lucide-react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home, Building2, MapPin, Bell, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -145,6 +145,9 @@ export const Navbar = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl gap-2">
                   <Link to="/business-dashboard"><BarChart3 className="h-4 w-4" strokeWidth={1.5} /> My Businesses</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-xl gap-2">
+                  <Link to="/insights"><TrendingUp className="h-4 w-4" strokeWidth={1.5} /> My Insights</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl gap-2">
                   <Link to="/business/onboarding"><Plus className="h-4 w-4" strokeWidth={1.5} /> {t("nav.listBusiness")}</Link>

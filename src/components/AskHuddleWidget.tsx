@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Send, Sparkles, Loader2, MessageCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,7 +131,18 @@ export const AskHuddleWidget = () => {
                       : "max-w-[85%] rounded-2xl rounded-bl-sm bg-muted px-3 py-2 text-sm prose prose-sm dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-a:text-primary"
                   }
                 >
-                  {m.role === "assistant" ? <ReactMarkdown>{m.content}</ReactMarkdown> : m.content}
+                  {m.role === "assistant" ? (
+                    <ReactMarkdown
+                      components={{
+                        a: ({ href, children }) => {
+                          if (href && href.startsWith("/")) {
+                            return <Link to={href} className="text-primary underline underline-offset-2 hover:opacity-80" onClick={() => setOpen(false)}>{children}</Link>;
+                          }
+                          return <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:opacity-80">{children}</a>;
+                        },
+                      }}
+                    >{m.content}</ReactMarkdown>
+                  ) : m.content}
                 </div>
               </div>
             ))}
