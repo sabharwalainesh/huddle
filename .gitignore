@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 ver
+
+# AI agent artifacts — must not appear in repo
+.claude/
+skills-lock.json
+PRPs/
+make_pptx.py
