@@ -391,6 +391,25 @@ const Discover = () => {
           )}
         </Card>
 
+        {/* Category quick-filter pills */}
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c)}
+              aria-pressed={category === c}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 capitalize ${
+                category === c
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-background border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              {t(`cat.${c}` as TranslationKey)}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {source === "huddle"
@@ -421,7 +440,13 @@ const Discover = () => {
                 <h2 id="huddle-heading" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                   On Huddle
                 </h2>
-                {!loading && visible.length === 0 ? (
+                {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="rounded-[1.5rem] bg-muted/40 border border-border/40 aspect-[16/10] animate-pulse" />
+                  ))}
+                </div>
+              ) : visible.length === 0 ? (
                   <Card className="p-12 text-center text-muted-foreground">
                     <p className="font-medium mb-1">{t("home.noResults")}</p>
                     <p className="text-sm">{t("home.noResultsHint")}</p>
