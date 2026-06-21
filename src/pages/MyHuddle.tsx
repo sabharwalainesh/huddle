@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, BookmarkCheck } from "lucide-react";
+import { Sparkles, BookmarkCheck, BarChart3, Download, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -9,6 +9,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BusinessCard } from "@/components/BusinessCard";
 import { PreferencesBanner } from "@/components/PreferencesBanner";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { hasAnyPrefs, scoreBusiness, type UserPreferences } from "@/lib/preferences";
 import type { Business } from "@/lib/sorting";
@@ -87,6 +88,43 @@ const MyHuddle = () => {
     return huddleMatch(saved, all);
   }, [saved, all, prefs, personalize]);
 
+  // Compute report data from saved businesses
+  const report = useMemo(() => {
+    if (!saved.length) return null;
+    const categoryMap: Record<string, number> = {};
+    let ratingSum = 0;
+    let ratedCount = 0;
+    let topBiz = saved[0];
+    for (const b of saved) {
+      categoryMap[b.category] = (categoryMap[b.category] ?? 0) + 1;
+      const r = Number(b.avg_rating);
+      if (r > 0) { ratingSum += r; ratedCount++; }
+      if (Number(b.avg_rating) > Number(topBiz.avg_rating)) topBiz = b;
+    }
+    const categories = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]);
+    const avgRating = ratedCount > 0 ? (ratingSum / ratedCount).toFixed(2) : null;
+    return { categories, avgRating, topBiz, total: saved.length };
+  }, [saved]);
+
+  const exportCsv = () => {
+    if (!saved.length) return;
+    const header = "Name,Category,Rating,Reviews,Address";
+    const rows = saved.map((b) =>
+      [b.name, b.category, b.avg_rating ?? 0, b.review_count ?? 0, b.address ?? ""]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(",")
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "my-huddle-report.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Report downloaded!", description: `${saved.length} businesses exported as CSV.` });
+  };
+
   if (!user) return null;
 
   return (
@@ -156,6 +194,77 @@ const MyHuddle = () => {
                 <div className="p-7">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+        {/* Data report panel */}
+        {report && (
+          <section>
+            <div className="p-[5px] rounded-[1.75rem] bg-foreground/[0.03] border border-border/50">
+              <div className="rounded-[calc(1.75rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <div className="px-7 pt-7 pb-5 border-b border-border/60 flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <BarChart3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold tracking-tight">My Huddle Report</h2>
+                      <p className="text-xs text-muted-foreground">Insights across your {report.total} saved place{report.total !== 1 ? "s" : ""}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportCsv}
+                    className="rounded-full gap-2"
+                    aria-label="Download saved businesses as CSV"
+                  >
+                    <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    Export CSV
+                  </Button>
+                </div>
+
+                <div className="px-7 py-6 space-y-5">
+                  {/* Summary stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="rounded-2xl bg-muted/30 border border-border/40 px-5 py-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Saved</p>
+                      <p className="text-2xl font-bold tabular-nums mt-1">{report.total}</p>
+                    </div>
+                    <div className="rounded-2xl bg-muted/30 border border-border/40 px-5 py-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Avg Rating</p>
+                      <p className="text-2xl font-bold tabular-nums mt-1 flex items-center gap-1">
+                        {report.avgRating ?? "—"}
+                        {report.avgRating && <Star className="h-4 w-4 text-amber-400 fill-amber-400" strokeWidth={1} />}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-muted/30 border border-border/40 px-5 py-4 sm:col-span-1 col-span-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Top Rated</p>
+                      <p className="text-sm font-semibold mt-1 truncate">{report.topBiz.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{report.topBiz.category} · ★ {Number(report.topBiz.avg_rating).toFixed(1)}</p>
+                    </div>
+                  </div>
+
+                  {/* Category breakdown */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground mb-3">By Category</p>
+                    <div className="space-y-2" role="list" aria-label="Saved businesses by category">
+                      {report.categories.map(([cat, count]) => (
+                        <div key={cat} role="listitem" className="flex items-center gap-3">
+                          <span className="text-sm capitalize w-24 shrink-0 text-muted-foreground">{cat}</span>
+                          <div className="flex-1 h-2 rounded-full bg-muted/50 overflow-hidden" aria-hidden>
+                            <div
+                              className="h-full bg-primary/70 rounded-full transition-all duration-500"
+                              style={{ width: `${(count / report.total) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-semibold tabular-nums w-6 text-right">{count}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

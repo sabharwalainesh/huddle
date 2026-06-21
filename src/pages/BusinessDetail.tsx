@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import {
@@ -6,6 +6,7 @@ import {
   MapPinned, ShieldCheck, Star, ExternalLink, Loader2, Eye, Users,
   BarChart3, ArrowRight, Navigation, Clock, AlertCircle, CheckCircle2,
   ChevronDown, ChevronUp, Sparkles, UserCircle, Share2, Camera, Bell, BellOff, X, ImageIcon,
+  Store, Instagram, Facebook, ShoppingBag, Video, MessageCircle, Copy, SlidersHorizontal,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -124,6 +125,22 @@ const buildMapsUrl = (b: { lat?: number | null; lng?: number | null; address?: s
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const PLATFORM_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+  "facebook-marketplace": { label: "Facebook Marketplace", icon: Facebook, color: "text-blue-600" },
+  "instagram-shop": { label: "Instagram Shop", icon: Instagram, color: "text-pink-600" },
+  "etsy": { label: "Etsy", icon: ShoppingBag, color: "text-orange-500" },
+  "tiktok-shop": { label: "TikTok Shop", icon: Video, color: "text-zinc-800" },
+  "whatsapp": { label: "WhatsApp Business", icon: MessageCircle, color: "text-emerald-600" },
+};
+
+function getPlatformMeta(tags: string[] | null) {
+  if (!tags) return null;
+  for (const tag of tags) {
+    if (PLATFORM_META[tag]) return PLATFORM_META[tag];
+  }
+  return null;
+}
+
 const BusinessDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -159,6 +176,7 @@ const BusinessDetail = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [photoView, setPhotoView] = useState<string | null>(null);
+  const [reviewSort, setReviewSort] = useState<"newest" | "highest" | "lowest" | "verified">("newest");
 
   const fetchGoogleReviews = async () => {
     if (!business) return;
@@ -339,6 +357,20 @@ const BusinessDetail = () => {
     load();
   };
 
+  // Sort reviews client-side based on selected sort option
+  const sortedReviews = useMemo(() => {
+    const arr = [...reviews];
+    switch (reviewSort) {
+      case "highest": return arr.sort((a, b) => b.rating - a.rating);
+      case "lowest":  return arr.sort((a, b) => a.rating - b.rating);
+      case "verified": return arr.sort((a, b) =>
+        Number((b as { verified?: boolean }).verified ?? false) - Number((a as { verified?: boolean }).verified ?? false) ||
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      default: return arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+  }, [reviews, reviewSort]);
+
   if (loading || !business) {
     return (
       <div className="min-h-screen bg-background">
@@ -394,9 +426,17 @@ const BusinessDetail = () => {
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               <div className="absolute bottom-5 left-6 right-6">
-                <Badge variant="secondary" className="capitalize mb-2 bg-white/10 text-white border-white/20 backdrop-blur-sm">
-                  {business.category}
-                </Badge>
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <Badge variant="secondary" className="capitalize bg-white/10 text-white border-white/20 backdrop-blur-sm">
+                    {business.category}
+                  </Badge>
+                  {business.tags?.includes("community-seller") && (
+                    <Badge className="gap-1.5 bg-amber-500/80 text-white border-amber-400/30 backdrop-blur-sm hover:bg-amber-500/80">
+                      <Store className="h-3 w-3" strokeWidth={1.5} />
+                      Community Seller
+                    </Badge>
+                  )}
+                </div>
                 <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">{business.name}</h1>
                 {business.avg_rating != null && Number(business.avg_rating) > 0 && (
                   <div className="flex items-center gap-1.5 mt-1.5">
@@ -431,13 +471,18 @@ const BusinessDetail = () => {
                     </a>
                   </Button>
                 )}
-                {business.website && (
-                  <Button asChild variant="outline" size="sm" className="rounded-full gap-2">
-                    <a href={business.website} target="_blank" rel="noreferrer">
-                      <Globe className="h-3.5 w-3.5" strokeWidth={1.5} /> Website
-                    </a>
-                  </Button>
-                )}
+                {business.website && (() => {
+                  const platform = getPlatformMeta(business.tags ?? []);
+                  const PlatformIcon = platform?.icon ?? Globe;
+                  return (
+                    <Button asChild variant="outline" size="sm" className="rounded-full gap-2">
+                      <a href={business.website} target="_blank" rel="noreferrer">
+                        <PlatformIcon className={`h-3.5 w-3.5 ${platform?.color ?? ""}`} strokeWidth={1.5} />
+                        {platform?.label ?? "Website"}
+                      </a>
+                    </Button>
+                  );
+                })()}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -785,6 +830,9 @@ const BusinessDetail = () => {
         {/* Photo lightbox */}
         <Dialog open={!!photoView} onOpenChange={(o) => { if (!o) setPhotoView(null); }}>
           <DialogContent className="rounded-2xl p-2 sm:max-w-2xl bg-black/90 border-white/10">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Community photo</DialogTitle>
+            </DialogHeader>
             <button
               type="button"
               onClick={() => setPhotoView(null)}
@@ -879,13 +927,30 @@ const BusinessDetail = () => {
               <div className="p-4 space-y-3">
                 {coupons.map((c) => (
                   <div key={c.id} className="px-5 py-4 rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 flex items-start justify-between gap-3">
-                    <div className="space-y-0.5">
+                    <div className="space-y-0.5 flex-1 min-w-0">
                       <p className="font-semibold text-sm">{c.title}</p>
                       {c.description && <p className="text-sm text-muted-foreground">{c.description}</p>}
                       <p className="text-xs text-muted-foreground mt-1.5">
-                        {c.code && <><span className="font-mono font-semibold text-foreground">{c.code}</span> · </>}
                         Expires {new Date(c.expires_at).toLocaleDateString()}
                       </p>
+                      {c.code && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="font-mono font-bold text-sm tracking-widest bg-background/80 border border-border/50 rounded-lg px-3 py-1">
+                            {c.code}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(c.code!);
+                              toast({ title: "Code copied!", description: `"${c.code}" is in your clipboard.` });
+                            }}
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-semibold"
+                            aria-label={`Copy coupon code ${c.code}`}
+                          >
+                            <Copy className="h-3 w-3" strokeWidth={1.5} /> Copy
+                          </button>
+                        </div>
+                      )}
                     </div>
                     {c.discount && <Badge className="shrink-0 rounded-full">{c.discount}</Badge>}
                   </div>
@@ -898,7 +963,7 @@ const BusinessDetail = () => {
         {/* Reviews */}
         <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
           <div className="rounded-[calc(2rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-            <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center justify-between">
+            <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-amber-500/10 flex items-center justify-center">
                   <Star className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
@@ -908,18 +973,37 @@ const BusinessDetail = () => {
                   <p className="text-xs text-muted-foreground mt-0.5">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</p>
                 </div>
               </div>
-              {Number(business.avg_rating) > 0 && (
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-3.5 w-3.5 ${i < Math.round(Number(business.avg_rating)) ? "text-amber-400 fill-amber-400" : "text-border"}`}
-                      strokeWidth={1}
-                    />
-                  ))}
-                  <span className="text-sm font-semibold ml-1.5 tabular-nums">{Number(business.avg_rating).toFixed(1)}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-3 flex-wrap">
+                {Number(business.avg_rating) > 0 && (
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-3.5 w-3.5 ${i < Math.round(Number(business.avg_rating)) ? "text-amber-400 fill-amber-400" : "text-border"}`}
+                        strokeWidth={1}
+                      />
+                    ))}
+                    <span className="text-sm font-semibold ml-1.5 tabular-nums">{Number(business.avg_rating).toFixed(1)}</span>
+                  </div>
+                )}
+                {reviews.length > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                    <div className="flex rounded-full border border-border/50 overflow-hidden text-[11px] font-medium">
+                      {(["newest", "highest", "lowest", "verified"] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setReviewSort(opt)}
+                          className={`px-2.5 py-1 transition-colors capitalize ${reviewSort === opt ? "bg-primary text-primary-foreground" : "hover:bg-muted/60 text-muted-foreground"}`}
+                        >
+                          {opt === "highest" ? "★ High" : opt === "lowest" ? "★ Low" : opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="px-7 py-6 space-y-5">
@@ -968,7 +1052,7 @@ const BusinessDetail = () => {
                 <p className="text-sm text-muted-foreground py-4 text-center">No reviews yet — be the first!</p>
               ) : (
                 <div className="space-y-3">
-                  {reviews.map((r) => (
+                  {sortedReviews.map((r) => (
                     <div key={r.id} className="px-5 py-4 rounded-2xl bg-muted/30 border border-border/40 space-y-2">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2">
@@ -1008,8 +1092,8 @@ const BusinessDetail = () => {
           reviews={reviews.map((r) => ({ rating: r.rating, comment: r.comment }))}
         />
 
-        {/* Google reviews */}
-        <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
+        {/* Google reviews — only for non-community sellers */}
+        {!business.tags?.includes("community-seller") && <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
           <div className="rounded-[calc(2rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
             <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center gap-3">
               <div className="h-10 w-10 rounded-2xl bg-blue-500/10 flex items-center justify-center">
@@ -1097,7 +1181,7 @@ const BusinessDetail = () => {
               )}
             </div>
           </div>
-        </div>
+        </div>}
 
       </main>
       <Footer />

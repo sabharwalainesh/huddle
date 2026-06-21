@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Upload, CheckCircle2, AlertTriangle, Search, Sparkles, MapPin, Info, X } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, AlertTriangle, Search, Sparkles, MapPin, Info, X, Store, Globe, Instagram, Facebook, ShoppingBag, Video, MessageCircle, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import type { GooglePlace } from "@/components/GooglePlaceCard";
@@ -49,6 +49,18 @@ const detailsSchema = z.object({
 });
 
 type Step = "details" | "upload" | "verifying" | "result";
+type BusinessMode = "google" | "niche" | null;
+
+const NICHE_PLATFORMS = [
+  { value: "facebook-marketplace", label: "Facebook Marketplace", icon: Facebook, color: "text-blue-600" },
+  { value: "instagram-shop", label: "Instagram Shop", icon: Instagram, color: "text-pink-600" },
+  { value: "etsy", label: "Etsy", icon: ShoppingBag, color: "text-orange-500" },
+  { value: "tiktok-shop", label: "TikTok Shop", icon: Video, color: "text-zinc-800" },
+  { value: "whatsapp", label: "WhatsApp Business", icon: MessageCircle, color: "text-emerald-600" },
+  { value: "other", label: "Other / No online presence", icon: Globe, color: "text-muted-foreground" },
+] as const;
+
+type NichePlatform = typeof NICHE_PLATFORMS[number]["value"];
 
 // Map a Google primaryType to our internal category buckets
 const mapGoogleTypeToCategory = (primaryType?: string | null): string => {
@@ -73,6 +85,8 @@ interface PrefilledFields {
 const BusinessOnboarding = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [businessMode, setBusinessMode] = useState<BusinessMode>(null);
+  const [nichePlatform, setNichePlatform] = useState<NichePlatform>("facebook-marketplace");
   const [step, setStep] = useState<Step>("details");
   const [submitting, setSubmitting] = useState(false);
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -227,6 +241,10 @@ const BusinessOnboarding = () => {
     }
     setSubmitting(true);
 
+    const nicheTags = businessMode === "niche"
+      ? ["community-seller", nichePlatform]
+      : [];
+
     const payload = {
       name: parsed.data.name,
       category: parsed.data.category,
@@ -237,6 +255,7 @@ const BusinessOnboarding = () => {
       image_url: parsed.data.image_url || null,
       owner_id: user.id,
       status: "draft" as const,
+      tags: nicheTags,
     };
 
     let id = businessId;
@@ -338,14 +357,107 @@ const BusinessOnboarding = () => {
         <div>
           <h1 className="text-2xl font-bold">List your business</h1>
           <p className="text-sm text-muted-foreground">
-            Step {step === "details" ? 1 : 2} of 2 — your listing won't appear publicly until an admin approves it.
+            {businessMode === null
+              ? "Let's get you set up — first, tell us a bit about your business."
+              : `Step ${step === "details" ? 1 : 2} of 2 — your listing won't appear publicly until an admin approves it.`}
           </p>
         </div>
 
-        {step === "details" && (
+        {/* Mode chooser */}
+        {businessMode === null && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Where do people find your business?</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setBusinessMode("google")}
+                className="group text-left p-[3px] rounded-2xl bg-foreground/[0.03] border border-border/60 hover:border-primary/40 hover:bg-primary/[0.02] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <div className="rounded-[calc(1.25rem-3px)] bg-background p-5 space-y-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Search className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm tracking-tight">My business is on Google</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Import details automatically and get approved faster.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                    Continue <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBusinessMode("niche")}
+                className="group text-left p-[3px] rounded-2xl bg-foreground/[0.03] border border-border/60 hover:border-primary/40 hover:bg-primary/[0.02] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <div className="rounded-[calc(1.25rem-3px)] bg-background p-5 space-y-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                    <Store className="h-4 w-4 text-amber-600" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm tracking-tight">My business isn't on Google</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Facebook Marketplace, Instagram, Etsy, pop-ups, home businesses, and more.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-amber-600 font-medium">
+                    Continue <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Niche platform selector (shown above details form for niche mode) */}
+        {businessMode === "niche" && step === "details" && (
+          <Card className="border-amber-500/30 bg-amber-500/[0.02]">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Store className="h-4 w-4 text-amber-600" strokeWidth={1.5} />
+                Where do you sell?
+              </CardTitle>
+              <CardDescription>
+                Pick your main platform. This helps customers find and contact you.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {NICHE_PLATFORMS.map(({ value, label, icon: Icon, color }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setNichePlatform(value)}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left text-sm transition-all duration-150 ${
+                      nichePlatform === value
+                        ? "border-primary/50 bg-primary/5 font-medium"
+                        : "border-border/50 bg-background hover:bg-muted/40"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 shrink-0 ${nichePlatform === value ? "text-primary" : color}`} strokeWidth={1.5} />
+                    <span className="truncate text-xs leading-tight">{label}</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setBusinessMode(null)}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 mt-1"
+              >
+                My business is on Google after all
+              </button>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === "details" && businessMode !== null && (
           <>
-            {/* Google import */}
-            <Card className="border-primary/30">
+            {/* Google import — only for google mode */}
+            {businessMode === "google" && <Card className="border-primary/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
@@ -421,10 +533,17 @@ const BusinessOnboarding = () => {
                   </Button>
                 )}
               </CardContent>
-            </Card>
+            </Card>}
 
             <Card>
-              <CardHeader><CardTitle>Business details</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>Business details</CardTitle>
+                {businessMode === "niche" && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Fill in what you have — phone is required so customers can reach you.
+                  </p>
+                )}
+              </CardHeader>
               <CardContent>
                 {editedPrefilled.length > 0 && (
                   <Alert variant="destructive" className="mb-4">
@@ -514,8 +633,18 @@ const BusinessOnboarding = () => {
                       {!fieldErrors.address && fieldHint("address")}
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="website">Website</Label>
-                      <Input id="website" type="url" placeholder="https://..." value={website} onChange={(e) => setWebsite(e.target.value)} />
+                      <Label htmlFor="website">
+                        {businessMode === "niche"
+                          ? `${NICHE_PLATFORMS.find((p) => p.value === nichePlatform)?.label ?? "Listing"} URL`
+                          : "Website"}
+                      </Label>
+                      <Input
+                        id="website"
+                        type="url"
+                        placeholder={businessMode === "niche" ? "Paste your listing or profile link..." : "https://..."}
+                        value={website}
+                        onChange={(e) => setWebsite(e.target.value)}
+                      />
                       {fieldErrors.website && (
                         <p className="text-[11px] text-destructive font-medium mt-1">{fieldErrors.website}</p>
                       )}
@@ -578,8 +707,9 @@ const BusinessOnboarding = () => {
             <CardHeader>
               <CardTitle>Upload proof of business</CardTitle>
               <CardDescription>
-                A recent utility bill, business license, lease, or tax document showing your business name or address.
-                We'll do an instant AI sanity-check before sending it to an admin.
+                {businessMode === "niche"
+                  ? "A screenshot of your marketplace listing, a photo of your products, or any document showing your name and what you sell. We'll do a quick AI check before an admin reviews it."
+                  : "A recent utility bill, business license, lease, or tax document showing your business name or address. We'll do an instant AI sanity-check before sending it to an admin."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
