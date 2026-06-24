@@ -90,17 +90,43 @@ export const Navbar = () => {
             <span className="tracking-tight">Huddle</span>
           </Link>
 
-          {/* Home hint tooltip */}
+          {/* Home hint — curved arrow annotation */}
           <div
-            className={`absolute top-full left-0 mt-3 z-50 pointer-events-none transition-all duration-300 ${
-              hintVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+            className={`absolute top-full left-0 mt-0.5 z-50 pointer-events-none select-none transition-all duration-500 ${
+              hintVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
             }`}
             aria-hidden={!hintVisible}
           >
-            {/* Arrow pointing up at logo */}
-            <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 rounded-sm bg-foreground shadow-[-1px_-1px_0_rgba(0,0,0,0.08)]" />
-            <div className="relative rounded-xl bg-foreground text-background text-xs px-3.5 py-2.5 max-w-[200px] shadow-[0_4px_16px_-4px_rgba(0,0,0,0.2)] leading-snug whitespace-normal">
-              {t("nav.homeHint")}
+            <div className="relative w-[196px] h-[100px]">
+              {/* Curved SVG arrow — tip points at the Huddle logo icon above */}
+              <svg
+                viewBox="0 0 196 100"
+                fill="none"
+                className="absolute inset-0 w-full h-full text-foreground"
+                aria-hidden="true"
+              >
+                {/* Shaft: sweeps from text area (bottom-right) up to logo (top-left) */}
+                <path
+                  d="M 88 91 C 62 68 34 28 21 9"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  opacity="0.75"
+                />
+                {/* Arrowhead */}
+                <path
+                  d="M 21 9 L 11 21 M 21 9 L 30 19"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.75"
+                />
+              </svg>
+              {/* Text label — no box, italic annotation style */}
+              <p className="absolute bottom-0 right-0 text-[11px] italic font-medium text-foreground/65 max-w-[108px] text-right leading-snug">
+                {t("nav.homeHint")}
+              </p>
             </div>
           </div>
         </div>
