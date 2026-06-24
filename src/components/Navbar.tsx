@@ -30,10 +30,14 @@ export const Navbar = () => {
   const [bellOpen, setBellOpen] = useState(false);
 
   const seenHintRef = useRef(false);
+  const prevIsHomeRef = useRef(isHome);
   const [hintVisible, setHintVisible] = useState(false);
 
+  // Only show when transitioning FROM home → non-home, once per page load
   useEffect(() => {
-    if (!isHome && !seenHintRef.current) {
+    const wasHome = prevIsHomeRef.current;
+    prevIsHomeRef.current = isHome;
+    if (!isHome && wasHome && !seenHintRef.current) {
       seenHintRef.current = true;
       setHintVisible(true);
     }
@@ -90,44 +94,45 @@ export const Navbar = () => {
             <span className="tracking-tight">Huddle</span>
           </Link>
 
-          {/* Home hint — curved SVG arrow annotation */}
+          {/* Home hint — text pill (left) + curved arrow sweeping right */}
           <div
-            className={`absolute top-full left-0 mt-0.5 z-50 pointer-events-none select-none transition-all duration-500 ${
-              hintVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+            className={`absolute top-full left-0 mt-2.5 z-50 pointer-events-none select-none flex items-center gap-1.5 transition-all duration-500 ${
+              hintVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
             }`}
             aria-hidden={!hintVisible}
           >
-            <div className="relative w-[186px] h-[86px]">
-              <svg
-                viewBox="0 0 186 86"
-                fill="none"
-                className="absolute inset-0 w-full h-full text-foreground"
-                aria-hidden="true"
-              >
-                {/* Smooth arc from tip (near logo, top-left) sweeping to text area (bottom-right) */}
-                <path
-                  d="M 18 7 Q 48 40 96 74"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  opacity="0.55"
-                />
-                {/* Arrowhead — open chevron pointing UP at logo, wings flare downward */}
-                <path
-                  d="M 7 20 L 18 7 L 29 18"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  opacity="0.55"
-                />
-              </svg>
-              {/* Text anchored at arrow tail, no background */}
-              <p className="absolute bottom-0 right-0 text-[10.5px] italic font-medium text-foreground/50 max-w-[92px] text-right leading-snug tracking-tight">
+            {/* Text pill */}
+            <div className="rounded-xl border border-foreground/12 bg-background/85 backdrop-blur-md shadow-sm px-2.5 py-2 max-w-[100px]">
+              <p className="text-[10.5px] italic text-foreground/60 leading-snug">
                 {t("nav.homeHint")}
               </p>
             </div>
+
+            {/* Curved arrow: tail at left, tip at right — smooth upward arc */}
+            <svg
+              width="62"
+              height="48"
+              viewBox="0 0 62 48"
+              fill="none"
+              className="shrink-0 text-foreground/50"
+              aria-hidden="true"
+            >
+              {/* Shaft: bottom-left → curves up → tip upper-right */}
+              <path
+                d="M 3 38 Q 18 4 57 9"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              {/* Arrowhead at tip (57,9): wings go back upper-left and lower-left */}
+              <path
+                d="M 48 2 L 57 9 L 47 15"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </div>
 
