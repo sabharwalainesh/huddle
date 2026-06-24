@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Accessibility, Moon, Sun, Eye, Volume2, Square, Languages } from "lucide-react";
+import { Accessibility, Moon, Sun, Eye, Volume2, Square, Languages, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -51,6 +51,8 @@ export const AccessibilityPanel = () => {
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
                 <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+                <SelectItem value="zh">中文</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -76,6 +78,37 @@ export const AccessibilityPanel = () => {
               <p className="text-xs text-muted-foreground">{t("a11y.highVisibilityHint")}</p>
             </div>
             <Switch id="hv-mode" checked={highVisibility} onCheckedChange={toggleHighVisibility} />
+          </div>
+
+          {/* Keyboard shortcuts */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <Keyboard className="h-4 w-4" /> {t("a11y.shortcuts")}
+            </Label>
+            <div className="rounded-lg border divide-y text-xs">
+              {[
+                { keys: ["/"], label: t("a11y.shortcutSearch") },
+                { keys: ["Shift", "?"], label: t("a11y.shortcutHighVis") },
+                { keys: ["g", "h"], label: `${t("a11y.shortcutNav")} Home` },
+                { keys: ["g", "m"], label: `${t("a11y.shortcutNav")} My Huddle` },
+                { keys: ["g", "a"], label: `${t("a11y.shortcutNav")} Ask` },
+                { keys: ["g", "d"], label: `${t("a11y.shortcutNav")} Dashboard` },
+              ].map(({ keys, label }) => (
+                <div key={label} className="flex items-center justify-between px-3 py-2 gap-3">
+                  <span className="text-muted-foreground">{label}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {keys.map((k, i) => (
+                      <span key={i} className="flex items-center gap-1">
+                        {i > 0 && <span className="text-muted-foreground/50 text-[10px]">+</span>}
+                        <kbd className="inline-flex items-center rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-foreground shadow-[0_1px_0_rgba(0,0,0,0.1)]">
+                          {k}
+                        </kbd>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* TTS */}

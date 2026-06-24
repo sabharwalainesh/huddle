@@ -75,15 +75,15 @@ export const Navbar = () => {
         {/* Center nav links — hidden on mobile */}
         <nav className="hidden md:flex items-center gap-0.5">
           {!isHome && (
-            <NavPill to="/" icon={<Home className="h-3.5 w-3.5" strokeWidth={1.5} />} label="Home" />
+            <NavPill to="/" icon={<Home className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.home")} />
           )}
-          <NavPill to="/about" icon={<Info className="h-3.5 w-3.5" strokeWidth={1.5} />} label="About" />
-          <NavPill to="/discover" icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.5} />} label="Discover" />
+          <NavPill to="/about" icon={<Info className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.about")} />
+          <NavPill to="/discover" icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.discover")} />
           {user && (
-            <NavPill to="/my-huddle" icon={<Bookmark className="h-3.5 w-3.5" strokeWidth={1.5} />} label="My Huddle" />
+            <NavPill to="/my-huddle" icon={<Bookmark className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.myHuddle")} />
           )}
           {user && (
-            <NavPill to="/business-dashboard" icon={<Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />} label="Business" />
+            <NavPill to="/business-dashboard" icon={<Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.myBusinesses")} />
           )}
         </nav>
 
@@ -108,11 +108,11 @@ export const Navbar = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80 rounded-2xl p-1.5 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12)]">
                 <div className="px-3 py-2 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Notifications</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">{t("nav.notifications")}</p>
                 </div>
                 <DropdownMenuSeparator className="my-1" />
                 {notifications.length === 0 ? (
-                  <div className="px-3 py-5 text-center text-sm text-muted-foreground">No notifications yet</div>
+                  <div className="px-3 py-5 text-center text-sm text-muted-foreground">{t("nav.noNotifications")}</div>
                 ) : (
                   notifications.slice(0, 8).map((n) => (
                     <div
@@ -144,10 +144,10 @@ export const Navbar = () => {
                   <Link to="/account"><UserCircle className="h-4 w-4" strokeWidth={1.5} /> {t("nav.myAccount")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl gap-2">
-                  <Link to="/business-dashboard"><BarChart3 className="h-4 w-4" strokeWidth={1.5} /> My Businesses</Link>
+                  <Link to="/business-dashboard"><BarChart3 className="h-4 w-4" strokeWidth={1.5} /> {t("nav.myBusinesses")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl gap-2">
-                  <Link to="/insights"><TrendingUp className="h-4 w-4" strokeWidth={1.5} /> My Insights</Link>
+                  <Link to="/insights"><TrendingUp className="h-4 w-4" strokeWidth={1.5} /> {t("nav.myInsights")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl gap-2">
                   <Link to="/business/onboarding"><Plus className="h-4 w-4" strokeWidth={1.5} /> {t("nav.listBusiness")}</Link>

@@ -137,8 +137,8 @@
   }
 }
 
-/* High-Visibility Mode — accessibility suite */
-.high-visibility {
+/* High-Visibility Mode — light variant */
+.high-visibility:not(.dark) {
   --background: 0 0% 100%;
   --foreground: 0 0% 0%;
   --card: 0 0% 100%;
@@ -153,9 +153,30 @@
   --accent: 30 100% 35%;
   --accent-foreground: 0 0% 100%;
 }
-.high-visibility * {
+.high-visibility:not(.dark) * {
   border-color: hsl(0 0% 0%) !important;
 }
+
+/* High-Visibility Mode — dark variant */
+.dark.high-visibility {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+  --primary: 220 100% 65%;
+  --primary-foreground: 0 0% 0%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 88%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 220 100% 65%;
+  --accent: 30 100% 65%;
+  --accent-foreground: 0 0% 0%;
+}
+.dark.high-visibility * {
+  border-color: hsl(0 0% 100%) !important;
+}
+
 .high-visibility body {
   font-weight: 500;
 }
@@ -165,7 +186,7 @@
   text-decoration: underline;
 }
 .high-visibility *:focus-visible {
-  outline: 3px solid hsl(220 100% 35%) !important;
+  outline: 3px solid hsl(var(--ring)) !important;
   outline-offset: 2px !important;
 }
 
