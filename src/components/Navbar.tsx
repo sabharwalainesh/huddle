@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Home, Building2, MapPin, Bell, TrendingUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Building2, MapPin, Bell, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -28,6 +28,23 @@ export const Navbar = () => {
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [bellOpen, setBellOpen] = useState(false);
+
+  const seenHintRef = useRef(false);
+  const [hintVisible, setHintVisible] = useState(false);
+
+  useEffect(() => {
+    if (!isHome && !seenHintRef.current) {
+      seenHintRef.current = true;
+      setHintVisible(true);
+    }
+    if (isHome) setHintVisible(false);
+  }, [isHome]);
+
+  useEffect(() => {
+    if (!hintVisible) return;
+    const timer = setTimeout(() => setHintVisible(false), 5000);
+    return () => clearTimeout(timer);
+  }, [hintVisible]);
 
   useEffect(() => {
     if (!user) { setUnread(0); setNotifications([]); return; }
@@ -65,18 +82,31 @@ export const Navbar = () => {
       <div className="max-w-3xl mx-auto flex items-center justify-between h-14 px-3 rounded-full bg-background/90 backdrop-blur-xl border border-border/50 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] pointer-events-auto">
 
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-2 font-bold text-base pl-1 shrink-0">
-          <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
-            <Users className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+        <div className="relative shrink-0">
+          <Link to="/" className="flex items-center gap-2 font-bold text-base pl-1" onClick={() => setHintVisible(false)}>
+            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+              <Users className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+            </div>
+            <span className="tracking-tight">Huddle</span>
+          </Link>
+
+          {/* Home hint tooltip */}
+          <div
+            className={`absolute top-full left-0 mt-3 z-50 pointer-events-none transition-all duration-300 ${
+              hintVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+            }`}
+            aria-hidden={!hintVisible}
+          >
+            {/* Arrow pointing up at logo */}
+            <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 rounded-sm bg-foreground shadow-[-1px_-1px_0_rgba(0,0,0,0.08)]" />
+            <div className="relative rounded-xl bg-foreground text-background text-xs px-3.5 py-2.5 max-w-[200px] shadow-[0_4px_16px_-4px_rgba(0,0,0,0.2)] leading-snug whitespace-normal">
+              {t("nav.homeHint")}
+            </div>
           </div>
-          <span className="tracking-tight">Huddle</span>
-        </Link>
+        </div>
 
         {/* Center nav links — hidden on mobile */}
         <nav className="hidden md:flex items-center gap-0.5">
-          {!isHome && (
-            <NavPill to="/" icon={<Home className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.home")} />
-          )}
           <NavPill to="/about" icon={<Info className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.about")} />
           <NavPill to="/discover" icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.discover")} />
           {user && (
