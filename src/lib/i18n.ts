@@ -21,6 +21,7 @@ export const translations = {
     "nav.myInsights": "My Insights",
     "nav.notifications": "Notifications",
     "nav.noNotifications": "No notifications yet",
+    "nav.homeHint": "Click Huddle to go back to the home page",
 
     // A11y panel
     "a11y.title": "Accessibility",
@@ -233,6 +234,7 @@ export const translations = {
     "nav.myInsights": "Mis estadísticas",
     "nav.notifications": "Notificaciones",
     "nav.noNotifications": "Aún no hay notificaciones",
+    "nav.homeHint": "Haz clic en Huddle para volver a la página de inicio",
 
     // A11y panel
     "a11y.title": "Accesibilidad",
@@ -445,6 +447,7 @@ export const translations = {
     "nav.myInsights": "Mes statistiques",
     "nav.notifications": "Notifications",
     "nav.noNotifications": "Aucune notification pour l'instant",
+    "nav.homeHint": "Cliquez sur Huddle pour revenir à la page d'accueil",
 
     // A11y panel
     "a11y.title": "Accessibilité",
@@ -657,6 +660,7 @@ export const translations = {
     "nav.myInsights": "我的洞察",
     "nav.notifications": "通知",
     "nav.noNotifications": "暂无通知",
+    "nav.homeHint": "点击 Huddle 返回首页",
 
     // A11y panel
     "a11y.title": "无障碍",
