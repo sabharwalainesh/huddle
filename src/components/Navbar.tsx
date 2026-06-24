@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Building2, MapPin, Bell, TrendingUp } from "lucide-react";
@@ -31,7 +32,9 @@ export const Navbar = () => {
 
   const seenHintRef = useRef(false);
   const prevIsHomeRef = useRef(isHome);
+  const brandRef = useRef<HTMLDivElement>(null);
   const [hintVisible, setHintVisible] = useState(false);
+  const [hintPos, setHintPos] = useState<{ top: number; left: number } | null>(null);
 
   // Only show when transitioning FROM home → non-home, once per page load
   useEffect(() => {
@@ -39,6 +42,10 @@ export const Navbar = () => {
     prevIsHomeRef.current = isHome;
     if (!isHome && wasHome && !seenHintRef.current) {
       seenHintRef.current = true;
+      if (brandRef.current) {
+        const r = brandRef.current.getBoundingClientRect();
+        setHintPos({ top: r.bottom + 10, left: r.left });
+      }
       setHintVisible(true);
     }
     if (isHome) setHintVisible(false);
@@ -79,6 +86,7 @@ export const Navbar = () => {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-40 px-4 py-3 pointer-events-none">
       <a href="#main" className="skip-link" style={{ pointerEvents: "auto" }}>
         {t("nav.skipToContent")}
@@ -86,54 +94,13 @@ export const Navbar = () => {
       <div className="max-w-3xl mx-auto flex items-center justify-between h-14 px-3 rounded-full bg-background/90 backdrop-blur-xl border border-border/50 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] pointer-events-auto">
 
         {/* Brand */}
-        <div className="relative shrink-0">
+        <div ref={brandRef} className="shrink-0">
           <Link to="/" className="flex items-center gap-2 font-bold text-base pl-1" onClick={() => setHintVisible(false)}>
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
               <Users className="h-3.5 w-3.5 text-white" strokeWidth={2} />
             </div>
             <span className="tracking-tight">Huddle</span>
           </Link>
-
-          {/* Home hint — text pill (left) + curved arrow sweeping right */}
-          <div
-            className={`absolute top-full left-0 mt-2.5 z-50 pointer-events-none select-none flex items-center gap-1.5 transition-all duration-500 ${
-              hintVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
-            }`}
-            aria-hidden={!hintVisible}
-          >
-            {/* Text pill */}
-            <div className="rounded-xl border border-foreground/12 bg-background/85 backdrop-blur-md shadow-sm px-2.5 py-2 max-w-[100px]">
-              <p className="text-[10.5px] italic text-foreground/60 leading-snug">
-                {t("nav.homeHint")}
-              </p>
-            </div>
-
-            {/* Curved arrow: tail at left, tip at right — smooth upward arc */}
-            <svg
-              width="62"
-              height="48"
-              viewBox="0 0 62 48"
-              fill="none"
-              className="shrink-0 text-foreground/50"
-              aria-hidden="true"
-            >
-              {/* Shaft: bottom-left → curves up → tip upper-right */}
-              <path
-                d="M 3 38 Q 18 4 57 9"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              {/* Arrowhead at tip (57,9): wings go back upper-left and lower-left */}
-              <path
-                d="M 48 2 L 57 9 L 47 15"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
         </div>
 
         {/* Center nav links — hidden on mobile */}
@@ -239,6 +206,32 @@ export const Navbar = () => {
         </div>
       </div>
     </header>
+
+    {/* Home hint — portalled to body so backdrop-blur can't clip it */}
+    {hintPos && createPortal(
+      <div
+        className={`fixed z-[9999] pointer-events-none select-none flex items-center gap-2 transition-all duration-500 ${
+          hintVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
+        }`}
+        style={{ top: hintPos.top, left: hintPos.left }}
+        aria-hidden={!hintVisible}
+      >
+        {/* Text pill */}
+        <div className="rounded-xl border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-md px-3 py-2 max-w-[108px]">
+          <p className="text-[10.5px] italic text-foreground/65 leading-snug">
+            {t("nav.homeHint")}
+          </p>
+        </div>
+
+        {/* Curved arrow: tail bottom-left → tip upper-right */}
+        <svg width="62" height="48" viewBox="0 0 62 48" fill="none" className="shrink-0 text-foreground/50" aria-hidden="true">
+          <path d="M 3 38 Q 18 4 57 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M 48 2 L 57 9 L 47 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>,
+      document.body
+    )}
+  </>
   );
 };
 
