@@ -49,7 +49,7 @@ export const A11yProvider = ({ children }: { children: ReactNode }) => {
       const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
       setDarkMode(storedDark === null ? !!prefersDark : storedDark === "1");
       const storedLang = localStorage.getItem(LANG_KEY);
-      if (storedLang === "es" || storedLang === "en") setLangState(storedLang);
+      if (storedLang === "en" || storedLang === "es" || storedLang === "fr" || storedLang === "zh") setLangState(storedLang);
     } catch {
       /* noop */
     }
@@ -97,7 +97,8 @@ export const A11yProvider = ({ children }: { children: ReactNode }) => {
     const text = (main?.innerText ?? "").replace(/\s+/g, " ").trim().slice(0, 5000);
     if (!text) return;
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = lang === "es" ? "es-ES" : "en-US";
+    const ttsLangMap: Record<string, string> = { en: "en-US", es: "es-ES", fr: "fr-FR", zh: "zh-CN" };
+    utter.lang = ttsLangMap[lang] ?? "en-US";
     utter.rate = 1;
     utter.onend = () => setIsSpeaking(false);
     utter.onerror = () => setIsSpeaking(false);

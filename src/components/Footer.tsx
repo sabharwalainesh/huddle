@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { useT } from "@/contexts/A11yContext";
 
 export const Footer = () => {
+  const t = useT();
   const year = new Date().getFullYear();
 
   const onSubscribe = (e: React.FormEvent<HTMLFormElement>) => {
@@ -13,10 +15,10 @@ export const Footer = () => {
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email") ?? "").trim();
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      toast({ title: "Enter a valid email", variant: "destructive" });
+      toast({ title: t("footer.invalidEmail"), variant: "destructive" });
       return;
     }
-    toast({ title: "You're on the list", description: "We'll send a monthly local roundup." });
+    toast({ title: t("footer.subscribed"), description: t("footer.subscribedDesc") });
     e.currentTarget.reset();
   };
 
@@ -26,8 +28,8 @@ export const Footer = () => {
       <div className="bg-gradient-hero text-primary-foreground">
         <div className="container py-12 flex flex-col md:flex-row gap-6 md:items-center md:justify-between">
           <div className="space-y-1">
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Own a local business?</h2>
-            <p className="text-sm opacity-80 font-medium">List on Huddle in minutes — free for local owners.</p>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("footer.ownBusiness")}</h2>
+            <p className="text-sm opacity-80 font-medium">{t("footer.listFree")}</p>
           </div>
           <Button
             asChild
@@ -36,7 +38,7 @@ export const Footer = () => {
             className="rounded-full pl-7 pr-2.5 gap-3 self-start md:self-auto group whitespace-nowrap transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
           >
             <Link to="/business/onboarding">
-              List your business
+              {t("footer.listYourBusiness")}
               <span className="h-8 w-8 rounded-full bg-foreground/8 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
                 <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
               </span>
@@ -58,7 +60,7 @@ export const Footer = () => {
               <span className="tracking-tight">Huddle</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-[26ch]">
-              Discover and support local businesses. Real reviews from real neighbors.
+              {t("footer.tagline")}
             </p>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li className="flex items-center gap-2.5">
@@ -77,18 +79,18 @@ export const Footer = () => {
           {/* Explore links */}
           <div className="md:col-span-2">
             <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/50 mb-4">
-              Explore
+              {t("footer.explore")}
             </h3>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               {[
-                { to: "/", label: "Home" },
-                { to: "/ask", label: "Ask Huddle" },
-                { to: "/my-huddle", label: "My Huddle" },
-                { to: "/about", label: "About" },
+                { to: "/", labelKey: "nav.home" as const },
+                { to: "/ask", labelKey: "footer.askHuddle" as const },
+                { to: "/my-huddle", labelKey: "nav.myHuddle" as const },
+                { to: "/about", labelKey: "nav.about" as const },
               ].map((l) => (
-                <li key={l.to + l.label}>
+                <li key={l.to + l.labelKey}>
                   <Link to={l.to} className="hover:text-foreground transition-colors duration-200">
-                    {l.label}
+                    {t(l.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -98,17 +100,17 @@ export const Footer = () => {
           {/* Business links */}
           <div className="md:col-span-2">
             <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/50 mb-4">
-              For business
+              {t("footer.forBusiness")}
             </h3>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               {[
-                { to: "/business/onboarding", label: "List your business" },
-                { to: "/insights", label: "Owner insights" },
-                { to: "/account", label: "Account" },
+                { to: "/business/onboarding", labelKey: "footer.listYourBusiness" as const },
+                { to: "/insights", labelKey: "footer.ownerInsights" as const },
+                { to: "/account", labelKey: "nav.account" as const },
               ].map((l) => (
                 <li key={l.to}>
                   <Link to={l.to} className="hover:text-foreground transition-colors duration-200">
-                    {l.label}
+                    {t(l.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -118,25 +120,25 @@ export const Footer = () => {
           {/* Newsletter */}
           <div className="md:col-span-4">
             <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/50 mb-4">
-              Local roundup
+              {t("footer.localRoundup")}
             </h3>
             <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-              One email a month. New spots, neighbor picks, no spam.
+              {t("footer.roundupDesc")}
             </p>
             <form onSubmit={onSubscribe} className="flex gap-2">
               <div className="flex-1">
-                <Label htmlFor="footer-email" className="sr-only">Email address</Label>
+                <Label htmlFor="footer-email" className="sr-only">{t("footer.emailLabel")}</Label>
                 <Input
                   id="footer-email"
                   name="email"
                   type="email"
-                  placeholder="you@neighborhood.com"
+                  placeholder={t("footer.emailPlaceholder")}
                   required
                   className="rounded-full text-sm"
                 />
               </div>
               <Button type="submit" className="rounded-full px-5 text-sm shrink-0">
-                Subscribe
+                {t("footer.subscribe")}
               </Button>
             </form>
             <div className="flex items-center gap-1.5 mt-5">
@@ -159,11 +161,11 @@ export const Footer = () => {
         {/* Legal bar */}
         <div className="border-t">
           <div className="container py-5 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-xs text-muted-foreground">
-            <p>© {year} Huddle. All rights reserved.</p>
+            <p>© {year} Huddle. {t("footer.allRights")}</p>
             <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-1">
-              {["Privacy Policy", "Terms of Service", "Cookie Policy", "Accessibility"].map((item) => (
-                <Link key={item} to="/about" className="hover:text-foreground transition-colors duration-200">
-                  {item}
+              {(["footer.privacy", "footer.terms", "footer.cookie", "footer.accessibility"] as const).map((key) => (
+                <Link key={key} to="/about" className="hover:text-foreground transition-colors duration-200">
+                  {t(key)}
                 </Link>
               ))}
             </nav>
