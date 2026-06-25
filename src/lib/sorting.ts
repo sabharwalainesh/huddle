@@ -1,3 +1,4 @@
+// Sample code from sorting.ts
 // Modular sorting logic for the Business Directory Engine.
 import type { Tables } from "@/integrations/supabase/types";
 
