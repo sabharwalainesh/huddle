@@ -3,7 +3,6 @@ import { Navigate } from "react-router-dom";
 import { Download, BarChart3, Eye, Users, Bookmark, MapPin, Star, Sparkles, Loader2, TrendingUp, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -559,7 +558,7 @@ const Insights = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+
       <main id="main" className="container py-10 space-y-6 flex-1">
 
         {/* Header */}

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles, Navigation, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Navbar } from "@/components/Navbar";
 import { BusinessCard } from "@/components/BusinessCard";
 import { GooglePlaceCard, type GooglePlace } from "@/components/GooglePlaceCard";
 import { PulseWidget } from "@/components/PulseWidget";
@@ -244,7 +243,7 @@ const Discover = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+
       <section className="relative overflow-hidden border-b">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-accent/8" />
         <div className="container py-14 md:py-20">

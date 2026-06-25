@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Users, Sparkles, MapPin, ShieldCheck, MessageSquareHeart, Store } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
@@ -31,7 +30,7 @@ const VALUES = [
 const About = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+
 
       {/* Hero */}
       <section className="relative overflow-hidden border-b">

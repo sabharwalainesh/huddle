@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useT } from "@/contexts/A11yContext";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PreferencesDialog } from "@/components/PreferencesDialog";
 import { Button } from "@/components/ui/button";
@@ -115,7 +114,7 @@ const Account = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+
       <main id="main" className="container max-w-2xl py-10 space-y-4 flex-1">
 
         {/* Profile hero */}

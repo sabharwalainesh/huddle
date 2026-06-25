@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Search, Sparkles, MapPin, Users, Star, Bookmark, MessageSquare, ChevronDown } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
@@ -41,7 +40,7 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+
       <main id="main" className="flex-1">
 
         {/* ── Hero: full-screen video ────────────────────────────── */}

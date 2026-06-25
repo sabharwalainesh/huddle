@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/contexts/A11yContext";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,7 +105,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+
       <main id="main" className="container py-10 space-y-6 flex-1">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +50,7 @@ const Admin = () => {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+
         <main className="container py-8">
           <Alert>
             <AlertDescription>You need admin access to view this page.</AlertDescription>
@@ -63,7 +62,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+
       <main className="container max-w-5xl py-8 space-y-6">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-6 w-6 text-primary" />

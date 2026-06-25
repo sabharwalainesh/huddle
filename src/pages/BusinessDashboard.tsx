@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Building2, Plus, Eye, MapPin, Star, ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import type { Tables } from "@/integrations/supabase/types";
@@ -69,7 +68,7 @@ const BusinessDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+
       <main id="main" className="container max-w-5xl py-10 flex-1">
 
         {/* Header */}

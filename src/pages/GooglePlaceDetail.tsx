@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Phone, Globe, ExternalLink, Loader2, Plus, Clock, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,7 +120,7 @@ const GooglePlaceDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+
         <main id="main" className="container py-10">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading place details…
@@ -134,7 +133,7 @@ const GooglePlaceDetail = () => {
   if (error || !details || !details.found) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+
         <main id="main" className="container py-10 space-y-4">
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" /> Back
@@ -153,7 +152,7 @@ const GooglePlaceDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+
       <main id="main" className="container py-6 space-y-6">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" /> Back
