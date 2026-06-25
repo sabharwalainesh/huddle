@@ -26,6 +26,11 @@ ver
 
 # AI agent artifacts — must not appear in repo
 .claude/
+.agents/
+.junie/
+.mcp.json
+CLAUDE.md
+INITIAL.md
 skills-lock.json
 PRPs/
 make_pptx.py
