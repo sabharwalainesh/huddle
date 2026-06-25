@@ -25,6 +25,7 @@ import BusinessDashboardDetail from "./pages/BusinessDashboardDetail.tsx";
 import About from "./pages/About.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RequireAdmin } from "./components/RequireAdmin";
+import { Navbar } from "./components/Navbar";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <A11yProvider>
+              <Navbar />
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/discover" element={<Discover />} />

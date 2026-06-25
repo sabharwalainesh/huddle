@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -352,7 +351,7 @@ const BusinessOnboarding = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+
       <main className="container max-w-2xl py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-bold">List your business</h1>

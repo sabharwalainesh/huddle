@@ -3,7 +3,6 @@ import ReactMarkdown from "react-markdown";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useA11y, useT } from "@/contexts/A11yContext";
-import { Navbar } from "@/components/Navbar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -75,7 +74,7 @@ const Ask = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
-      <Navbar />
+
       <main id="main" className="container max-w-3xl flex-1 flex flex-col py-6 gap-4">
 
         {/* Header */}

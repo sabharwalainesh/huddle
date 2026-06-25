@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BusinessCard } from "@/components/BusinessCard";
 import { PreferencesBanner } from "@/components/PreferencesBanner";
@@ -129,7 +128,7 @@ const MyHuddle = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+
       <main id="main" className="container py-10 space-y-10 flex-1">
         <PreferencesBanner />
 

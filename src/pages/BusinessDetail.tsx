@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -374,7 +373,7 @@ const BusinessDetail = () => {
   if (loading || !business) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+
         <main id="main" className="container py-8 flex items-center justify-center gap-3 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="text-sm">Loading…</span>
@@ -406,7 +405,7 @@ const BusinessDetail = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+
       <main id="main" className="container max-w-4xl py-8 flex-1 space-y-5">
 
         <button
