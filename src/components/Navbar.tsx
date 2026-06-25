@@ -1,6 +1,6 @@
-import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Building2, MapPin, Bell, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,32 +30,20 @@ export const Navbar = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [bellOpen, setBellOpen] = useState(false);
 
-  const seenHintRef = useRef(false);
-  const prevIsHomeRef = useRef(isHome);
-  const brandRef = useRef<HTMLDivElement>(null);
-  const [hintVisible, setHintVisible] = useState(false);
+  const logoRef = useRef<HTMLDivElement>(null);
   const [hintPos, setHintPos] = useState<{ top: number; left: number } | null>(null);
 
-  // Only show when transitioning FROM home → non-home, once per page load
+  // Show once per session when user leaves the home page
   useEffect(() => {
-    const wasHome = prevIsHomeRef.current;
-    prevIsHomeRef.current = isHome;
-    if (!isHome && wasHome && !seenHintRef.current) {
-      seenHintRef.current = true;
-      if (brandRef.current) {
-        const r = brandRef.current.getBoundingClientRect();
-        setHintPos({ top: r.bottom + 10, left: r.left });
-      }
-      setHintVisible(true);
-    }
-    if (isHome) setHintVisible(false);
+    if (isHome) return;
+    if (sessionStorage.getItem("homeHintShown")) return;
+    sessionStorage.setItem("homeHintShown", "1");
+    const rect = logoRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setHintPos({ top: rect.bottom + 10, left: rect.left + rect.width / 2 });
+    const t = setTimeout(() => setHintPos(null), 5000);
+    return () => clearTimeout(t);
   }, [isHome]);
-
-  useEffect(() => {
-    if (!hintVisible) return;
-    const timer = setTimeout(() => setHintVisible(false), 5000);
-    return () => clearTimeout(timer);
-  }, [hintVisible]);
 
   useEffect(() => {
     if (!user) { setUnread(0); setNotifications([]); return; }
@@ -94,8 +82,8 @@ export const Navbar = () => {
       <div className="max-w-3xl mx-auto flex items-center justify-between h-14 px-3 rounded-full bg-background/90 backdrop-blur-xl border border-border/50 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] pointer-events-auto">
 
         {/* Brand */}
-        <div ref={brandRef} className="shrink-0">
-          <Link to="/" className="flex items-center gap-2 font-bold text-base pl-1" onClick={() => setHintVisible(false)}>
+        <div ref={logoRef} className="shrink-0">
+          <Link to="/" className="flex items-center gap-2 font-bold text-base pl-1">
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
               <Users className="h-3.5 w-3.5 text-white" strokeWidth={2} />
             </div>
@@ -206,28 +194,19 @@ export const Navbar = () => {
         </div>
       </div>
     </header>
-
-    {/* Home hint — portalled to body so backdrop-blur can't clip it */}
     {hintPos && createPortal(
       <div
-        className={`fixed z-[9999] pointer-events-none select-none flex items-center gap-2 transition-all duration-500 ${
-          hintVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
-        }`}
-        style={{ top: hintPos.top, left: hintPos.left }}
-        aria-hidden={!hintVisible}
+        role="tooltip"
+        onClick={() => setHintPos(null)}
+        style={{ position: "fixed", top: hintPos.top, left: hintPos.left, transform: "translateX(-50%)", zIndex: 9999 }}
+        className="pointer-events-auto flex flex-col items-center gap-0.5 animate-in fade-in slide-in-from-top-2 duration-300"
       >
-        {/* Text pill */}
-        <div className="rounded-xl border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-md px-3 py-2 max-w-[108px]">
-          <p className="text-[10.5px] italic text-foreground/65 leading-snug">
-            {t("nav.homeHint")}
-          </p>
+        {/* Arrow */}
+        <div className="w-0 h-0" style={{ borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderBottom: "7px solid hsl(var(--popover))" }} />
+        {/* Bubble */}
+        <div className="rounded-xl bg-popover border border-border/60 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.14)] px-3.5 py-2 text-xs font-medium text-popover-foreground whitespace-nowrap select-none cursor-pointer">
+          Click the logo to go home
         </div>
-
-        {/* Curved arrow: tail bottom-left → tip upper-right */}
-        <svg width="62" height="48" viewBox="0 0 62 48" fill="none" className="shrink-0 text-foreground/50" aria-hidden="true">
-          <path d="M 3 38 Q 18 4 57 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M 48 2 L 57 9 L 47 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
       </div>,
       document.body
     )}
