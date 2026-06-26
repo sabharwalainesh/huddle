@@ -23,6 +23,10 @@ import Insights from "./pages/Insights.tsx";
 import BusinessDashboard from "./pages/BusinessDashboard.tsx";
 import BusinessDashboardDetail from "./pages/BusinessDashboardDetail.tsx";
 import About from "./pages/About.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Terms from "./pages/Terms.tsx";
+import Cookies from "./pages/Cookies.tsx";
+import AccessibilityStatement from "./pages/AccessibilityStatement.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RequireAdmin } from "./components/RequireAdmin";
 import { Navbar } from "./components/Navbar";
@@ -55,6 +59,10 @@ const App = () => (
                 <Route path="/business-dashboard" element={<BusinessDashboard />} />
                 <Route path="/business-dashboard/:id" element={<BusinessDashboardDetail />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/cookies" element={<Cookies />} />
+                <Route path="/accessibility" element={<AccessibilityStatement />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
