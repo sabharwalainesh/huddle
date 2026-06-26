@@ -663,6 +663,65 @@ const BusinessDetail = () => {
           </div>
         )}
 
+        {/* Coupons & Deals — always visible */}
+        <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
+          <div className="rounded-[calc(2rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+            <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-amber-400/15 flex items-center justify-center">
+                <Tag className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
+              </div>
+              <div>
+                <p className="font-semibold tracking-tight">Deals &amp; Coupons</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {coupons.length > 0 ? `${coupons.length} active deal${coupons.length !== 1 ? "s" : ""}` : "No active deals right now"}
+                </p>
+              </div>
+            </div>
+            {coupons.length > 0 ? (
+              <div className="p-4 space-y-3">
+                {coupons.map((c) => (
+                  <div key={c.id} className="px-5 py-4 rounded-2xl bg-gradient-to-r from-amber-400/8 to-primary/5 border border-amber-400/20 flex items-start justify-between gap-3">
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <p className="font-semibold text-sm">{c.title}</p>
+                      {c.description && <p className="text-sm text-muted-foreground">{c.description}</p>}
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        Expires {new Date(c.expires_at).toLocaleDateString()}
+                      </p>
+                      {c.code && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="font-mono font-bold text-sm tracking-widest bg-background/80 border border-border/50 rounded-lg px-3 py-1">
+                            {c.code}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(c.code!);
+                              toast({ title: "Code copied!", description: `"${c.code}" is in your clipboard.` });
+                            }}
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-semibold"
+                            aria-label={`Copy coupon code ${c.code}`}
+                          >
+                            <Copy className="h-3 w-3" strokeWidth={1.5} /> Copy
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {c.discount && <Badge className="shrink-0 rounded-full bg-amber-400/20 text-amber-700 border-amber-400/30 hover:bg-amber-400/30">{c.discount}</Badge>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-7 py-8 flex flex-col items-center gap-2 text-center">
+                <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-1">
+                  <Tag className="h-5 w-5 text-muted-foreground/50" strokeWidth={1.5} />
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">No deals yet</p>
+                <p className="text-xs text-muted-foreground/70 max-w-[220px]">Check back soon — this business may post deals or coupons in the future.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Community photos */}
         {(photos.length > 0 || user) && (
           <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
@@ -906,55 +965,6 @@ const BusinessDetail = () => {
                   No stats available yet — check back once your listing has some visitors.
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Coupons */}
-        {coupons.length > 0 && (
-          <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
-            <div className="rounded-[calc(2rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-              <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Tag className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="font-semibold tracking-tight">Active deals</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{coupons.length} deal{coupons.length !== 1 ? "s" : ""} available</p>
-                </div>
-              </div>
-              <div className="p-4 space-y-3">
-                {coupons.map((c) => (
-                  <div key={c.id} className="px-5 py-4 rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 flex items-start justify-between gap-3">
-                    <div className="space-y-0.5 flex-1 min-w-0">
-                      <p className="font-semibold text-sm">{c.title}</p>
-                      {c.description && <p className="text-sm text-muted-foreground">{c.description}</p>}
-                      <p className="text-xs text-muted-foreground mt-1.5">
-                        Expires {new Date(c.expires_at).toLocaleDateString()}
-                      </p>
-                      {c.code && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="font-mono font-bold text-sm tracking-widest bg-background/80 border border-border/50 rounded-lg px-3 py-1">
-                            {c.code}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              await navigator.clipboard.writeText(c.code!);
-                              toast({ title: "Code copied!", description: `"${c.code}" is in your clipboard.` });
-                            }}
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-semibold"
-                            aria-label={`Copy coupon code ${c.code}`}
-                          >
-                            <Copy className="h-3 w-3" strokeWidth={1.5} /> Copy
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {c.discount && <Badge className="shrink-0 rounded-full">{c.discount}</Badge>}
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}
