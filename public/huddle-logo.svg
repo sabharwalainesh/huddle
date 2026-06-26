@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(14,88%,55%);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:hsl(28,95%,62%);stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="hsl(14,88%,55%)" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Circle background -->
+  <circle cx="100" cy="100" r="90" fill="url(#grad)" filter="url(#shadow)"/>
+
+  <!-- Users icon (lucide-react style): two people silhouettes -->
+  <!-- Back person (right, slightly smaller) -->
+  <circle cx="118" cy="78" r="16" fill="white" opacity="0.75"/>
+  <path d="M88 138 C88 118 98 108 118 108 C138 108 148 118 148 138" fill="white" opacity="0.75" stroke="none"/>
+
+  <!-- Front person (left, main) -->
+  <circle cx="86" cy="82" r="19" fill="white"/>
+  <path d="M48 144 C48 122 64 110 86 110 C108 110 124 122 124 144" fill="white" stroke="none"/>
+</svg>

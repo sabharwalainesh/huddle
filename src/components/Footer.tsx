@@ -163,8 +163,15 @@ export const Footer = () => {
           <div className="container py-5 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-xs text-muted-foreground">
             <p>© {year} Huddle. {t("footer.allRights")}</p>
             <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-1">
-              {(["footer.privacy", "footer.terms", "footer.cookie", "footer.accessibility"] as const).map((key) => (
-                <Link key={key} to="/about" className="hover:text-foreground transition-colors duration-200">
+              {(
+                [
+                  { key: "footer.privacy", to: "/privacy" },
+                  { key: "footer.terms", to: "/terms" },
+                  { key: "footer.cookie", to: "/cookies" },
+                  { key: "footer.accessibility", to: "/accessibility" },
+                ] as const
+              ).map(({ key, to }) => (
+                <Link key={key} to={to} className="hover:text-foreground transition-colors duration-200">
                   {t(key)}
                 </Link>
               ))}
