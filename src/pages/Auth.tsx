@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Users, MapPin, Star, ArrowRight } from "lucide-react";
+import { Users, MapPin, Star, ArrowRight, Eye, EyeOff, MessageSquare } from "lucide-react";
 import { RecaptchaBox } from "@/components/RecaptchaBox";
 
 const signUpSchema = z.object({
@@ -61,6 +61,16 @@ const Auth = () => {
   const [ownsBusiness, setOwnsBusiness] = useState(false);
   const [signInHuman, setSignInHuman] = useState(false);
   const [signUpHuman, setSignUpHuman] = useState(false);
+  const [heroStats, setHeroStats] = useState<{ businesses: number; reviews: number } | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "approved"),
+      supabase.from("reviews").select("id", { count: "exact", head: true }),
+    ]).then(([bRes, rRes]) => {
+      setHeroStats({ businesses: bRes.count ?? 0, reviews: rRes.count ?? 0 });
+    });
+  }, []);
 
   const signUpForm = useForm<SignUpForm>({ resolver: zodResolver(signUpSchema) });
   const signInForm = useForm<SignInForm>({ resolver: zodResolver(signInSchema) });
@@ -79,6 +89,8 @@ const Auth = () => {
   } = signInForm;
 
   const signUpPassword = watchUp("password") ?? "";
+  const [showSignInPw, setShowSignInPw] = useState(false);
+  const [showSignUpPw, setShowSignUpPw] = useState(false);
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
@@ -179,18 +191,18 @@ const Auth = () => {
 
           {/* Mini stat pills */}
           <div className="flex flex-wrap gap-2.5 pt-2">
-            {[
-              { icon: MapPin, label: "2,847 local businesses" },
-              { icon: Star, label: "14k+ real reviews" },
-            ].map(({ icon: Icon, label }) => (
-              <div
-                key={label}
-                className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-3.5 py-1.5 text-sm font-medium"
-              >
-                <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
-                {label}
-              </div>
-            ))}
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-3.5 py-1.5 text-sm font-medium">
+              <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+              {heroStats
+                ? `${heroStats.businesses.toLocaleString()} local business${heroStats.businesses !== 1 ? "es" : ""} — & more to come`
+                : "Local businesses — & more to come"}
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-3.5 py-1.5 text-sm font-medium">
+              <MessageSquare className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+              {heroStats
+                ? `${heroStats.reviews.toLocaleString()} real review${heroStats.reviews !== 1 ? "s" : ""}`
+                : "Real reviews"}
+            </div>
           </div>
         </div>
       </div>
@@ -270,13 +282,23 @@ const Auth = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="si-password" className="text-sm font-medium">{t("auth.password")}</Label>
-                  <Input
-                    id="si-password"
-                    type="password"
-                    {...registerIn("password")}
-                    className="rounded-xl h-11"
-                    placeholder="••••••••"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="si-password"
+                      type={showSignInPw ? "text" : "password"}
+                      {...registerIn("password")}
+                      className="rounded-xl h-11 pr-11"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignInPw((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showSignInPw ? "Hide password" : "Show password"}
+                    >
+                      {showSignInPw ? <EyeOff className="h-4 w-4" strokeWidth={1.5} /> : <Eye className="h-4 w-4" strokeWidth={1.5} />}
+                    </button>
+                  </div>
                   {errorsIn.password && (
                     <p className="text-[11px] text-destructive font-medium mt-1">{errorsIn.password.message}</p>
                   )}
@@ -327,13 +349,23 @@ const Auth = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="su-password" className="text-sm font-medium">{t("auth.password")}</Label>
-                  <Input
-                    id="su-password"
-                    type="password"
-                    {...registerUp("password")}
-                    className="rounded-xl h-11"
-                    placeholder="8+ characters"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="su-password"
+                      type={showSignUpPw ? "text" : "password"}
+                      {...registerUp("password")}
+                      className="rounded-xl h-11 pr-11"
+                      placeholder="8+ characters"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignUpPw((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showSignUpPw ? "Hide password" : "Show password"}
+                    >
+                      {showSignUpPw ? <EyeOff className="h-4 w-4" strokeWidth={1.5} /> : <Eye className="h-4 w-4" strokeWidth={1.5} />}
+                    </button>
+                  </div>
                   {errorsUp.password && (
                     <p className="text-[11px] text-destructive font-medium mt-1">{errorsUp.password.message}</p>
                   )}
