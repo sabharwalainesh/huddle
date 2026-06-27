@@ -129,6 +129,7 @@ const Landing = () => {
           {([loopRefA, loopRefB] as const).map((ref, i) => (
             <video
               key={i} ref={ref} src="/intro_2.mp4" muted playsInline
+              onCanPlay={() => { if (ref.current) ref.current.playbackRate = 0.6; }}
               onEnded={activeLoop === i ? handleLoopEnd : undefined}
               className="absolute inset-0 w-full h-full object-cover"
               style={{ opacity: videoEnded && activeLoop === i ? 1 : 0, transition: "opacity 0.8s ease-in-out" }}
@@ -161,10 +162,10 @@ const Landing = () => {
               </div>
 
               {/* Right: CTA */}
-              <div className="flex flex-col items-start md:items-end gap-3 shrink-0">
+              <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
                 <Button
                   asChild size="lg"
-                  className="rounded-full pl-8 pr-2.5 gap-4 group text-base transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shadow-[0_0_32px_rgba(0,0,0,0.5)]"
+                  className="w-full md:w-auto rounded-full pl-8 pr-2.5 gap-4 group text-base transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shadow-[0_0_32px_rgba(0,0,0,0.5)]"
                 >
                   <Link to="/discover">
                     {t("landing.getStarted")}
