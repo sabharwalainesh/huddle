@@ -35,7 +35,7 @@ function CarouselCard({ biz }: { biz: CarouselBiz }) {
       to={`/business/${biz.id}`}
       tabIndex={-1}
       aria-label={biz.name}
-      className="group shrink-0 w-56 block rounded-2xl overflow-hidden border border-border/50 bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+      className="card-shine group shrink-0 w-56 block rounded-2xl overflow-hidden border border-border/50 bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
     >
       <div className={`h-32 relative bg-gradient-to-br ${gradient}`}>
         {biz.image_url && (
@@ -82,8 +82,7 @@ const Landing = () => {
       .from("businesses")
       .select("id, name, category, avg_rating, image_url")
       .eq("status", "approved")
-      .not("image_url", "is", null)
-      .neq("image_url", "")
+      .like("image_url", "%unsplash%")
       .order("avg_rating", { ascending: false })
       .limit(24)
       .then(({ data }) => { if (data && data.length >= 4) setBusinesses(data); });
@@ -129,7 +128,7 @@ const Landing = () => {
           {([loopRefA, loopRefB] as const).map((ref, i) => (
             <video
               key={i} ref={ref} src="/intro_2.mp4" muted playsInline
-              onCanPlay={() => { if (ref.current) ref.current.playbackRate = 0.6; }}
+              onCanPlay={() => { if (ref.current) ref.current.playbackRate = 0.8; }}
               onEnded={activeLoop === i ? handleLoopEnd : undefined}
               className="absolute inset-0 w-full h-full object-cover"
               style={{ opacity: videoEnded && activeLoop === i ? 1 : 0, transition: "opacity 0.8s ease-in-out" }}
@@ -162,7 +161,7 @@ const Landing = () => {
               </div>
 
               {/* Right: CTA */}
-              <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
+              <div className="w-full md:w-auto flex flex-col items-center md:items-end gap-3 shrink-0">
                 <Button
                   asChild size="lg"
                   className="w-full md:w-auto rounded-full pl-8 pr-2.5 gap-4 group text-base transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shadow-[0_0_32px_rgba(0,0,0,0.5)]"
@@ -415,21 +414,20 @@ const Landing = () => {
               </Reveal>
 
               {/* Right: benefit cards grid */}
-              <Reveal delay={100}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {(["landing.benefit1", "landing.benefit2", "landing.benefit3", "landing.benefit4"] as const).map((key, i) => (
-                    <div
-                      key={key}
-                      className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 px-5 py-5 flex items-start gap-3 hover:bg-white/15 transition-colors duration-300"
-                    >
-                      <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-white">{String(i + 1).padStart(2, "0")}</span>
+                    <Reveal key={key} delay={i * 90} variant="scale">
+                      <div
+                        className="card-shine rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 px-5 py-5 flex items-start gap-3 hover:bg-white/15 transition-colors duration-300"
+                      >
+                        <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-white">{String(i + 1).padStart(2, "0")}</span>
+                        </div>
+                        <span className="text-sm text-primary-foreground/90 font-medium leading-snug">{t(key)}</span>
                       </div>
-                      <span className="text-sm text-primary-foreground/90 font-medium leading-snug">{t(key)}</span>
-                    </div>
+                    </Reveal>
                   ))}
                 </div>
-              </Reveal>
             </div>
           </div>
         </section>

@@ -173,7 +173,7 @@ const Auth = () => {
         </div>
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 text-primary-foreground relative z-10">
+        <Link to="/" className="flex items-center gap-2.5 text-primary-foreground relative z-10 animate-slide-up stagger-1">
           <div className="h-9 w-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
             <Users className="h-4.5 w-4.5" strokeWidth={2} />
           </div>
@@ -181,7 +181,7 @@ const Auth = () => {
         </Link>
 
         {/* Tagline */}
-        <div className="relative z-10 space-y-6 text-primary-foreground">
+        <div className="relative z-10 space-y-6 text-primary-foreground animate-slide-up stagger-3">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight leading-[1.1]">
             Your neighborhood,<br />all in one place.
           </h2>
@@ -209,7 +209,7 @@ const Auth = () => {
 
       {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-sm space-y-8">
+        <div className="w-full max-w-sm space-y-8 animate-slide-up stagger-2">
           {/* Mobile logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-base lg:hidden">
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">

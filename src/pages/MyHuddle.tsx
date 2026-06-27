@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Reveal } from "@/components/Reveal";
 import { Sparkles, BookmarkCheck, BarChart3, Download, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -133,15 +134,17 @@ const MyHuddle = () => {
         <PreferencesBanner />
 
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <BookmarkCheck className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
+        <Reveal>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center animate-bounce-in">
+              <BookmarkCheck className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight leading-tight">{t("huddle.title")}</h1>
+              <p className="text-xs text-muted-foreground">{saved.length} saved {saved.length === 1 ? "place" : "places"}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight leading-tight">{t("huddle.title")}</h1>
-            <p className="text-xs text-muted-foreground">{saved.length} saved {saved.length === 1 ? "place" : "places"}</p>
-          </div>
-        </div>
+        </Reveal>
 
         {/* Saved businesses */}
         <section>
@@ -163,13 +166,18 @@ const MyHuddle = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {saved.map((b) => <BusinessCard key={b.id} b={b} />)}
+              {saved.map((b, i) => (
+                <div key={b.id} className="animate-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
+                  <BusinessCard b={b} />
+                </div>
+              ))}
             </div>
           )}
         </section>
 
         {/* Picks for you */}
         {matches.length > 0 && (
+          <Reveal>
           <section>
             <div className="p-[5px] rounded-[1.75rem] bg-gradient-to-br from-primary/6 to-accent/5 border border-primary/12">
               <div className="rounded-[calc(1.75rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
@@ -192,15 +200,21 @@ const MyHuddle = () => {
                 </div>
                 <div className="p-7">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {matches.map((b) => <BusinessCard key={b.id} b={b} />)}
+                    {matches.map((b, i) => (
+                      <div key={b.id} className="animate-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
+                        <BusinessCard b={b} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
           </section>
+          </Reveal>
         )}
         {/* Data report panel */}
         {report && (
+          <Reveal>
           <section>
             <div className="p-[5px] rounded-[1.75rem] bg-foreground/[0.03] border border-border/50">
               <div className="rounded-[calc(1.75rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
@@ -269,6 +283,7 @@ const MyHuddle = () => {
               </div>
             </div>
           </section>
+          </Reveal>
         )}
       </main>
       <Footer />

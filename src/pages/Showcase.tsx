@@ -4,6 +4,7 @@ import { Loader2, ShoppingBag, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Footer } from "@/components/Footer";
 import { Input } from "@/components/ui/input";
+import { Reveal } from "@/components/Reveal";
 
 type ShowcaseItem = {
   id: string;
@@ -58,15 +59,17 @@ const Showcase = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <main id="main" className="container max-w-6xl py-10 flex-1 space-y-8">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <ShoppingBag className="h-5 w-5 text-primary" strokeWidth={1.5} />
+        <Reveal>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center animate-bounce-in">
+              <ShoppingBag className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Showcase</h1>
+              <p className="text-sm text-muted-foreground">Products &amp; services from local businesses</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Showcase</h1>
-            <p className="text-sm text-muted-foreground">Products &amp; services from local businesses</p>
-          </div>
-        </div>
+        </Reveal>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -109,11 +112,12 @@ const Showcase = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filtered.map((item) => (
+            {filtered.map((item, i) => (
               <Link
                 key={item.id}
                 to={`/business/${item.business_id}`}
-                className="group flex flex-col rounded-2xl border border-border/50 bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200"
+                className="group flex flex-col rounded-2xl border border-border/50 bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200 card-shine animate-slide-up"
+                style={{ animationDelay: `${(i % 8) * 50}ms` }}
               >
                 <div className="aspect-square bg-muted/40 overflow-hidden">
                   {item.image_url ? (

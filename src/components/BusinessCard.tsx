@@ -14,7 +14,7 @@ interface BusinessCardProps {
 export const BusinessCard = ({ b, distanceMi, reason }: BusinessCardProps) => (
   <Link to={`/business/${b.id}`} className="block group">
     {/* Outer shell */}
-    <div className="p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
+    <div className="card-shine p-[5px] rounded-[1.5rem] bg-foreground/[0.03] border border-border/50 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
       {/* Inner core */}
       <div className="rounded-[calc(1.5rem-5px)] bg-background overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
         {/* Image */}
