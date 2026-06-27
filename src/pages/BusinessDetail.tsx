@@ -21,12 +21,14 @@ import { ReceiptVerifier } from "@/components/ReceiptVerifier";
 import { ReviewThemes } from "@/components/ReviewThemes";
 import { RecaptchaBox } from "@/components/RecaptchaBox";
 import { toast } from "@/hooks/use-toast";
+import { useT } from "@/contexts/A11yContext";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Business = Tables<"businesses">;
 type Review = Tables<"reviews"> & { profiles?: { display_name: string } | null };
 type Coupon = Tables<"coupons">;
 type BusinessPhoto = { id: string; photo_url: string; user_id: string; created_at: string };
+type ShowcaseItem = { id: string; business_id: string; title: string; description: string | null; price: string | null; image_url: string | null; is_available: boolean; created_at: string };
 
 interface InsightRow {
   business_id: string;
@@ -141,6 +143,7 @@ function getPlatformMeta(tags: string[] | null) {
 }
 
 const BusinessDetail = () => {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -171,6 +174,7 @@ const BusinessDetail = () => {
   const [reportSending, setReportSending] = useState(false);
 
   const [photos, setPhotos] = useState<BusinessPhoto[]>([]);
+  const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>([]);
   const [watched, setWatched] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -203,11 +207,12 @@ const BusinessDetail = () => {
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
-    const [bRes, rRes, cRes, photosRes] = await Promise.all([
+    const [bRes, rRes, cRes, photosRes, showcaseRes] = await Promise.all([
       supabase.from("businesses").select("*").eq("id", id).maybeSingle(),
       supabase.from("reviews").select("*").eq("business_id", id).order("created_at", { ascending: false }),
       supabase.from("active_coupons").select("*").eq("business_id", id),
       supabase.from("business_photos").select("id, photo_url, user_id, created_at").eq("business_id", id).order("created_at", { ascending: false }),
+      supabase.from("showcase_items").select("*").eq("business_id", id).eq("is_available", true).order("created_at", { ascending: false }),
     ]);
     if (bRes.error || !bRes.data) {
       toast({ title: "Business not found", variant: "destructive" });
@@ -227,6 +232,7 @@ const BusinessDetail = () => {
     setReviews(reviewRows);
     setCoupons((cRes.data ?? []) as Coupon[]);
     setPhotos((photosRes.data ?? []) as BusinessPhoto[]);
+    setShowcaseItems((showcaseRes.data ?? []) as ShowcaseItem[]);
 
     if (user) {
       const [bmRes, watchRes] = await Promise.all([
@@ -461,7 +467,7 @@ const BusinessDetail = () => {
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={checkIn} disabled={checkingIn} className="rounded-full gap-2">
                   <MapPinned className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  {checkingIn ? "Checking in…" : "Check in"}
+                  {checkingIn ? t("biz.checkingIn") : t("biz.checkIn")}
                 </Button>
                 {mapsUrl && (
                   <Button asChild size="sm" className="rounded-full gap-2">
@@ -550,7 +556,7 @@ const BusinessDetail = () => {
                     {openStatus.open
                       ? <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
                       : <Clock className="h-3 w-3" strokeWidth={2} />}
-                    {openStatus.open ? "Open now" : "Closed"}
+                    {openStatus.open ? t("biz.openNow") : t("biz.closed")}
                   </span>
                   <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                     {openStatus.label}
@@ -633,8 +639,8 @@ const BusinessDetail = () => {
                   <UserCircle className="h-5 w-5 text-primary" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="font-semibold tracking-tight">Meet the founder</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">The person behind {business.name}</p>
+                  <p className="font-semibold tracking-tight">{t("biz.meetFounder")}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("biz.founderRole")} · {business.name}</p>
                 </div>
               </div>
               <div className="px-7 py-6 flex items-start gap-5">
@@ -651,7 +657,7 @@ const BusinessDetail = () => {
                   {business.founder_name && (
                     <div>
                       <p className="font-semibold tracking-tight leading-none">{business.founder_name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Founder · {business.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t("biz.founderRole")} · {business.name}</p>
                     </div>
                   )}
                   {business.founder_bio && (
@@ -671,9 +677,9 @@ const BusinessDetail = () => {
                 <Tag className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
               </div>
               <div>
-                <p className="font-semibold tracking-tight">Deals &amp; Coupons</p>
+                <p className="font-semibold tracking-tight">{t("biz.dealsTitle")}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {coupons.length > 0 ? `${coupons.length} active deal${coupons.length !== 1 ? "s" : ""}` : "No active deals right now"}
+                  {coupons.length > 0 ? `${coupons.length} ${coupons.length !== 1 ? t("biz.activeDeals") : t("biz.activeDeal")}` : t("biz.noActiveDeals")}
                 </p>
               </div>
             </div>
@@ -685,7 +691,7 @@ const BusinessDetail = () => {
                       <p className="font-semibold text-sm">{c.title}</p>
                       {c.description && <p className="text-sm text-muted-foreground">{c.description}</p>}
                       <p className="text-xs text-muted-foreground mt-1.5">
-                        Expires {new Date(c.expires_at).toLocaleDateString()}
+                        {t("biz.expires")} {new Date(c.expires_at).toLocaleDateString()}
                       </p>
                       {c.code && (
                         <div className="flex items-center gap-2 mt-2">
@@ -701,7 +707,7 @@ const BusinessDetail = () => {
                             className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-semibold"
                             aria-label={`Copy coupon code ${c.code}`}
                           >
-                            <Copy className="h-3 w-3" strokeWidth={1.5} /> Copy
+                            <Copy className="h-3 w-3" strokeWidth={1.5} /> {t("biz.copy")}
                           </button>
                         </div>
                       )}
@@ -715,12 +721,69 @@ const BusinessDetail = () => {
                 <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-1">
                   <Tag className="h-5 w-5 text-muted-foreground/50" strokeWidth={1.5} />
                 </div>
-                <p className="text-sm font-medium text-muted-foreground">No deals yet</p>
-                <p className="text-xs text-muted-foreground/70 max-w-[220px]">Check back soon — this business may post deals or coupons in the future.</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("biz.noDealsTitle")}</p>
+                <p className="text-xs text-muted-foreground/70 max-w-[220px]">{t("biz.noDealsBody")}</p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Showcase */}
+        {showcaseItems.length > 0 && (
+          <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50">
+            <div className="rounded-[calc(2rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <div className="px-7 pt-6 pb-5 border-b border-border/60 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <ShoppingBag className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <p className="font-semibold tracking-tight">Showcase</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{showcaseItems.length} item{showcaseItems.length !== 1 ? "s" : ""} from this business</p>
+                  </div>
+                </div>
+                <Link
+                  to={`/showcase?business_id=${business?.id}`}
+                  className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                >
+                  View all <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {showcaseItems.slice(0, 8).map((item) => (
+                  <div
+                    key={item.id}
+                    className="group flex flex-col rounded-2xl border border-border/50 bg-card overflow-hidden"
+                  >
+                    <div className="aspect-square bg-muted/40 overflow-hidden">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag className="h-8 w-8 text-muted-foreground/30" strokeWidth={1} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2.5 flex flex-col gap-1 flex-1">
+                      <p className="font-semibold text-xs leading-snug line-clamp-2">{item.title}</p>
+                      {item.description && (
+                        <p className="text-[10px] text-muted-foreground line-clamp-2">{item.description}</p>
+                      )}
+                      {item.price && (
+                        <p className="font-bold text-xs text-primary mt-auto pt-1">{item.price}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Community photos */}
         {(photos.length > 0 || user) && (
@@ -833,11 +896,11 @@ const BusinessDetail = () => {
             </DialogHeader>
             <div className="space-y-3 py-1">
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border/50 text-sm font-mono text-muted-foreground overflow-hidden">
-                <span className="truncate flex-1">{`${window.location.origin}/business/${business.id}`}</span>
+                <span className="truncate flex-1">{`${"https://huddlehub-spark.vercel.app"}/business/${business.id}`}</span>
                 <button
                   type="button"
                   onClick={async () => {
-                    await navigator.clipboard.writeText(`${window.location.origin}/business/${business.id}`);
+                    await navigator.clipboard.writeText(`${"https://huddlehub-spark.vercel.app"}/business/${business.id}`);
                     toast({ title: "Link copied!" });
                   }}
                   className="shrink-0 text-xs text-primary font-semibold hover:underline"
@@ -849,15 +912,15 @@ const BusinessDetail = () => {
                 {[
                   {
                     label: "WhatsApp",
-                    href: `https://wa.me/?text=${encodeURIComponent(`Check out ${business.name} on Huddle! ${window.location.origin}/business/${business.id}`)}`,
+                    href: `https://wa.me/?text=${encodeURIComponent(`Check out ${business.name} on Huddle! ${"https://huddlehub-spark.vercel.app"}/business/${business.id}`)}`,
                   },
                   {
                     label: "X / Twitter",
-                    href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${business.name} on Huddle!`)}&url=${encodeURIComponent(`${window.location.origin}/business/${business.id}`)}`,
+                    href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${business.name} on Huddle!`)}&url=${encodeURIComponent(`${"https://huddlehub-spark.vercel.app"}/business/${business.id}`)}`,
                   },
                   {
                     label: "SMS",
-                    href: `sms:?body=${encodeURIComponent(`Check out ${business.name} on Huddle! ${window.location.origin}/business/${business.id}`)}`,
+                    href: `sms:?body=${encodeURIComponent(`Check out ${business.name} on Huddle! ${"https://huddlehub-spark.vercel.app"}/business/${business.id}`)}`,
                   },
                 ].map(({ label, href }) => (
                   <a
@@ -875,7 +938,7 @@ const BusinessDetail = () => {
                 <Button
                   className="w-full rounded-full gap-2"
                   onClick={async () => {
-                    await navigator.share({ title: business.name, text: `Check out ${business.name} on Huddle!`, url: `${window.location.origin}/business/${business.id}` });
+                    await navigator.share({ title: business.name, text: `Check out ${business.name} on Huddle!`, url: `${"https://huddlehub-spark.vercel.app"}/business/${business.id}` });
                   }}
                 >
                   <Share2 className="h-3.5 w-3.5" strokeWidth={1.5} /> Share via…
@@ -978,8 +1041,8 @@ const BusinessDetail = () => {
                   <Star className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="font-semibold tracking-tight">Community reviews</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</p>
+                  <p className="font-semibold tracking-tight">{t("biz.communityReviews")}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{reviews.length} {reviews.length !== 1 ? t("biz.reviews") : t("biz.review")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
@@ -1019,23 +1082,23 @@ const BusinessDetail = () => {
               {/* Write review */}
               {user ? (
                 <form onSubmit={submitReview} className="space-y-4 p-5 rounded-2xl border border-border/50 bg-muted/20">
-                  <p className="text-sm font-semibold">Leave a review</p>
+                  <p className="text-sm font-semibold">{t("biz.leaveReview")}</p>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Your rating</Label>
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">{t("biz.yourRating")}</Label>
                     <StarRating value={rating} onChange={setRating} size={26} />
                     {ratingError && (
                       <p className="text-[11px] text-destructive font-medium">{ratingError}</p>
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="comment" className="text-xs text-muted-foreground uppercase tracking-wide">Your experience</Label>
+                    <Label htmlFor="comment" className="text-xs text-muted-foreground uppercase tracking-wide">{t("biz.yourExperience")}</Label>
                     <Textarea
                       id="comment"
                       rows={3}
                       maxLength={1000}
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      placeholder="Share your experience (10–1000 characters)"
+                      placeholder={t("biz.reviewPlaceholder")}
                       className="rounded-xl"
                     />
                     {commentError && (
@@ -1047,7 +1110,7 @@ const BusinessDetail = () => {
                   <RecaptchaBox onVerifiedChange={setHumanVerified} />
                   <Button type="submit" disabled={posting || !rating || !humanVerified} className="rounded-full gap-2">
                     {posting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                    {posting ? "Posting…" : visitVerified ? "Post verified review" : "Post review"}
+                    {posting ? t("biz.posting") : visitVerified ? t("biz.postVerified") : t("biz.postReview")}
                   </Button>
                 </form>
               ) : (

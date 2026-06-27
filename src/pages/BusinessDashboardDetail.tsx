@@ -24,6 +24,15 @@ import type { Tables } from "@/integrations/supabase/types";
 type Business = Tables<"businesses">;
 type Review = Tables<"reviews"> & { profiles?: { display_name: string } | null };
 type Coupon = Tables<"coupons">;
+type ShowcaseItem = { id: string; business_id: string; title: string; description: string | null; price: string | null; image_url: string | null; is_available: boolean; created_at: string };
+
+const showcaseSchema = z.object({
+  title:       z.string().trim().min(1, "Title required").max(100),
+  description: z.string().trim().max(500).optional(),
+  price:       z.string().trim().max(30).optional(),
+  image_url:   z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
+});
+type ShowcaseForm = z.infer<typeof showcaseSchema>;
 
 const couponSchema = z.object({
   title:       z.string().trim().min(2, "Title required").max(80),
@@ -151,9 +160,13 @@ const BusinessDashboardDetail = () => {
   const [saving, setSaving] = useState(false);
   const [couponSaving, setCouponSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>([]);
+  const [showcaseSaving, setShowcaseSaving] = useState(false);
+  const [showcaseDeletingId, setShowcaseDeletingId] = useState<string | null>(null);
 
   const form = useForm<EditForm>({ resolver: zodResolver(editSchema) });
   const couponForm = useForm<CouponForm>({ resolver: zodResolver(couponSchema) });
+  const showcaseForm = useForm<ShowcaseForm>({ resolver: zodResolver(showcaseSchema) });
   const { register, handleSubmit, setValue, watch, reset, formState: { errors, isDirty } } = form;
 
   useEffect(() => {
@@ -164,12 +177,13 @@ const BusinessDashboardDetail = () => {
     if (!user || !id) return;
     (async () => {
       setLoading(true);
-      const [bizRes, statsRes, revRes, cpRes, hrRes] = await Promise.all([
+      const [bizRes, statsRes, revRes, cpRes, hrRes, scRes] = await Promise.all([
         supabase.from("businesses").select("*").eq("id", id).eq("owner_id", user.id).maybeSingle(),
         supabase.from("business_insights_summary").select("*").eq("business_id", id).maybeSingle(),
         supabase.from("reviews").select("*").eq("business_id", id).order("created_at", { ascending: false }),
         supabase.from("coupons").select("*").eq("business_id", id).order("expires_at", { ascending: true }),
         supabase.from("hours_reports").select("id, message, created_at").eq("business_id", id).order("created_at", { ascending: false }).limit(10),
+        supabase.from("showcase_items").select("*").eq("business_id", id).order("created_at", { ascending: false }),
       ]);
       if (!bizRes.data) { navigate("/business-dashboard"); return; }
       const biz = bizRes.data as Business;
@@ -186,6 +200,7 @@ const BusinessDashboardDetail = () => {
       setReviews(reviewRows);
       setCoupons((cpRes.data ?? []) as Coupon[]);
       setHoursReports((hrRes.data ?? []) as { id: string; message: string; created_at: string }[]);
+      setShowcaseItems((scRes.data ?? []) as ShowcaseItem[]);
 
       setEditorialTags(biz.editorial_tags ?? []);
       reset({
@@ -262,6 +277,45 @@ const BusinessDashboardDetail = () => {
     if (error) return toast({ title: "Couldn't delete deal", description: error.message, variant: "destructive" });
     setCoupons((prev) => prev.filter((c) => c.id !== cpId));
     toast({ title: "Deal removed" });
+  };
+
+  const onAddShowcaseItem = async (data: ShowcaseForm) => {
+    if (!business) return;
+    setShowcaseSaving(true);
+    const { data: row, error } = await supabase
+      .from("showcase_items")
+      .insert({
+        business_id: business.id,
+        title: data.title,
+        description: data.description ?? null,
+        price: data.price || null,
+        image_url: data.image_url || null,
+      })
+      .select()
+      .single();
+    setShowcaseSaving(false);
+    if (error) return toast({ title: "Couldn't add item", description: error.message, variant: "destructive" });
+    setShowcaseItems((prev) => [row as ShowcaseItem, ...prev]);
+    showcaseForm.reset();
+    toast({ title: "Item added to showcase" });
+  };
+
+  const deleteShowcaseItem = async (itemId: string) => {
+    setShowcaseDeletingId(itemId);
+    const { error } = await supabase.from("showcase_items").delete().eq("id", itemId);
+    setShowcaseDeletingId(null);
+    if (error) return toast({ title: "Couldn't remove item", description: error.message, variant: "destructive" });
+    setShowcaseItems((prev) => prev.filter((i) => i.id !== itemId));
+    toast({ title: "Item removed" });
+  };
+
+  const toggleShowcaseAvailability = async (item: ShowcaseItem) => {
+    const { error } = await supabase
+      .from("showcase_items")
+      .update({ is_available: !item.is_available })
+      .eq("id", item.id);
+    if (error) return toast({ title: "Couldn't update item", description: error.message, variant: "destructive" });
+    setShowcaseItems((prev) => prev.map((i) => i.id === item.id ? { ...i, is_available: !i.is_available } : i));
   };
 
   if (!user) return null;
@@ -357,6 +411,14 @@ const BusinessDashboardDetail = () => {
                   {coupons.length > 0 && (
                     <span className="ml-1.5 text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-semibold tabular-nums">
                       {coupons.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="showcase" className="rounded-full text-xs font-semibold px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">
+                  Showcase
+                  {showcaseItems.length > 0 && (
+                    <span className="ml-1.5 text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-semibold tabular-nums">
+                      {showcaseItems.length}
                     </span>
                   )}
                 </TabsTrigger>
@@ -875,6 +937,129 @@ const BusinessDashboardDetail = () => {
                         </div>
                       );
                     })
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* ── SHOWCASE TAB ────────────────────────────────────────────── */}
+              <TabsContent value="showcase" className="space-y-5 mt-0">
+                {/* Add item form */}
+                <div className="p-[5px] rounded-[1.75rem] bg-foreground/[0.03] border border-border/50">
+                  <div className="rounded-[calc(1.75rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] px-6 py-5 space-y-4">
+                    <p className="font-semibold tracking-tight text-sm">Add a product or service</p>
+                    <form
+                      onSubmit={showcaseForm.handleSubmit(onAddShowcaseItem)}
+                      className="space-y-3"
+                    >
+                      <Field label="Title *" error={showcaseForm.formState.errors.title?.message}>
+                        <Input
+                          {...showcaseForm.register("title")}
+                          placeholder="e.g. Handmade Scented Candle"
+                          className="rounded-xl"
+                        />
+                      </Field>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label="Price" error={showcaseForm.formState.errors.price?.message}>
+                          <Input
+                            {...showcaseForm.register("price")}
+                            placeholder="e.g. $12.99"
+                            className="rounded-xl"
+                          />
+                        </Field>
+                        <Field label="Image URL" error={showcaseForm.formState.errors.image_url?.message}>
+                          <Input
+                            {...showcaseForm.register("image_url")}
+                            placeholder="https://…"
+                            className="rounded-xl"
+                          />
+                        </Field>
+                      </div>
+                      <Field label="Description" error={showcaseForm.formState.errors.description?.message}>
+                        <Textarea
+                          {...showcaseForm.register("description")}
+                          placeholder="Brief description (optional, max 500 chars)"
+                          rows={2}
+                          className="rounded-xl resize-none"
+                        />
+                      </Field>
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          disabled={showcaseSaving}
+                          className="rounded-full gap-2"
+                        >
+                          {showcaseSaving
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                          Add item
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                {/* Item list */}
+                <div className="space-y-3">
+                  {showcaseItems.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3 py-12 text-center rounded-[1.75rem] border border-dashed border-border/60">
+                      <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-muted-foreground/50" strokeWidth={1.5} />
+                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">No showcase items yet</p>
+                      <p className="text-xs text-muted-foreground/70 max-w-[240px]">Add products or services above — they'll appear on your public business page.</p>
+                    </div>
+                  ) : (
+                    showcaseItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-[5px] rounded-[1.5rem] border ${item.is_available ? "border-primary/15 bg-primary/[0.02]" : "border-border/30 bg-foreground/[0.01]"}`}
+                      >
+                        <div className="rounded-[calc(1.5rem-5px)] bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] px-5 py-4 flex items-start gap-4">
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt={item.title}
+                              className="h-14 w-14 rounded-xl object-cover shrink-0"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={`font-semibold text-sm ${!item.is_available ? "text-muted-foreground" : ""}`}>{item.title}</p>
+                              {item.price && <Badge className="rounded-full text-[10px] h-5 px-2 shrink-0">{item.price}</Badge>}
+                              {!item.is_available && (
+                                <Badge variant="outline" className="rounded-full text-[10px] h-5 px-2 text-muted-foreground">Hidden</Badge>
+                              )}
+                            </div>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleShowcaseAvailability(item)}
+                              className="h-8 px-3 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              {item.is_available ? "Hide" : "Show"}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteShowcaseItem(item.id)}
+                              disabled={showcaseDeletingId === item.id}
+                              className="h-8 w-8 p-0 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              aria-label="Delete item"
+                            >
+                              {showcaseDeletingId === item.id
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </TabsContent>

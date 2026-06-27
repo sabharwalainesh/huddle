@@ -268,6 +268,19 @@
   animation: scroll-ring-pulse 2s ease-out infinite;
 }
 
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes marquee-reverse {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+.animate-marquee         { animation: marquee 38s linear infinite; }
+.animate-marquee-reverse { animation: marquee-reverse 42s linear infinite; }
+.animate-marquee:hover,
+.animate-marquee-reverse:hover { animation-play-state: paused; }
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1 !important;
@@ -277,7 +290,9 @@
   }
   .animate-float,
   .animate-pulse-dot,
-  .animate-scroll-arrow {
+  .animate-scroll-arrow,
+  .animate-marquee,
+  .animate-marquee-reverse {
     animation: none !important;
   }
 }

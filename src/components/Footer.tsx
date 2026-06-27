@@ -25,21 +25,20 @@ export const Footer = () => {
   return (
     <footer className="mt-16">
       {/* CTA strip */}
-      <div className="bg-gradient-hero text-primary-foreground">
+      <div className="bg-foreground text-background">
         <div className="container py-12 flex flex-col md:flex-row gap-6 md:items-center md:justify-between">
           <div className="space-y-1">
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("footer.ownBusiness")}</h2>
-            <p className="text-sm opacity-80 font-medium">{t("footer.listFree")}</p>
+            <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">{t("footer.ownBusiness")}</h2>
+            <p className="text-sm opacity-60 font-medium">{t("footer.listFree")}</p>
           </div>
           <Button
             asChild
-            variant="secondary"
             size="lg"
-            className="rounded-full pl-7 pr-2.5 gap-3 self-start md:self-auto group whitespace-nowrap transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+            className="rounded-full pl-7 pr-2.5 gap-3 self-start md:self-auto group whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
           >
             <Link to="/business/onboarding">
               {t("footer.listYourBusiness")}
-              <span className="h-8 w-8 rounded-full bg-foreground/8 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
+              <span className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
                 <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
               </span>
             </Link>
@@ -48,16 +47,16 @@ export const Footer = () => {
       </div>
 
       {/* Main body */}
-      <div className="border-t bg-muted/15">
+      <div className="border-t bg-muted/10">
         <div className="container py-16 grid gap-12 md:grid-cols-12">
 
           {/* Brand + contact */}
           <div className="md:col-span-4 space-y-5">
-            <Link to="/" className="flex items-center gap-2 font-bold text-base">
-              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
-                <Users className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+            <Link to="/" className="flex items-center gap-2.5 font-bold text-base">
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)]">
+                <Users className="h-4 w-4 text-white" strokeWidth={2} />
               </div>
-              <span className="tracking-tight">Huddle</span>
+              <span className="font-display font-bold text-lg tracking-tight">Huddle</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-[26ch]">
               {t("footer.tagline")}
@@ -65,12 +64,12 @@ export const Footer = () => {
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li className="flex items-center gap-2.5">
                 <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/60" strokeWidth={1.5} />
-                <span>Brooklyn, NY 11201</span>
+                <span>10707 Mason Road, Cypress, TX 77433</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-primary/60" strokeWidth={1.5} />
-                <a href="mailto:hello@huddle.local" className="hover:text-foreground transition-colors duration-200">
-                  hello@huddle.local
+                <a href="mailto:sabharwalainesh@gmail.com" className="hover:text-foreground transition-colors duration-200">
+                  sabharwalainesh@gmail.com
                 </a>
               </li>
             </ul>
