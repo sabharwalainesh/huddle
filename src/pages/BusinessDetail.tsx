@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import {
@@ -8,7 +8,10 @@ import {
   ChevronDown, ChevronUp, Sparkles, UserCircle, Share2, Camera, Bell, BellOff, X, ImageIcon,
   Store, Instagram, Facebook, ShoppingBag, Video, MessageCircle, Copy, SlidersHorizontal,
 } from "lucide-react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 import { supabase } from "@/integrations/supabase/client";
+import { haversineMiles, formatMiles } from "@/lib/geo";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -181,6 +184,11 @@ const BusinessDetail = () => {
   const [photoView, setPhotoView] = useState<string | null>(null);
   const [reviewSort, setReviewSort] = useState<"newest" | "highest" | "lowest" | "verified">("newest");
 
+  const [mapToken, setMapToken] = useState<string | null>(null);
+  const [distanceMi, setDistanceMi] = useState<number | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const bizMapRef = useRef<mapboxgl.Map | null>(null);
+
   const fetchGoogleReviews = async () => {
     if (!business) return;
     setLoadingGoogle(true);
@@ -265,6 +273,46 @@ const BusinessDetail = () => {
     sessionStorage.setItem(key, "1");
     supabase.from("business_views").insert({ business_id: id, viewer_id: user?.id ?? null }).then(() => {});
   }, [id, user?.id]);
+
+  // Fetch Mapbox token once business coords are known
+  useEffect(() => {
+    if (!business?.lat || !business?.lng) return;
+    supabase.functions.invoke("mapbox-token", { method: "GET" })
+      .then(({ data }) => { if (data?.token) setMapToken(data.token); });
+  }, [business?.lat, business?.lng]);
+
+  // Init single-business location map
+  useEffect(() => {
+    if (!mapToken || !mapContainerRef.current || !business?.lat || !business?.lng || bizMapRef.current) return;
+    mapboxgl.accessToken = mapToken;
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [business.lng, business.lat],
+      zoom: 15,
+      interactive: true,
+    });
+    new mapboxgl.Marker({ color: "#f97316" })
+      .setLngLat([business.lng, business.lat])
+      .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(business.name ?? ""))
+      .addTo(map);
+    bizMapRef.current = map;
+
+    navigator.geolocation?.getCurrentPosition((pos) => {
+      const { latitude, longitude } = pos.coords;
+      setDistanceMi(haversineMiles({ lat: latitude, lng: longitude }, { lat: business.lat!, lng: business.lng! }));
+      new mapboxgl.Marker({ color: "#3b82f6" })
+        .setLngLat([longitude, latitude])
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText("Your location"))
+        .addTo(map);
+      const bounds = new mapboxgl.LngLatBounds()
+        .extend([business.lng!, business.lat!])
+        .extend([longitude, latitude]);
+      map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 1200 });
+    });
+
+    return () => { map.remove(); bizMapRef.current = null; };
+  }, [mapToken, business?.lat, business?.lng]);
 
   const toggleBookmark = async () => {
     if (!user) { navigate("/auth"); return; }
@@ -629,6 +677,49 @@ const BusinessDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Location map */}
+        {business.lat && business.lng && (
+          <div className="p-[5px] rounded-[2rem] bg-foreground/[0.03] border border-border/50 overflow-hidden">
+            <div className="rounded-[calc(2rem-5px)] overflow-hidden relative">
+              <div ref={mapContainerRef} className="w-full h-[300px]" aria-label={`Map showing location of ${business.name}`} />
+              {!mapToken && (
+                <div className="absolute inset-0 bg-muted/50 flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {distanceMi !== null && (
+                <div className="absolute top-3 left-3 bg-background/95 backdrop-blur-sm border border-border/60 rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 shadow-sm pointer-events-none">
+                  <Navigation className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+                  {formatMiles(distanceMi)} from you
+                </div>
+              )}
+              {mapsUrl && (
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full shadow-md hover:bg-primary/90 transition-colors"
+                >
+                  <Navigation className="h-3 w-3" strokeWidth={2} />
+                  Directions
+                </a>
+              )}
+              {distanceMi !== null && (
+                <div className="absolute bottom-3 left-3 bg-background/95 backdrop-blur-sm border border-border/60 rounded-xl px-3 py-2 text-[10px] text-muted-foreground space-y-1 pointer-events-none">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-[#f97316] shrink-0" />
+                    {business.name}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                    Your location
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Founder profile */}
         {(business.founder_name || business.founder_bio) && (
