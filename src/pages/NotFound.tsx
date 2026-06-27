@@ -20,15 +20,15 @@ const NotFound = () => {
 
       <div className="text-center space-y-6 max-w-md">
         {/* Icon */}
-        <div className="flex justify-center">
-          <div className="p-[5px] rounded-[1.5rem] bg-primary/8 border border-primary/15">
+        <div className="flex justify-center animate-bounce-in">
+          <div className="p-[5px] rounded-[1.5rem] bg-primary/8 border border-primary/15 animate-glow-pulse">
             <div className="rounded-[calc(1.5rem-5px)] bg-background p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-              <MapPin className="h-10 w-10 text-primary" strokeWidth={1.5} />
+              <MapPin className="h-10 w-10 text-primary animate-wiggle" strokeWidth={1.5} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 animate-slide-up stagger-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-primary">404 — Lost</p>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             This block doesn't exist.
@@ -38,18 +38,20 @@ const NotFound = () => {
           </p>
         </div>
 
-        <Button
-          asChild
-          size="lg"
-          className="rounded-full pl-6 pr-2 gap-3 group transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-        >
-          <Link to="/">
-            Back to Huddle
-            <span className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-            </span>
-          </Link>
-        </Button>
+        <div className="animate-slide-up stagger-4">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full pl-6 pr-2 gap-3 group transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+          >
+            <Link to="/">
+              Back to Huddle
+              <span className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105">
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+              </span>
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

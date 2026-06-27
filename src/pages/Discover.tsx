@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Reveal } from "@/components/Reveal";
 import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles, Navigation, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessCard } from "@/components/BusinessCard";
@@ -245,16 +246,18 @@ const Discover = () => {
       <section className="relative overflow-hidden border-b">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-accent/8" />
         <div className="container py-14 md:py-20">
-          <div className="max-w-2xl space-y-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
-              Explore your area
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground">{t("home.heroTitle")}</h1>
-            <p className="text-base md:text-lg text-muted-foreground max-w-xl leading-relaxed">
-              {t("home.heroSubtitle")}
-            </p>
-          </div>
+          <Reveal>
+            <div className="max-w-2xl space-y-3">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
+                Explore your area
+              </span>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground">{t("home.heroTitle")}</h1>
+              <p className="text-base md:text-lg text-muted-foreground max-w-xl leading-relaxed">
+                {t("home.heroSubtitle")}
+              </p>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -504,7 +507,11 @@ const Discover = () => {
                 ) : (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      {pagedHuddleVisible.map((b) => <BusinessCard key={b.id} b={b} distanceMi={distanceFor(b)} />)}
+                      {pagedHuddleVisible.map((b, i) => (
+                        <div key={b.id} className="animate-slide-up" style={{ animationDelay: `${(i % 6) * 60}ms` }}>
+                          <BusinessCard b={b} distanceMi={distanceFor(b)} />
+                        </div>
+                      ))}
                     </div>
                     {nearMe && coords && huddleByRange.outOfRange.length > 0 && (
                       <Card className="p-4 flex flex-wrap items-center justify-between gap-3 bg-muted/30 border-dashed">
