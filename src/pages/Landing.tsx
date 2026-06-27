@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
 import { useT } from "@/contexts/A11yContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AttentionMap } from "@/components/AttentionMap";
 
 type CarouselBiz = {
   id: string;
@@ -242,92 +243,122 @@ const Landing = () => {
           </section>
         )}
 
-        {/* ── Features — editorial split layout ─────────────────── */}
+        {/* ── Features — bento grid ─────────────────────────────── */}
         <section ref={featuresRef} className="border-b">
           <div className="container py-28 md:py-36">
-            <div className="grid md:grid-cols-2 gap-16 md:gap-24 items-start">
+            <Reveal>
+              <div className="mb-14 max-w-xl">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{t("landing.whyHuddle")}</span>
+                <h2 className="font-display text-5xl md:text-6xl font-bold leading-[1.0] tracking-tight mt-3">
+                  {t("landing.builtAround")}
+                </h2>
+              </div>
+            </Reveal>
 
-              {/* Left: sticky statement */}
-              <div className="md:sticky md:top-28 space-y-7">
-                <Reveal>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{t("landing.whyHuddle")}</span>
-                  <h2 className="font-display text-5xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.0] tracking-tight mt-3">
-                    {t("landing.builtAround")}
-                  </h2>
-                </Reveal>
-                <Reveal delay={80}>
-                  <p className="text-muted-foreground text-lg leading-relaxed max-w-sm">
-                    Real listings, real reviews, and a community that actually shows up.
-                  </p>
-                </Reveal>
-                <Reveal delay={120}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Large hero card — spans 2 cols */}
+              <Reveal className="md:col-span-2">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/12 via-primary/5 to-background border border-border/60 p-10 min-h-[300px] flex flex-col justify-between group hover:border-primary/30 transition-colors duration-300">
+                  <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+                  <div className="h-14 w-14 rounded-2xl bg-primary/15 flex items-center justify-center">
+                    <Search className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div className="relative mt-auto pt-10">
+                    <h3 className="font-display text-2xl md:text-3xl font-bold tracking-tight mb-3">{t("landing.findLocalGems")}</h3>
+                    <p className="text-muted-foreground leading-relaxed max-w-[48ch]">{t("landing.findLocalGemsBody")}</p>
+                  </div>
+                </div>
+              </Reveal>
+
+              {/* Tall narrow card */}
+              <Reveal delay={80}>
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500/12 via-purple-500/5 to-background border border-border/60 p-10 min-h-[300px] flex flex-col justify-between group hover:border-violet-400/40 transition-colors duration-300">
+                  <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
+                  <div className="h-14 w-14 rounded-2xl bg-violet-500/15 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-violet-500" strokeWidth={1.5} />
+                  </div>
+                  <div className="relative mt-auto pt-10">
+                    <h3 className="font-display text-2xl font-bold tracking-tight mb-3">{t("landing.poweredByNeighbors")}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{t("landing.poweredByNeighborsBody")}</p>
+                  </div>
+                </div>
+              </Reveal>
+
+              {/* Wide bottom card — spans 3 cols */}
+              <Reveal delay={120} className="md:col-span-3">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-background border border-border/60 p-10 flex flex-col md:flex-row md:items-center gap-10 group hover:border-emerald-400/40 transition-colors duration-300">
+                  <div className="absolute top-0 right-0 h-56 w-56 rounded-full bg-emerald-500/8 blur-3xl pointer-events-none" />
+                  <div className="h-14 w-14 rounded-2xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                    <MapPin className="h-6 w-6 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 relative">
+                    <h3 className="font-display text-2xl md:text-3xl font-bold tracking-tight mb-2">{t("landing.builtForYourBlock")}</h3>
+                    <p className="text-muted-foreground leading-relaxed max-w-[60ch]">{t("landing.builtForYourBlockBody")}</p>
+                  </div>
                   <Link
                     to="/discover"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-all duration-300 hover:gap-3.5"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 transition-all duration-300 hover:gap-3.5 shrink-0"
                   >
                     {t("landing.startExploring")} <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
                   </Link>
-                </Reveal>
-              </div>
-
-              {/* Right: feature list with dividers */}
-              <div className="divide-y divide-border/60">
-                {[
-                  { icon: Search,  titleKey: "landing.findLocalGems" as const,      bodyKey: "landing.findLocalGemsBody" as const },
-                  { icon: Users,   titleKey: "landing.poweredByNeighbors" as const,  bodyKey: "landing.poweredByNeighborsBody" as const },
-                  { icon: MapPin,  titleKey: "landing.builtForYourBlock" as const,   bodyKey: "landing.builtForYourBlockBody" as const },
-                ].map(({ icon: Icon, titleKey, bodyKey }, i) => (
-                  <Reveal key={titleKey} delay={i * 80}>
-                    <div className="py-8 flex gap-5 items-start">
-                      <div className="h-10 w-10 rounded-xl bg-primary/8 flex items-center justify-center shrink-0 mt-0.5">
-                        <Icon className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <h3 className="font-semibold text-base tracking-tight">{t(titleKey)}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{t(bodyKey)}</p>
-                      </div>
-                    </div>
-                  </Reveal>
-                ))}
-              </div>
+                </div>
+              </Reveal>
             </div>
           </div>
         </section>
 
-        {/* ── How it works — large numbered steps ───────────────── */}
-        <section className="bg-muted/25 border-b">
+        {/* ── Stats strip ───────────────────────────────────────── */}
+        <section className="border-b bg-muted/20">
+          <div className="container py-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
+              {[
+                { value: "20+",  label: "Local businesses" },
+                { value: "100%", label: "Community-reviewed" },
+                { value: "Free", label: "Always free to browse" },
+                { value: "Live", label: "Real-time activity" },
+              ].map((stat, i) => (
+                <Reveal key={stat.label} delay={i * 60} variant="scale">
+                  <div className="bg-background flex flex-col items-center justify-center py-10 px-6 text-center h-full">
+                    <span className="font-display text-4xl md:text-5xl font-black tracking-tight text-foreground">{stat.value}</span>
+                    <span className="text-xs text-muted-foreground mt-2 font-medium tracking-wide uppercase">{stat.label}</span>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── How it works — visual step flow ───────────────────── */}
+        <section className="border-b">
           <div className="container py-28 md:py-36">
             <Reveal>
-              <div className="mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{t("landing.simpleToStart")}</span>
-                  <h2 className="font-display text-4xl md:text-5xl font-bold mt-2 tracking-tight leading-[1.0]">
-                    {t("landing.howHuddleWorks")}
-                  </h2>
-                </div>
+              <div className="mb-16">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{t("landing.simpleToStart")}</span>
+                <h2 className="font-display text-4xl md:text-5xl font-bold mt-2 tracking-tight leading-[1.0]">
+                  {t("landing.howHuddleWorks")}
+                </h2>
               </div>
             </Reveal>
 
-            <div className="grid md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
+            <div className="grid md:grid-cols-3 gap-6">
               {[
-                { icon: Search,   step: "01", titleKey: "landing.step1Title" as const, bodyKey: "landing.step1Body" as const },
-                { icon: Bookmark, step: "02", titleKey: "landing.step2Title" as const, bodyKey: "landing.step2Body" as const },
-                { icon: Star,     step: "03", titleKey: "landing.step3Title" as const, bodyKey: "landing.step3Body" as const },
+                { icon: Search,   step: "01", titleKey: "landing.step1Title" as const, bodyKey: "landing.step1Body" as const,  accent: "from-sky-500/15 to-blue-500/5",    iconBg: "bg-sky-500/15",    iconColor: "text-sky-500",    numColor: "text-sky-500/10"   },
+                { icon: Bookmark, step: "02", titleKey: "landing.step2Title" as const, bodyKey: "landing.step2Body" as const,  accent: "from-violet-500/15 to-purple-500/5", iconBg: "bg-violet-500/15", iconColor: "text-violet-500", numColor: "text-violet-500/10" },
+                { icon: Star,     step: "03", titleKey: "landing.step3Title" as const, bodyKey: "landing.step3Body" as const,  accent: "from-amber-500/15 to-orange-500/5", iconBg: "bg-amber-500/15",  iconColor: "text-amber-500",  numColor: "text-amber-500/10"  },
               ].map((s, i) => (
-                <Reveal key={s.step} delay={i * 80} variant="scale">
-                  <div className="bg-background px-8 py-10 md:px-10 md:py-12 h-full relative overflow-hidden">
-                    {/* Large decorative step number */}
-                    <span className="absolute -top-4 -right-2 font-display text-[8rem] font-black text-foreground/[0.04] leading-none select-none pointer-events-none">
+                <Reveal key={s.step} delay={i * 100} variant="scale">
+                  <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${s.accent} border border-border/60 px-8 py-10 md:px-10 md:py-12 h-full flex flex-col gap-8 hover:border-border transition-colors duration-300`}>
+                    {/* Giant decorative step number */}
+                    <span className={`absolute -top-6 -right-3 font-display text-[9rem] font-black ${s.numColor} leading-none select-none pointer-events-none`}>
                       {s.step}
                     </span>
-                    <div className="relative space-y-5">
-                      <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <s.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-lg tracking-tight">{t(s.titleKey)}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{t(s.bodyKey)}</p>
-                      </div>
+                    <div className={`h-12 w-12 rounded-2xl ${s.iconBg} flex items-center justify-center relative`}>
+                      <s.icon className={`h-5 w-5 ${s.iconColor}`} strokeWidth={1.5} />
+                    </div>
+                    <div className="relative space-y-2 mt-auto">
+                      <p className={`text-xs font-bold uppercase tracking-[0.16em] ${s.iconColor}`}>{s.step}</p>
+                      <h3 className="font-display text-xl font-bold tracking-tight">{t(s.titleKey)}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{t(s.bodyKey)}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -336,10 +367,17 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* ── For business owners — orange accent section ────────── */}
-        <section className="bg-primary text-primary-foreground">
-          <div className="container py-28 md:py-36">
-            <div className="grid md:grid-cols-2 gap-16 items-start">
+        {/* ── Live business map ─────────────────────────────────── */}
+        <AttentionMap />
+
+        {/* ── For business owners ────────────────────────────────── */}
+        <section className="bg-primary text-primary-foreground overflow-hidden relative">
+          {/* Decorative blobs */}
+          <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-black/20 blur-3xl pointer-events-none" />
+
+          <div className="container py-28 md:py-36 relative">
+            <div className="grid md:grid-cols-2 gap-16 items-center">
               {/* Left: statement */}
               <Reveal>
                 <div className="space-y-6">
@@ -375,16 +413,21 @@ const Landing = () => {
                 </div>
               </Reveal>
 
-              {/* Right: benefits */}
+              {/* Right: benefit cards grid */}
               <Reveal delay={100}>
-                <ul className="divide-y divide-primary-foreground/15">
-                  {(["landing.benefit1", "landing.benefit2", "landing.benefit3", "landing.benefit4"] as const).map((key) => (
-                    <li key={key} className="flex items-center gap-4 py-5">
-                      <div className="h-2 w-2 rounded-full bg-primary-foreground/60 shrink-0" />
-                      <span className="text-primary-foreground/90 font-medium">{t(key)}</span>
-                    </li>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(["landing.benefit1", "landing.benefit2", "landing.benefit3", "landing.benefit4"] as const).map((key, i) => (
+                    <div
+                      key={key}
+                      className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 px-5 py-5 flex items-start gap-3 hover:bg-white/15 transition-colors duration-300"
+                    >
+                      <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-[10px] font-bold text-white">{String(i + 1).padStart(2, "0")}</span>
+                      </div>
+                      <span className="text-sm text-primary-foreground/90 font-medium leading-snug">{t(key)}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </Reveal>
             </div>
           </div>
