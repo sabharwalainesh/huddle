@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Building2, MapPin, Bell, TrendingUp } from "lucide-react";
+import { Users, LogOut, Plus, Bookmark, BarChart3, ShieldCheck, UserCircle, Info, Building2, MapPin, Bell, TrendingUp, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/contexts/A11yContext";
@@ -95,6 +95,7 @@ export const Navbar = () => {
         <nav className="hidden md:flex items-center gap-0.5">
           <NavPill to="/about" icon={<Info className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.about")} />
           <NavPill to="/discover" icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.discover")} />
+          <NavPill to="/showcase" icon={<ShoppingBag className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.showcase")} />
           {user && (
             <NavPill to="/my-huddle" icon={<Bookmark className="h-3.5 w-3.5" strokeWidth={1.5} />} label={t("nav.myHuddle")} />
           )}

@@ -81,6 +81,8 @@ const Landing = () => {
       .from("businesses")
       .select("id, name, category, avg_rating, image_url")
       .eq("status", "approved")
+      .not("image_url", "is", null)
+      .neq("image_url", "")
       .order("avg_rating", { ascending: false })
       .limit(24)
       .then(({ data }) => { if (data && data.length >= 4) setBusinesses(data); });
