@@ -3,7 +3,6 @@ import { Search, SlidersHorizontal, Loader2, MapPin, Sparkles, Navigation, Arrow
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessCard } from "@/components/BusinessCard";
 import { GooglePlaceCard, type GooglePlace } from "@/components/GooglePlaceCard";
-import { PulseWidget } from "@/components/PulseWidget";
 import { BusinessOfTheWeek } from "@/components/BusinessOfTheWeek";
 import { Footer } from "@/components/Footer";
 import { AttentionMap } from "@/components/AttentionMap";
@@ -261,9 +260,6 @@ const Discover = () => {
       </section>
 
       <main id="main">
-        <BusinessOfTheWeek />
-        <AttentionMap />
-
         <div className="container py-8 space-y-6">
         <PreferencesBanner />
         <Card className="p-4 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.06)] rounded-2xl border-border/60">
@@ -432,8 +428,7 @@ const Discover = () => {
           <span>Use filters above to narrow results</span>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
-          <div className="space-y-8">
+        <div className="space-y-8">
             {source === "huddle" ? (
               <section aria-labelledby="huddle-heading" className="space-y-3">
                 <h2 id="huddle-heading" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -577,12 +572,10 @@ const Discover = () => {
                 )}
               </section>
             )}
-          </div>
-          <aside className="lg:sticky lg:top-20">
-            <PulseWidget />
-          </aside>
         </div>
         </div>
+        <BusinessOfTheWeek />
+        <AttentionMap />
       </main>
       <Footer />
     </div>

@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        display: ["Playfair Display", "Georgia", "serif"],
+      },
       spacing: {
         "4.5": "1.125rem",
         "5.5": "1.375rem",

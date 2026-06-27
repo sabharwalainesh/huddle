@@ -27,6 +27,7 @@ import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import Cookies from "./pages/Cookies.tsx";
 import AccessibilityStatement from "./pages/AccessibilityStatement.tsx";
+import Showcase from "./pages/Showcase.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RequireAdmin } from "./components/RequireAdmin";
 import { Navbar } from "./components/Navbar";
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/accessibility" element={<AccessibilityStatement />} />
+                <Route path="/showcase" element={<Showcase />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

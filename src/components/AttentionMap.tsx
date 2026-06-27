@@ -313,7 +313,7 @@ export const AttentionMap = () => {
   const hasNoData = !loading && !tokenError && points.length === 0;
 
   return (
-    <section className="container py-10">
+    <section className="py-8 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold">{t("map.title")}</h2>
@@ -356,7 +356,7 @@ export const AttentionMap = () => {
         </div>
 
         <div className="relative">
-          <div ref={containerRef} className="w-full h-[500px]" aria-label="Attention heat map" />
+          <div ref={containerRef} className="w-full h-[580px]" aria-label="Attention heat map" />
           {(loading || (!token && !tokenError)) && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
