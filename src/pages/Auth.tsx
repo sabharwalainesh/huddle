@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,7 +78,6 @@ const Auth = () => {
   const {
     register: registerUp,
     handleSubmit: handleSubmitUp,
-    watch: watchUp,
     formState: { errors: errorsUp },
   } = signUpForm;
 
@@ -88,7 +87,7 @@ const Auth = () => {
     formState: { errors: errorsIn },
   } = signInForm;
 
-  const signUpPassword = watchUp("password") ?? "";
+  const signUpPassword = useWatch({ control: signUpForm.control, name: "password", defaultValue: "" });
   const [showSignInPw, setShowSignInPw] = useState(false);
   const [showSignUpPw, setShowSignUpPw] = useState(false);
 
