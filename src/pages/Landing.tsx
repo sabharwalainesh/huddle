@@ -127,11 +127,11 @@ const Landing = () => {
           />
           {([loopRefA, loopRefB] as const).map((ref, i) => (
             <video
-              key={i} ref={ref} src="https://ijdqiguubxctdwdjeuge.supabase.co/storage/v1/object/public/videos/intro_2.mp4" muted playsInline
+              key={i} ref={ref} src="https://ijdqiguubxctdwdjeuge.supabase.co/storage/v1/object/public/videos/intro_2.mp4" muted playsInline preload="auto"
               onCanPlay={() => { if (ref.current) ref.current.playbackRate = 0.8; }}
               onEnded={activeLoop === i ? handleLoopEnd : undefined}
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ opacity: videoEnded && activeLoop === i ? 1 : 0, transition: "opacity 0.8s ease-in-out" }}
+              style={{ opacity: videoEnded && activeLoop === i ? 1 : 0, transition: "opacity 0.3s ease-in-out" }}
             />
           ))}
 
