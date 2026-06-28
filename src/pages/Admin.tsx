@@ -63,7 +63,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
 
-      <main className="container max-w-5xl py-8 space-y-6">
+      <main className="container py-8 space-y-6">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Admin panel</h1>

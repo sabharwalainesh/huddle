@@ -69,7 +69,7 @@ const BusinessDashboard = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
 
-      <main id="main" className="container max-w-5xl py-10 flex-1">
+      <main id="main" className="container py-10 flex-1">
 
         {/* Header */}
         <div className="flex items-end justify-between gap-4 mb-8">

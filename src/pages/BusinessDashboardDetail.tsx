@@ -334,7 +334,7 @@ const BusinessDashboardDetail = () => {
     <div className="min-h-screen bg-background flex flex-col">
 
 
-      <main id="main" className="container max-w-4xl py-10 flex-1 space-y-6">
+      <main id="main" className="container py-10 flex-1 space-y-6">
 
         {/* Back */}
         <Link
