@@ -135,6 +135,8 @@ const Landing = () => {
             />
           ))}
 
+          {/* Dark tint — always present over loop, lightens during intro */}
+          <div className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${videoEnded ? "opacity-100" : "opacity-40"} bg-black/40`} />
           <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
           {/* Bottom gradient for text legibility */}
           <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
@@ -191,7 +193,7 @@ const Landing = () => {
             <button
               onClick={() => featuresRef.current?.scrollIntoView({ behavior: "smooth" })}
               aria-label={t("landing.scrollToExplore")}
-              className="group flex flex-col items-center gap-3 focus:outline-none opacity-0"
+              className="group flex flex-col items-center gap-3 focus:outline-none"
             >
               <div className="relative flex items-center justify-center">
                 <span className="absolute h-10 w-10 rounded-full border border-white/30 animate-scroll-ring" />
