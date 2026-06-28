@@ -1,1 +1,2 @@
-*.mp4 filter=lfs diff=lfs merge=lfs -text
+# mp4 files tracked normally (all videos under 100MB)
+*.mp4 -filter -diff -merge text=auto
