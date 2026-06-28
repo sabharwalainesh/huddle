@@ -119,7 +119,7 @@ const Landing = () => {
         <section className="relative h-[100dvh] -mt-20 overflow-hidden bg-black">
           <video
             ref={videoRef}
-            src="/intro.mp4"
+            src="https://ijdqiguubxctdwdjeuge.supabase.co/storage/v1/object/public/videos/intro.mp4"
             autoPlay muted playsInline
             onCanPlay={() => { if (videoRef.current) videoRef.current.playbackRate = 1; }}
             onEnded={() => setVideoEnded(true)}
@@ -127,7 +127,7 @@ const Landing = () => {
           />
           {([loopRefA, loopRefB] as const).map((ref, i) => (
             <video
-              key={i} ref={ref} src="/intro_2.mp4" muted playsInline
+              key={i} ref={ref} src="https://ijdqiguubxctdwdjeuge.supabase.co/storage/v1/object/public/videos/intro_2.mp4" muted playsInline
               onCanPlay={() => { if (ref.current) ref.current.playbackRate = 0.8; }}
               onEnded={activeLoop === i ? handleLoopEnd : undefined}
               className="absolute inset-0 w-full h-full object-cover"
