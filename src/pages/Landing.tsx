@@ -120,7 +120,7 @@ const Landing = () => {
           <video
             ref={videoRef}
             src="https://ijdqiguubxctdwdjeuge.supabase.co/storage/v1/object/public/videos/intro.mp4"
-            autoPlay muted playsInline
+            autoPlay muted playsInline preload="auto"
             onCanPlay={() => { if (videoRef.current) videoRef.current.playbackRate = 1; }}
             onEnded={() => setVideoEnded(true)}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoEnded ? "opacity-0" : "opacity-100"}`}
