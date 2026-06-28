@@ -79,7 +79,7 @@ export const Navbar = () => {
       <a href="#main" className="skip-link" style={{ pointerEvents: "auto" }}>
         {t("nav.skipToContent")}
       </a>
-      <div className="max-w-3xl mx-auto flex items-center justify-between h-14 px-3 rounded-full bg-background/90 backdrop-blur-xl border border-border/50 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] pointer-events-auto">
+      <div className="max-w-5xl mx-auto flex items-center justify-between h-14 px-3 rounded-full bg-background/90 backdrop-blur-xl border border-border/50 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] pointer-events-auto">
 
         {/* Brand */}
         <div ref={logoRef} className="shrink-0">
