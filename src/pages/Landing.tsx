@@ -201,6 +201,9 @@ const Landing = () => {
                   <ChevronDown className="h-5 w-5 text-white animate-scroll-arrow" strokeWidth={2} />
                 </div>
               </div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50 group-hover:text-white/80 transition-colors duration-300">
+                Scroll to explore
+              </span>
             </button>
           </div>
         </section>
