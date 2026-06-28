@@ -460,7 +460,7 @@ const BusinessDetail = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
 
-      <main id="main" className="container max-w-4xl py-8 flex-1 space-y-5">
+      <main id="main" className="container py-8 flex-1 space-y-5">
 
         <button
           onClick={() => navigate(-1)}

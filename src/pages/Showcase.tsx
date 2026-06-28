@@ -57,7 +57,7 @@ const Showcase = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <main id="main" className="container max-w-6xl py-10 flex-1 space-y-8">
+      <main id="main" className="container py-10 flex-1 space-y-8">
         {/* Header */}
         <Reveal>
           <div className="flex items-center gap-3">
