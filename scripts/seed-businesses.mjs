@@ -2,7 +2,11 @@
 import https from 'https';
 import fs from 'fs';
 
-const API_KEY = 'REDACTED_GOOGLE_API_KEY';
+const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+if (!API_KEY) {
+  console.error('Missing GOOGLE_MAPS_API_KEY env var');
+  process.exit(1);
+}
 
 const STATES = [
   { state: 'Alabama', city: 'Birmingham, AL' },
