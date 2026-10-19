@@ -4,8 +4,8 @@
 
 /** Chat-completions endpoint. Override with the AI_GATEWAY_URL secret. */
 export const AI_GATEWAY_URL =
-  Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.example.com/v1/chat/completions";
+  Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-/** Bearer token for the gateway. AI_GATEWAY_API_KEY is the legacy secret name. */
+/** Bearer token for the gateway. Falls back to the legacy secret name. */
 export const AI_GATEWAY_API_KEY =
-  Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("AI_GATEWAY_API_KEY");
+  Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY");
