@@ -24,14 +24,5 @@ dist-ssr
 *.sw?
 ver
 
-# AI agent artifacts — must not appear in repo
-.agent/
-.agents/
-.junie/
-.mcp.json
-agent.md
-INITIAL.md
-skills-lock.json
-PRPs/
-make_pptx.py
+# Local environment
 .env

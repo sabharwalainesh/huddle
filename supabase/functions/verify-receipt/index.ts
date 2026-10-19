@@ -1,6 +1,8 @@
 // Edge function: AI sanity-check on uploaded receipt photos for "Verify Visit".
 // Confirms: (1) it looks like a real receipt, (2) business name matches, (3) date is recent (<= 90 days).
 
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai-gateway.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -19,7 +21,6 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
 
     if (!AI_GATEWAY_API_KEY) return json({ error: "AI gateway not configured" }, 500);
 
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
     const today = new Date().toISOString().slice(0, 10);
 
     // AI verification via AI Gateway with structured tool calling
-    const aiResp = await fetch("https://ai.gateway.example.com/v1/chat/completions", {
+    const aiResp = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,

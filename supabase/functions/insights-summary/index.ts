@@ -1,5 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai-gateway.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -37,7 +39,6 @@ Deno.serve(async (req) => {
 
   try {
     const { business, recent_reviews = [], mode = "summary" } = (await req.json()) as InsightInput;
-    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
     if (!AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY is not configured");
     if (!business?.name) {
       return new Response(JSON.stringify({ error: "business is required" }), {
@@ -77,7 +78,7 @@ Health score: ${healthScore}/100
 
 ${recent_reviews.length ? `Recent reviews:\n${recent_reviews.slice(0, 5).map((r) => `- ${r.rating}★ "${r.comment.slice(0, 200)}"`).join("\n")}` : "No recent reviews yet."}`;
 
-    const response = await fetch("https://ai.gateway.example.com/v1/chat/completions", {
+    const response = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,

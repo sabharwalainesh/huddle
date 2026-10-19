@@ -33,7 +33,7 @@ HuddleHub is a full-stack web application built as an entry for the **FBLA 2025-
 | Backend / Database | Supabase (PostgreSQL with Row-Level Security) |
 | Auth | Supabase Auth |
 | Edge Functions | Deno (Supabase Functions) |
-| AI | Google Gemini via AI Gateway |
+| AI | Google Gemini via an OpenAI-compatible AI gateway |
 | Maps | Mapbox GL JS |
 | Charts | Recharts |
 | Data Fetching | TanStack Query v5 |
@@ -49,7 +49,7 @@ HuddleHub is a full-stack web application built as an entry for the **FBLA 2025-
 - Node.js 18 or later
 - npm or a compatible package manager
 - A Supabase project (for database, auth, and edge functions)
-- A AI Gateway API key (for Gemini-powered edge functions)
+- An AI gateway API key (for Gemini-powered edge functions)
 - A Google Places API key (for business search and address autocomplete)
 - A Mapbox public token (for the interactive map)
 
@@ -76,7 +76,7 @@ The Supabase edge functions require the following secrets, set via `supabase sec
 | Secret | Purpose |
 |---|---|
 | `GOOGLE_PLACES_API_KEY` | Google Places search, address autocomplete, and geocoding |
-| `AI_GATEWAY_API_KEY` | AI Gateway — Gemini model access for chatbot, insights, and receipt verification |
+| `AI_GATEWAY_API_KEY` | AI gateway — Gemini model access for chatbot, insights, and receipt verification |
 | `MAPBOX_PUBLIC_TOKEN` | Served to the client by the `mapbox-token` edge function |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role database access used internally by edge functions |
 

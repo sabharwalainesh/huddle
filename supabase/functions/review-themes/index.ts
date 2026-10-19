@@ -1,5 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai-gateway.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -15,7 +17,6 @@ Deno.serve(async (req) => {
 
   try {
     const { business_name, reviews } = (await req.json()) as Body;
-    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
     if (!AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY is not configured");
 
     if (!Array.isArray(reviews) || reviews.length === 0) {
@@ -37,7 +38,7 @@ Return only the most frequent and distinctive themes (typically 4-8). Skip gener
 Reviews (${reviews.length}):
 ${reviewsText}`;
 
-    const response = await fetch("https://ai.gateway.example.com/v1/chat/completions", {
+    const response = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,

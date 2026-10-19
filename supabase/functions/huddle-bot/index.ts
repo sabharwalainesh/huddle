@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai-gateway.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -21,7 +23,6 @@ serve(async (req) => {
 
   try {
     const { question, businesses } = await req.json() as { question: string; businesses: Business[] };
-    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
     if (!AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY is not configured");
 
     if (!question || typeof question !== "string" || question.trim().length === 0) {
@@ -67,7 +68,7 @@ Site pages (use these paths as markdown links when relevant):
 Local business directory (JSON):
 ${JSON.stringify(directory)}`;
 
-    const response = await fetch("https://ai.gateway.example.com/v1/chat/completions", {
+    const response = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
@@ -89,7 +90,7 @@ ${JSON.stringify(directory)}`;
       });
     }
     if (response.status === 402) {
-      return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits in your ai-gateway workspace." }), {
+      return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to the AI gateway account." }), {
         status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

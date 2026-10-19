@@ -2,6 +2,8 @@
 // Lenient: flag obvious junk (selfies, blank pages, memes). Anything plausibly
 // official is "passed" -> sent to admin queue for human approval.
 
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai-gateway.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -20,7 +22,6 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
 
     if (!AI_GATEWAY_API_KEY) {
       return json({ error: "AI gateway not configured" }, 500);
@@ -83,7 +84,7 @@ Deno.serve(async (req) => {
     const dataUrl = `data:${contentType};base64,${base64}`;
 
     // Lenient AI check via AI Gateway, structured output via tool calling
-    const aiResp = await fetch("https://ai.gateway.example.com/v1/chat/completions", {
+    const aiResp = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
